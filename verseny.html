@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IKO Tournament System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="stilus.css">
+</head>
+
+<body class="bg-gray-100 text-zinc-900 font-sans">
+
+    <div id="app" class="min-h-screen flex flex-col">
+        <nav class="bg-zinc-900 text-white p-3 shadow-lg sticky top-0 z-50">
+            <div class="container mx-auto flex justify-between items-center">
+                <span class="font-bold italic text-lg tracking-wider">IKO SYSTEM <span
+                        class="text-red-600">MANAGER</span></span>
+                <div class="space-x-4 text-xs font-bold uppercase">
+                    <button onclick="switchTab('reg')" class="hover:text-red-500 transition-colors">Nevezés</button>
+                    <button onclick="switchTab('bracket')" class="text-red-500 transition-colors">Kumite Ágrajz</button>
+                    <button onclick="switchTab('kata')"
+                        class="hover:text-red-500 transition-colors text-blue-400">KATA</button>
+                    <button onclick="resetAll()"
+                        class="text-gray-500 hover:text-white transition-colors border-l pl-4 ml-4">Törlés</button>
+                </div>
+            </div>
+        </nav>
+
+        <section id="tab-reg" class="container mx-auto p-8 hidden flex-grow">
+            <div class="bg-white p-8 rounded-lg shadow-xl max-w-2xl mx-auto border-t-4 border-red-600">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Versenyzők hozzáadása</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <input id="p-name" type="text" placeholder="Név"
+                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
+                    <input id="p-dojo" type="text" placeholder="Ország / Klub"
+                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
+                    <input id="p-weight" type="number" placeholder="Súly (kg)"
+                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
+                    <input id="p-height" type="number" placeholder="Magasság (cm)"
+                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
+                    <input id="p-age" type="number" placeholder="Kor"
+                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
+
+                    <select id="p-cat" class="border-2 border-gray-200 p-3 rounded font-bold text-red-700 bg-white">
+                        <optgroup label="KUMITE (Küzdelem)">
+                            <option value="Kumite Girls 10-11y">Kumite Girls 10-11y</option>
+                            <option value="Kumite Boys 12-13y">Kumite Boys 12-13y</option>
+                            <option value="Felnőtt Férfi Open">Felnőtt Férfi Open</option>
+                        </optgroup>
+                        <optgroup label="KATA (Formagyakorlat)">
+                            <option value="Kata Boys 16-17y">Kata Boys 16-17y</option>
+                            <option value="Kata Girls 16-17y">Kata Girls 16-17y</option>
+                            <option value="Kata Adult Open">Kata Adult Open</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <button onclick="addPlayer()"
+                    class="bg-zinc-900 text-white px-6 py-3 rounded font-bold w-full hover:bg-red-600 transition duration-200 shadow-lg mb-8">HOZZÁADÁS
+                    LISTÁHOZ</button>
+
+                <div class="mb-8">
+                    <h3 class="font-bold mb-3 text-gray-500 uppercase text-xs tracking-widest border-b pb-2">Nevezettek
+                        listája</h3>
+                    <ul id="player-list" class="text-sm space-y-2 max-h-40 overflow-y-auto pr-2"></ul>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="generate()"
+                        class="bg-blue-600 text-white px-4 py-4 rounded font-bold w-full uppercase tracking-widest hover:bg-blue-700 transition shadow-lg text-sm">
+                        KUMITE Ágrajz (Sorsolás)
+                    </button>
+
+                    <button onclick="initKataTournament()"
+                        class="bg-zinc-700 text-white px-4 py-4 rounded font-bold w-full uppercase tracking-widest hover:bg-zinc-600 transition shadow-lg border-2 border-zinc-500 text-sm">
+                        KATA Verseny Indítása
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-bracket" class="overflow-x-auto min-h-screen bg-white p-10 hidden">
+            <div id="bracket-view" class="bracket-container">
+            </div>
+        </section>
+
+        <section id="tab-referee"
+            class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+            <div
+                class="bg-zinc-900 text-white p-8 rounded-2xl max-w-6xl w-full border-4 border-red-700 relative shadow-2xl">
+                <button onclick="switchTab('bracket')"
+                    class="absolute top-6 right-6 text-gray-500 hover:text-white font-bold text-xl">BEZÁRÁS ✕</button>
+
+                <div class="text-center mb-10 border-b border-zinc-800 pb-6">
+                    <h3 id="match-category-title" class="text-red-500 font-bold uppercase tracking-widest mb-4">
+                        Kategória</h3>
+                    <div id="timer" class="text-[8rem] leading-none font-black font-mono text-red-600 timer-glow mb-4">
+                        02:00</div>
+                    <button onclick="toggleTimer()" id="btn-timer"
+                        class="bg-zinc-700 px-12 py-3 rounded-full font-bold hover:bg-white hover:text-black transition">START</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-20 text-center">
+                    <div>
+                        <div class="flex items-center justify-center gap-2 mb-4">
+                            <div class="w-4 h-4 bg-blue-600"></div>
+                            <span class="text-blue-500 font-bold tracking-widest">AKA</span>
+                        </div>
+                        <div class="text-4xl font-bold text-white mb-6 truncate" id="ref-aka">Versenyző A</div>
+                        <div class="text-8xl font-black mb-8 bg-zinc-800 rounded-xl py-4" id="score-aka">0</div>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="score('aka', 1)"
+                                class="bg-blue-900 px-8 py-6 rounded-xl font-bold border-2 border-blue-500 hover:bg-blue-600 hover:text-white transition">WAZARI</button>
+                            <button onclick="score('aka', 2)"
+                                class="bg-blue-900 px-8 py-6 rounded-xl font-bold border-2 border-blue-500 text-blue-200 hover:bg-blue-500 hover:text-white transition">IPPON</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-center gap-2 mb-4">
+                            <div class="w-4 h-4 bg-red-600"></div>
+                            <span class="text-red-500 font-bold tracking-widest">SHIRO</span>
+                        </div>
+                        <div class="text-4xl font-bold text-white mb-6 truncate" id="ref-shiro">Versenyző B</div>
+                        <div class="text-8xl font-black mb-8 bg-zinc-800 rounded-xl py-4" id="score-shiro">0</div>
+                        <div class="flex justify-center gap-4">
+                            <button onclick="score('shiro', 1)"
+                                class="bg-red-900 px-8 py-6 rounded-xl font-bold border-2 border-red-500 hover:bg-red-600 hover:text-white transition">WAZARI</button>
+                            <button onclick="score('shiro', 2)"
+                                class="bg-red-900 px-8 py-6 rounded-xl font-bold border-2 border-red-500 text-red-200 hover:bg-red-500 hover:text-white transition">IPPON</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="endMatch()"
+                    class="w-full bg-green-700 hover:bg-green-600 py-6 mt-12 rounded-xl font-black text-2xl uppercase tracking-widest shadow-lg transform active:scale-95 transition">
+                    Meccs Lezárása & Mentés
+                </button>
+            </div>
+        </section>
+
+        <section id="tab-kata" class="container mx-auto p-8 hidden">
+            <div id="kata-content" class="w-full">
+            </div>
+        </section>
+    </div>
+
+    <script src="KUMITE.js"></script>
+    <script src="KATA.js"></script>
+
+</body>
+
+</html>
