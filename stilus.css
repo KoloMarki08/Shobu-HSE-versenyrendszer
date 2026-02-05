@@ -1,193 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+body { font-family: 'Roboto', sans-serif; }
 
-body {
-    font-family: 'Roboto', sans-serif;
-}
+/* ÁGRAJZ STÍLUS */
+.bracket-container { display: flex; padding: 20px; align-items: flex-start; }
+.round-column { display: flex; flex-direction: column; justify-content: space-around; margin-right: 60px; }
+.match-wrapper { position: relative; display: flex; flex-direction: column; justify-content: center; width: 240px; margin: 15px 0; }
 
-/* --- ÁGRAJZ STÍLUS (IKO Hivatalos stílus másolat) --- */
-
-.bracket-container {
-    display: flex;
-    padding: 20px;
-    align-items: flex-start;
-    /* Fontos a lépcsőzetességhez */
-}
-
-.round-column {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    margin-right: 80px;
-    /* Távolság az oszlopok között */
-    position: relative;
-}
-
-.match-wrapper {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    width: 260px;
-    /* Kártya szélessége */
-    margin: 15px 0;
-    /* Meccsek közötti minimális távolság */
-}
-
-/* Játékos kártya */
 .player-card {
-    border: 1px solid #ccc;
-    background: white;
-    margin-bottom: 4px;
-    /* A két ellenfél közötti rés */
-    padding: 6px 6px 6px 14px;
-    /* Bal oldali padding a színes csíknak */
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ccc; background: white; margin-bottom: 4px; padding: 6px 6px 6px 14px;
+    position: relative; transition: all 0.2s;
 }
+/* Ha kattintható (mert admin/bíró vagy), akkor kéz kurzor */
+.player-card.clickable { cursor: pointer; }
+.player-card.clickable:hover { border-color: #333; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
-.player-card:hover {
-    border-color: #333;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-}
+.color-strip { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; }
+.aka-strip { background-color: #0047AB; }
+.shiro-strip { background-color: #D32F2F; }
 
-/* Színes jelölőcsíkok */
-.color-strip {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-}
+.winner-card { background-color: #e8f5e9; border: 1px solid #2e7d32; }
 
-.aka-strip {
-    background-color: #0047AB;
-}
+/* Vonalazás */
+.match-connector-right { position: absolute; right: -30px; top: 50%; width: 30px; height: 1px; background-color: #000; }
 
-/* Hivatalos Kék */
-.shiro-strip {
-    background-color: #D32F2F;
-}
-
-/* Hivatalos Piros */
-
-/* Szövegek a kártyán */
-.card-header {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1a1a1a;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.player-id {
-    color: #0047AB;
-    font-size: 0.85em;
-}
-
-.card-details {
-    font-size: 11px;
-    color: #666;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 500;
-}
-
-/* Győztes stílus */
-.winner-card {
-    background-color: #e8f5e9;
-    /* Halványzöld */
-    border: 1px solid #2e7d32;
-}
-
-/* --- VONALAZÁS --- */
-
-/* Vízszintes vonal a meccsből kifelé */
-.match-connector-right {
-    position: absolute;
-    right: -40px;
-    /* Kilóg jobbra félig a köv oszlopig */
-    top: 50%;
-    width: 40px;
-    height: 1px;
-    background-color: #000;
-    z-index: 0;
-}
-
-/* Függőleges és vízszintes vonalak (Villa) */
-/* Ezeket a JS generálja majd div-ként, de itt alapozzuk meg */
-.bracket-line {
-    background-color: #000;
-    position: absolute;
-}
-
-/* Bírói panel extra */
-.timer-glow {
-    text-shadow: 0 0 30px rgba(220, 38, 38, 0.6);
-}
-
-
-/* --- KATA SCOREBOARD STÍLUSOK --- */
-
-.kata-table-wrapper {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.kata-header-row {
-    display: flex;
-    background-color: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
-    padding: 10px;
-    align-items: center;
-    font-weight: bold;
-    color: #374151;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.kata-row {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #f3f4f6;
-    padding: 8px 10px;
-    background: white;
-    transition: background 0.2s;
-}
-
-.kata-row:hover {
-    background-color: #ffffeb;
-    /* Halvány sárga hover */
-}
-
-/* Pontozó input mezők */
-.score-input {
-    width: 50px;
-    padding: 6px;
-    margin: 0 4px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
-    outline: none;
-}
-
-.score-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-/* Tab gombok aktív állapota (opcionális, ha használsz JS osztályokat) */
-.active-tab-btn {
-    border-bottom: 2px solid red;
-    color: white;
-}
+/* Rejtés segédosztály */
+.hidden { display: none !important; }

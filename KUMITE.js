@@ -1,78 +1,155 @@
-// --- ADATKEZELÉS ---
-let data = JSON.parse(localStorage.getItem('iko_db')) || { players: [], matches: [] };
+// --- SZIMULÁLT ADATBÁZISOK ---
+const USERS = [
+    { username: 'admin', pass: '1234', role: 'admin', dojo: 'HEADQUARTERS', name: 'Fő Admin' },
+    { username: 'edzo1', pass: '1234', role: 'coach', dojo: 'Honvéd SE', name: 'Kovács Edző' },
+    { username: 'biro',  pass: '1234', role: 'judge', dojo: '-', name: 'Asztalbíró' }
+];
 
-function save() { localStorage.setItem('iko_db', JSON.stringify(data)); }
-function resetAll() { if(confirm("Biztosan törölni akarsz minden adatot?")) { localStorage.clear(); location.reload(); }}
+let data = JSON.parse(localStorage.getItem('rbac_db')) || { players: [], matches: [] };
+let currentUser = null; 
 
-function switchTab(id) {
-    document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
-    document.getElementById('tab-'+id).classList.remove('hidden');
-    if(id === 'bracket') renderBracket();
+// --- AUTHENTIKÁCIÓ ---
+function login() {
+    const u = document.getElementById('login-user').value;
+    const p = document.getElementById('login-pass').value;
+    const foundUser = USERS.find(user => user.username === u && user.pass === p);
+    if (foundUser) setSession(foundUser);
+    else alert("Hibás felhasználónév vagy jelszó!");
 }
 
-// --- NEVEZÉS FUNKCIÓK ---
-function addPlayer() {
-    const p = {
-        id: 100 + data.players.length + 1, // Startszám generálás
-        name: document.getElementById('p-name').value,
-        dojo: document.getElementById('p-dojo').value,
-        weight: document.getElementById('p-weight').value,
-        height: document.getElementById('p-height').value,
-        age: document.getElementById('p-age').value,
-        cat: document.getElementById('p-cat').value
-    };
-    if(p.name && p.cat) { 
-        data.players.push(p); 
-        save(); 
-        renderList(); 
-        // Mezők ürítése
-        document.getElementById('p-name').value = '';
-    } else {
-        alert("Név és Kategória kötelező!");
+function loginAsGuest() {
+    setSession({ role: 'guest', name: 'Néző', dojo: '-' });
+}
+
+function setSession(user) {
+    currentUser = user;
+    document.getElementById('login-overlay').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    updateUIByRole();
+    renderPlayerList();
+    
+    if(user.role === 'coach' || user.role === 'admin') switchTab('reg');
+    else switchTab('bracket');
+    
+    if(typeof renderKata === "function") renderKata();
+}
+
+function logout() { location.reload(); }
+
+// --- UI FRISSÍTÉS JOGOSULTSÁG ALAPJÁN ---
+function updateUIByRole() {
+    const role = currentUser.role;
+    document.getElementById('user-badge').innerText = `${currentUser.name} (${role.toUpperCase()})`;
+    if(role === 'admin') document.getElementById('user-badge').className = "text-xs px-2 py-1 rounded bg-red-600 text-white";
+
+    if (role === 'coach' || role === 'admin') {
+        document.getElementById('nav-reg').classList.remove('hidden');
+        document.getElementById('p-dojo').value = currentUser.dojo;
+        if(role === 'admin') document.getElementById('p-dojo').disabled = false;
+    }
+
+    if (role === 'admin') {
+        document.getElementById('admin-controls').classList.remove('hidden');
     }
 }
 
-function renderList() {
-    document.getElementById('player-list').innerHTML = data.players.map(p => 
-        `<li class="border-b py-1 flex justify-between">
-            <span><b class="text-blue-800">[${p.id}]</b> ${p.name}</span>
-            <span class="text-gray-500 text-xs">${p.cat} / ${p.dojo}</span>
-         </li>`
-    ).join('');
+// --- SEGÉDFÜGGVÉNY A KATEGÓRIA TÍPUSÁHOZ ---
+function getCategoryType(catName) {
+    if (catName.includes('Kumite')) return 'KUMITE';
+    if (catName.includes('Kata')) return 'KATA';
+    return 'OTHER';
 }
 
-// --- SORSOLÁS GENERÁLÓ ---
-function generate() {
-    data.matches = [];
+// --- NEVEZÉS (MÓDOSÍTOTT LOGIKA) ---
+function addPlayer() {
+    if(currentUser.role !== 'coach' && currentUser.role !== 'admin') return;
+
+    const name = document.getElementById('p-name').value.trim(); // Trim: szóközök levágása
+    const dojo = document.getElementById('p-dojo').value;
     const cat = document.getElementById('p-cat').value;
+
+    if (!name || !dojo) {
+        alert("Kérlek töltsd ki a nevet!");
+        return;
+    }
+
+    // 1. ELLENŐRZÉS: Van-e már ilyen nevű versenyző ebben a dojoban?
+    const existingPlayer = data.players.find(p => p.name.toLowerCase() === name.toLowerCase() && p.dojo === dojo);
+
+    if (existingPlayer) {
+        // 2. ELLENŐRZÉS: Ha van, megnézzük a típusokat
+        const oldType = getCategoryType(existingPlayer.cat);
+        const newType = getCategoryType(cat);
+
+        // Ha az egyik Kumite, a másik Kata -> HIBA
+        if (oldType !== newType) {
+            alert(`HIBA: ${name} már nevezve van ${oldType} kategóriában!\nNem indulhat egyszerre Kumite-ban és Katában.`);
+            return; // Megállítjuk a mentést
+        }
+        
+        // Opcionális: Ha ugyanaz a típus (pl. Kumite Open és Kumite -70kg), azt engedhetjük, vagy azt is tilthatjuk.
+        // Jelenleg engedjük, ha a típus azonos.
+    }
+
+    // Ha minden rendben, mentés
+    data.players.push({
+        id: 100 + data.players.length + 1,
+        name: name, 
+        dojo: dojo, 
+        cat: cat,
+        owner: currentUser.username
+    });
+    
+    save(); 
+    renderPlayerList(); 
+    document.getElementById('p-name').value = '';
+}
+
+function renderPlayerList() {
+    const listEl = document.getElementById('player-list');
+    listEl.innerHTML = '';
+    let visiblePlayers = [];
+    if (currentUser.role === 'admin') visiblePlayers = data.players;
+    else if (currentUser.role === 'coach') visiblePlayers = data.players.filter(p => p.owner === currentUser.username);
+
+    visiblePlayers.forEach(p => {
+        // Színkód a típushoz
+        const typeColor = p.cat.includes('Kata') ? 'text-blue-600' : 'text-red-600';
+        
+        listEl.innerHTML += `
+            <li class="border-b py-2 flex justify-between items-center">
+                <span><b>${p.name}</b> (${p.dojo})</span>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded font-bold ${typeColor}">${p.cat}</span>
+            </li>`;
+    });
+}
+
+// --- KUMITE SORSOLÁS ---
+function generate() {
+    if(currentUser.role !== 'admin') return;
+    data.matches = [];
+    const cat = document.getElementById('p-cat').value; 
+    
+    // Csak akkor generáljunk, ha ez KUMITE kategória!
+    if (cat.includes('Kata')) {
+        alert("Ez egy Kata kategória! Használd a kék 'Kata Verseny Indítása' gombot.");
+        return;
+    }
+
     const players = data.players.filter(p => p.cat === cat);
-    
-    if(players.length < 2) { alert("Minimum 2 versenyző kell!"); return; }
+    if(players.length < 2) { alert("Nincs elég versenyző ebben a kategóriában!"); return; }
 
-    // 2 hatványa méretre igazítás (Bye helyek)
     const size = Math.pow(2, Math.ceil(Math.log2(players.length)));
-    
-    // Véletlenszerű keverés (opcionális, most kikapcsolva a dojo szétválasztás miatt)
-    // players.sort(() => Math.random() - 0.5); 
-
     for(let i=0; i<size; i+=2) {
         const p1 = players[i] || { name: "ÜRES", id: null };
         const p2 = players[i+1] || { name: "---", id: null, isBye: true };
-        
-        const winner = (p1.id && p2.isBye) ? p1 : null;
-        
         data.matches.push({
             id: `m1-${i}`, round: 1, cat: cat,
-            aka: p1, shiro: p2,
-            winner: winner,
-            scoreAka: 0, scoreShiro: 0,
-            nextId: `m2-${Math.floor(i/4)}`
+            aka: p1, shiro: p2, winner: (p1.id && p2.isBye) ? p1 : null,
+            scoreAka: 0, scoreShiro: 0, nextId: `m2-${Math.floor(i/4)}`
         });
     }
-    
-    checkAdvancements();
-    save();
-    switchTab('bracket');
+    checkAdvancements(); save(); switchTab('bracket');
 }
 
 function checkAdvancements() {
@@ -82,29 +159,10 @@ function checkAdvancements() {
         data.matches.forEach(m => {
             if(m.winner && m.nextId) {
                 let nextM = data.matches.find(x => x.id === m.nextId);
-                
-                // Ha nincs még következő kör, létrehozzuk
                 if(!nextM) {
-                    const nextRoundNum = m.round + 1;
-                    const maxRounds = Math.ceil(Math.log2(data.players.filter(p=>p.cat===m.cat).length));
-                    
-                    // Ha ez volt a döntő, nincs következő ID
-                    const nextNextId = (nextRoundNum > maxRounds) ? null : `m${nextRoundNum+1}-${Math.floor(parseInt(m.nextId.split('-')[1])/2)}`;
-
-                    nextM = {
-                        id: m.nextId, round: nextRoundNum, cat: m.cat,
-                        aka: { name: "Várakozás...", id: null }, 
-                        shiro: { name: "Várakozás...", id: null },
-                        winner: null, scoreAka: 0, scoreShiro: 0,
-                        nextId: nextNextId
-                    };
-                    data.matches.push(nextM);
-                    changed = true;
+                    nextM = { id: m.nextId, round: m.round + 1, cat: m.cat, aka: {name:"...",id:null}, shiro: {name:"...",id:null}, winner:null, scoreAka:0, scoreShiro:0, nextId:null};
+                    data.matches.push(nextM); changed = true;
                 }
-                
-                // Játékos beillesztése a megfelelő helyre
-                // Az ID-ből kitaláljuk: páros = AKA, páratlan = SHIRO az előző körben
-                // De egyszerűbb ellenőrzés:
                 if(!nextM.aka.id || nextM.aka.id === m.winner.id) {
                      if(nextM.aka.id !== m.winner.id) { nextM.aka = m.winner; changed = true; }
                 } else {
@@ -115,153 +173,64 @@ function checkAdvancements() {
     }
 }
 
-// --- MEGJELENÍTÉS (A LÉNYEG) ---
 function renderBracket() {
     const container = document.getElementById('bracket-view');
     container.innerHTML = "";
+    const canEdit = (currentUser.role === 'admin' || currentUser.role === 'judge');
     
     if(data.matches.length === 0) {
-        container.innerHTML = "<p class='p-10 text-gray-400'>Nincs aktív sorsolás. Generálj egyet!</p>";
+        container.innerHTML = "<p class='text-gray-400'>Nincs aktív Kumite ágrajz.</p>";
         return;
     }
 
     const maxRound = Math.max(...data.matches.map(m => m.round));
-    
     for(let r=1; r<=maxRound; r++) {
-        // ID szerinti sorrend fontos a párosításhoz
-        const matches = data.matches.filter(m => m.round === r).sort((a,b) => {
-            return parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]);
-        });
-        
+        const matches = data.matches.filter(m => m.round === r);
         const col = document.createElement('div');
         col.className = "round-column";
-        
         matches.forEach(m => {
-            const p1HTML = createCardHTML(m.aka);
-            const p2HTML = createCardHTML(m.shiro);
-            
-            // Csak akkor kattintható, ha van két érvényes harcos és nincs még lezárva
             const active = !m.winner && m.aka.id && m.shiro.id;
-            
-            // Vonalak generálása
-            let linesHTML = "";
-            if(m.nextId) {
-                // Vízszintes kimenő vonal
-                linesHTML += `<div class="match-connector-right"></div>`;
-                
-                // Villa (Függőleges összekötő a következő meccshez)
-                // Ha mi vagyunk a "felső" ág (páros index), lefelé kell vonal
-                // Ha mi vagyunk az "alsó" ág (páratlan index), felfelé kell vonal
-                // Egyszerűsítve: a CSS ::after helyett itt számoljuk ki a magasságot
-                // De a képen látható stílushoz fix pozíciók kellenek a szülőtől
-                
-                // Mivel flexboxot használunk "justify-content: space-around"-al, 
-                // a vonalakat CSS abszolút pozícionálással nehéz dinamikusan illeszteni.
-                // Ezért itt egy egyszerűsített vizuális megoldást használunk, ami "kockásan" köt össze.
-                
-                 linesHTML += `
-                    <div style="position:absolute; right:-40px; top:20px; bottom:20px; width:1px; background:#000; display:none;" class="connector-vertical"></div>
-                 `; 
-                 // Megjegyzés: A "space-around" miatt a JS vonalhúzás bonyolult lenne canvas nélkül. 
-                 // A style.css-ben lévő connector-right adja a vízszintes vonalat, ami elég a tiszta hatáshoz.
-                 // Ha a "villa" effektust akarjuk, azt a szülő container magasságából kellene számolni.
-                 // A mostani kód a vízszintes összekötést preferálja a tisztaság miatt.
-            }
-
+            const clickAction = (active && canEdit) ? `onclick="openRef('${m.id}')"` : "";
             col.innerHTML += `
                 <div class="match-wrapper">
-                    <div ${active ? `onclick="openRef('${m.id}')"` : ""} 
-                         class="player-card ${m.winner?.id === m.aka.id ? 'winner-card' : ''}">
-                        <div class="color-strip aka-strip"></div>
-                        ${p1HTML}
+                    <div ${clickAction} class="player-card ${active && canEdit ? 'clickable' : ''} ${m.winner?.id === m.aka.id ? 'winner-card' : ''}">
+                        <div class="color-strip aka-strip"></div><b>${m.aka.name}</b> <span class="float-right">${m.scoreAka}</span>
                     </div>
-                    <div ${active ? `onclick="openRef('${m.id}')"` : ""} 
-                         class="player-card ${m.winner?.id === m.shiro.id ? 'winner-card' : ''}">
-                        <div class="color-strip shiro-strip"></div>
-                        ${p2HTML}
+                    <div ${clickAction} class="player-card ${active && canEdit ? 'clickable' : ''} ${m.winner?.id === m.shiro.id ? 'winner-card' : ''}">
+                        <div class="color-strip shiro-strip"></div><b>${m.shiro.name}</b> <span class="float-right">${m.scoreShiro}</span>
                     </div>
-                    ${linesHTML}
-                </div>
-            `;
+                    ${ m.nextId ? '<div class="match-connector-right"></div>' : '' }
+                </div>`;
         });
         container.appendChild(col);
     }
-    
-    // Vonalak utólagos kirajzolása (Opcionális finomhangolás)
-    drawConnectingLines();
 }
 
-function createCardHTML(p) {
-    if(!p || !p.id) return `<div class="card-header text-gray-300 italic">---</div>`;
-    return `
-        <div class="card-header">
-            <span class="player-id">[ ${p.id} ]</span>
-            <span>${p.name}</span>
-        </div>
-        <div class="card-details">
-            ${p.dojo || ''} ${p.weight ? `/ ${p.weight}kg` : ''} ${p.age ? `/ ${p.age}y` : ''}
-        </div>
-    `;
-}
-
-// Vonalhúzó segéd (Flexbox kompatibilis)
-function drawConnectingLines() {
-    // Ez a funkció utólag végigmehetne a DOM-on és behúzhatná a függőleges vonalakat
-    // A jelenlegi CSS megoldás (vízszintes vonalak) tisztább mobilon és desktopon is.
-}
-
-// --- BÍRÓI PANEL LOGIKA ---
+// --- KUMITE BÍRÓI PANEL ---
 let currMatch = null;
-let timerInt = null;
-let time = 120; 
-
 function openRef(id) {
+    if (currentUser.role !== 'admin' && currentUser.role !== 'judge') return;
     currMatch = data.matches.find(m => m.id === id);
-    if(!currMatch) return;
-    
-    document.getElementById('match-category-title').innerText = currMatch.cat;
     document.getElementById('ref-aka').innerText = currMatch.aka.name;
     document.getElementById('ref-shiro').innerText = currMatch.shiro.name;
-    document.getElementById('score-aka').innerText = 0;
-    document.getElementById('score-shiro').innerText = 0;
-    currMatch.scoreAka = 0; currMatch.scoreShiro = 0;
-    
-    clearInterval(timerInt);
-    time = 120;
-    document.getElementById('timer').innerText = "02:00";
-    document.getElementById('btn-timer').innerText = "START";
-    
     switchTab('referee');
 }
-
-function toggleTimer() {
-    if(timerInt) {
-        clearInterval(timerInt); timerInt = null;
-        document.getElementById('btn-timer').innerText = "START";
-    } else {
-        document.getElementById('btn-timer').innerText = "STOP";
-        timerInt = setInterval(() => {
-            time--;
-            let m = Math.floor(time/60);
-            let s = time%60;
-            document.getElementById('timer').innerText = `0${m}:${s<10?'0'+s:s}`;
-            if(time<=0) clearInterval(timerInt);
-        }, 1000);
-    }
-}
-
 function score(who, pt) {
-    if(who==='aka') currMatch.scoreAka += pt; else currMatch.scoreShiro += pt;
+    if(who === 'aka') currMatch.scoreAka += pt; else currMatch.scoreShiro += pt;
     document.getElementById('score-aka').innerText = currMatch.scoreAka;
     document.getElementById('score-shiro').innerText = currMatch.scoreShiro;
 }
-
 function endMatch() {
     currMatch.winner = currMatch.scoreAka >= currMatch.scoreShiro ? currMatch.aka : currMatch.shiro;
-    checkAdvancements();
-    save();
-    switchTab('bracket');
+    checkAdvancements(); save(); switchTab('bracket');
 }
 
-// Indításkor lista betöltése
-renderList();
+// --- SEGÉD ---
+function switchTab(id) {
+    document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+    document.getElementById('tab-'+id).classList.remove('hidden');
+    if(id === 'bracket') renderBracket();
+    if(id === 'kata') renderKata(); 
+}
+function save() { localStorage.setItem('rbac_db', JSON.stringify(data)); }
+function resetAll() { if(confirm("Törlés?")) { localStorage.clear(); location.reload(); }}

@@ -1,198 +1,120 @@
-/* kata.js - Külön modul a formagyakorlathoz */
+/* kata.js - RBAC Integrációval */
 
-// Segédfüggvény a mentéshez (használja a közös localStorage kulcsot, vagy külön újat)
-function getKataData() {
-    return JSON.parse(localStorage.getItem('iko_kata_db')) || { rounds: [] };
-}
-function saveKataData(data) {
-    localStorage.setItem('iko_kata_db', JSON.stringify(data));
-}
+// Adatok betöltése
+function getKataData() { return JSON.parse(localStorage.getItem('rbac_kata_db')) || { rounds: [] }; }
+function saveKataData(d) { localStorage.setItem('rbac_kata_db', JSON.stringify(d)); }
 
-// KATA inicializálása (Meghívandó a Generálás gombbal)
 function initKataTournament() {
-    // 1. Kiszedjük a játékosokat a közös adatbázisból, akik KATA kategóriában vannak
-    // Feltételezzük, hogy a fő adatbázis 'iko_db' néven fut (a script.js-ből)
-    const mainData = JSON.parse(localStorage.getItem('iko_db')) || { players: [] };
-    const currentCat = document.getElementById('p-cat').value; // A legördülőből
-    
-    // Szűrés kategóriára (és feltételezzük, hogy ez Kata kategória)
-    // Ha a kategória nevében benne van, hogy "Kata" vagy csak simán mindenkit listázunk aki abban a kat-ban van
-    let players = mainData.players.filter(p => p.cat === currentCat);
+    if(currentUser.role !== 'admin') { alert("Csak Admin indíthat Kata versenyt!"); return; }
 
-    if (players.length === 0) {
-        alert("Nincs versenyző ebben a kategóriában!");
-        return;
-    }
+    const currentCat = document.getElementById('p-cat').value;
+    // Figyelem: A 'data' változó a script.js-ből jön (globális)
+    let players = data.players.filter(p => p.cat === currentCat);
 
-    // Létrehozzuk az 1. fordulót
+    if (players.length === 0) { alert("Nincs versenyző ebben a kategóriában!"); return; }
+
     const kataData = {
         category: currentCat,
-        round1: players.map(p => ({
-            ...p,
-            scores: [0, 0, 0, 0, 0], // 5 bíró
-            total: 0,
-            min: 0,
-            max: 0
-        })),
-        round2: [], // Üres, majd feltöltjük
+        round1: players.map(p => ({ ...p, scores: [0,0,0,0,0], total: 0, min: 0, max: 0 })),
+        round2: [],
         activeRound: 1
     };
 
     saveKataData(kataData);
     renderKata();
-    switchTab('kata'); // Átváltunk a Kata fülre
+    switchTab('kata');
 }
 
-// A Fő Renderelő függvény
 function renderKata() {
-    const data = getKataData();
+    const kData = getKataData();
     const container = document.getElementById('kata-content');
     container.innerHTML = "";
 
-    if (!data.round1 || data.round1.length === 0) {
-        container.innerHTML = "<p class='text-gray-500 text-center p-10'>Nincs aktív Kata verseny. Válassz kategóriát a Nevezésnél és generálj!</p>";
+    if (!kData.round1 || kData.round1.length === 0) {
+        container.innerHTML = "<p class='text-gray-400 text-center mt-10'>Nincs aktív Kata verseny.</p>";
         return;
     }
 
-    // Cím generálása
-    const title = document.createElement('h2');
-    title.className = "text-2xl font-bold mb-6 border-b pb-2";
-    title.innerText = `[ ROUND ${data.activeRound} ] - ${data.category}`;
-    container.appendChild(title);
+    // JOGOSULTSÁG ELLENŐRZÉS:
+    // Ki írhatja be a pontokat? Csak Admin vagy Bíró.
+    const canEdit = (currentUser && (currentUser.role === 'admin' || currentUser.role === 'judge'));
+    const disabledAttr = canEdit ? "" : "disabled";
+    const inputClass = canEdit ? "score-input border-blue-300 bg-white" : "score-input bg-gray-100 text-gray-500 cursor-not-allowed";
 
-    // Aktuális lista kiválasztása (Round 1 vagy Round 2)
-    let currentList = data.activeRound === 1 ? data.round1 : data.round2;
+    // Cím
+    container.innerHTML += `<h2 class="text-2xl font-bold mb-4 border-b pb-2">[ KÖR ${kData.activeRound} ] - ${kData.category}</h2>`;
 
-    // Ha Round 2 van, rendezzük őket sorrendbe (a szabályod szerint: a legkisebb pontszámú kezd)
-    // De a táblázatban általában indulási sorrendben vannak.
+    let currentList = kData.activeRound === 1 ? kData.round1 : kData.round2;
     
-    const table = document.createElement('div');
-    table.className = "kata-table-wrapper";
+    // Táblázat építése
+    let html = `<div class="kata-table-wrapper"><div class="kata-header-row flex font-bold bg-gray-100 p-2 text-xs uppercase">
+        <div class="flex-1">Név</div>
+        <div class="w-12 text-center">J1</div><div class="w-12 text-center">J2</div><div class="w-12 text-center">J3</div><div class="w-12 text-center">J4</div><div class="w-12 text-center">J5</div>
+        <div class="w-16 text-center border-l">MIN</div><div class="w-16 text-center">MAX</div><div class="w-20 text-center border-l bg-gray-200">TOTAL</div>
+    </div>`;
 
-    // Fejléc
-    table.innerHTML = `
-        <div class="kata-header-row">
-            <div class="flex-1">Versenyző</div>
-            <div class="w-16 text-center text-xs text-gray-400">J1</div>
-            <div class="w-16 text-center text-xs text-gray-400">J2</div>
-            <div class="w-16 text-center text-xs text-gray-400">J3</div>
-            <div class="w-16 text-center text-xs text-gray-400">J4</div>
-            <div class="w-16 text-center text-xs text-gray-400">J5</div>
-            <div class="w-16 text-center text-xs font-bold text-gray-500 border-l">MIN</div>
-            <div class="w-16 text-center text-xs font-bold text-gray-500">MAX</div>
-            <div class="w-20 text-center font-black border-l">RESULT</div>
-        </div>
-    `;
-
-    // Sorok generálása
-    currentList.forEach((p, index) => {
-        const row = document.createElement('div');
-        row.className = "kata-row";
-        
-        // Versenyző infó
-        const infoHTML = `
-            <div class="flex-1">
-                <div class="font-bold text-sm"><span class="text-blue-700">[ ${p.id} ]</span> ${p.name}</div>
-                <div class="text-xs text-gray-400">${p.dojo}</div>
-            </div>
-        `;
-
-        // Input mezők (5 db)
-        let inputsHTML = "";
+    currentList.forEach((p, idx) => {
+        let inputs = "";
         for(let i=0; i<5; i++) {
-            inputsHTML += `<input type="number" step="0.1" class="score-input" value="${p.scores[i] || ''}" onchange="updateKataScore(${index}, ${i}, this.value)">`;
+            inputs += `<input type="number" step="0.1" class="${inputClass} w-10 text-center mx-1 border rounded" 
+                        value="${p.scores[i]}" 
+                        ${disabledAttr} 
+                        onchange="updateKataScore(${idx}, ${i}, this.value)">`;
         }
 
-        // Eredmény mezők
-        const statsHTML = `
-            <div class="w-16 text-center text-xs text-gray-500 border-l py-2 flex items-center justify-center">${p.min || '-'}</div>
-            <div class="w-16 text-center text-xs text-gray-500 py-2 flex items-center justify-center">${p.max || '-'}</div>
-            <div class="w-20 text-center font-black text-lg border-l py-2 flex items-center justify-center bg-gray-50">${p.total || '0.0'}</div>
-        `;
-
-        row.innerHTML = infoHTML + inputsHTML + statsHTML;
-        table.appendChild(row);
+        html += `<div class="kata-row flex items-center border-b p-2 bg-white hover:bg-yellow-50">
+            <div class="flex-1 font-bold text-sm text-blue-900">${p.name} <span class="text-gray-400 font-normal text-xs ml-2">${p.dojo}</span></div>
+            ${inputs}
+            <div class="w-16 text-center text-xs text-gray-500 border-l">${p.min}</div>
+            <div class="w-16 text-center text-xs text-gray-500">${p.max}</div>
+            <div class="w-20 text-center font-black text-lg bg-gray-50 border-l">${p.total}</div>
+        </div>`;
     });
+    html += `</div>`;
+    container.innerHTML += html;
 
-    container.appendChild(table);
-
-    // Gombok (Továbbjutás)
-    if(data.activeRound === 1) {
-        const btn = document.createElement('button');
-        btn.className = "mt-8 bg-zinc-900 text-white px-6 py-3 rounded font-bold w-full hover:bg-red-600 transition";
-        btn.innerText = "1. FORDULÓ LEZÁRÁSA -> TOP 6 TOVÁBBJUT";
-        btn.onclick = finishKataRound1;
-        container.appendChild(btn);
-    } else {
-        const btn = document.createElement('button');
-        btn.className = "mt-8 bg-green-700 text-white px-6 py-3 rounded font-bold w-full";
-        btn.innerText = "VERSENY VÉGE - EREDMÉNYHIRDETÉS";
-        btn.onclick = () => alert("Gratulálunk a győzteseknek!"); // Ide jöhetne egy dobogó
-        container.appendChild(btn);
+    // Gombok (Csak Adminnak)
+    if(currentUser && currentUser.role === 'admin') {
+        if(kData.activeRound === 1) {
+            container.innerHTML += `<button onclick="finishKataRound1()" class="mt-6 bg-zinc-900 text-white w-full py-3 rounded font-bold uppercase hover:bg-red-600 transition">1. FORDULÓ LEZÁRÁSA -> TOP 6</button>`;
+        } else {
+            container.innerHTML += `<button class="mt-6 bg-green-600 text-white w-full py-3 rounded font-bold uppercase cursor-default">VERSENY VÉGE</button>`;
+        }
     }
 }
 
-// Pontszám frissítése és számolás
-function updateKataScore(playerIdx, scoreIdx, value) {
-    const data = getKataData();
-    let list = data.activeRound === 1 ? data.round1 : data.round2;
-    
-    list[playerIdx].scores[scoreIdx] = parseFloat(value) || 0;
+function updateKataScore(pIdx, sIdx, val) {
+    // Biztonsági ellenőrzés a függvényen belül is
+    if(currentUser.role !== 'admin' && currentUser.role !== 'judge') return;
 
-    // SZÁMÍTÁS: (Összeg - Min - Max)
-    const s = list[playerIdx].scores;
+    const kData = getKataData();
+    let list = kData.activeRound === 1 ? kData.round1 : kData.round2;
+    list[pIdx].scores[sIdx] = parseFloat(val) || 0;
+
+    const s = list[pIdx].scores;
     const min = Math.min(...s);
     const max = Math.max(...s);
-    
-    // Összeg kiszámítása
-    const sumAll = s.reduce((a, b) => a + b, 0);
-    
-    // Végső pont: Összesből kivonjuk a legkisebbet és legnagyobbat
-    // (Ez ugyanaz, mintha a középső 3-at adnánk össze)
-    let finalScore = sumAll - min - max;
+    const sum = s.reduce((a,b)=>a+b, 0);
+    list[pIdx].min = min; 
+    list[pIdx].max = max;
+    list[pIdx].total = Math.round((sum - min - max)*10)/10;
 
-    // Kerekítés 1 tizedesjegyre (ahogy a képen: 15.2)
-    finalScore = Math.round(finalScore * 10) / 10;
-
-    list[playerIdx].min = min;
-    list[playerIdx].max = max;
-    list[playerIdx].total = finalScore;
-
-    saveKataData(data);
-    
-    // Csak a számokat frissítjük a DOM-ban render nélkül (gyorsabb), de most egyszerűbb újrarenderelni
-    renderKata(); 
+    saveKataData(kData);
+    renderKata();
 }
 
-// 1. Kör lezárása és 2. Kör generálása
 function finishKataRound1() {
-    const data = getKataData();
-    
-    // 1. Rendezzük sorba pontszám szerint (Csökkenő: Legtöbb pont elől)
-    let sorted = [...data.round1].sort((a, b) => b.total - a.total);
-    
-    // 2. Vesszük a TOP 6-ot
+    if(currentUser.role !== 'admin') return;
+    const kData = getKataData();
+    // Rendezés pontszám szerint csökkenőbe
+    let sorted = [...kData.round1].sort((a,b) => b.total - a.total);
+    // Top 6
     let top6 = sorted.slice(0, 6);
-
-    if(top6.length === 0) { alert("Nincs elég pontszám!"); return; }
-
-    // 3. A 2. kör indulási sorrendje: A TOP 6 közül a legkevesebb pontú jön először
-    // Tehát a sorted tömb 6. helyezettje (aki épp bejutott) lesz az első induló.
-    // Ezért a top6 tömböt megfordítjuk (mert az most Csökkenőben van [1. hely, 2. hely...])
-    // Megfordítva: [6. hely, 5. hely ... 1. hely]
-    let round2Order = top6.reverse();
-
-    // Reseteljük a pontjaikat a 2. körre
-    data.round2 = round2Order.map(p => ({
-        ...p,
-        scores: [0,0,0,0,0],
-        total: 0,
-        min: 0,
-        max: 0
-    }));
-
-    data.activeRound = 2;
-    saveKataData(data);
+    if(top6.length < 1) return;
+    
+    // Fordított indulási sorrend a 2. körben
+    kData.round2 = top6.reverse().map(p => ({...p, scores:[0,0,0,0,0], total:0, min:0, max:0}));
+    kData.activeRound = 2;
+    saveKataData(kData);
     renderKata();
-    alert("TOP 6 Versenyző átlépett a 2. fordulóba!");
 }
