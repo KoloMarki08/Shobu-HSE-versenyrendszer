@@ -1,34 +1,32 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shobu HSE versenyrendszer</title>
+    <title>SHOBU HSE Versenyrendszer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="stilus.css">
     <link rel="icon" href="logo.jpg">
 </head>
+
 <body class="bg-gray-100 text-zinc-900 font-sans">
 
     <div id="login-overlay" class="fixed inset-0 bg-zinc-900 z-[100] flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-2xl w-96 text-center">
-            <h1 class="text-2xl font-black italic mb-6">KYOKUSHIN <span class="text-red-600">LOGIN</span></h1>
-            
+            <h1 class="text-2xl font-black italic mb-6">SHOBU HSE <span class="text-red-600">SYSTEM</span></h1>
             <div class="space-y-4">
                 <input id="login-user" type="text" placeholder="Felhasználónév" class="w-full border p-3 rounded">
                 <input id="login-pass" type="password" placeholder="Jelszó" class="w-full border p-3 rounded">
-                <button onclick="login()" class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">BELÉPÉS</button>
+                <button onclick="login()"
+                    class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">BELÉPÉS</button>
             </div>
-
             <div class="mt-6 border-t pt-4">
-                <button onclick="loginAsGuest()" class="text-gray-500 text-sm hover:text-black underline">Folytatás vendégként (Csak néző)</button>
+                <button onclick="loginAsGuest()" class="text-gray-500 text-sm hover:text-black underline">Folytatás
+                    vendégként</button>
             </div>
-
-            <div class="mt-6 text-xs text-left bg-gray-100 p-2 rounded text-gray-600">
-                <p><b>Teszt fiókok:</b></p>
-                <p>Admin: <code>admin</code> / <code>1234</code></p>
-                <p>Edző: <code>edzo1</code> / <code>1234</code></p>
-                <p>Bíró: <code>biro</code> / <code>1234</code></p>
+            <div class="mt-4 text-xs text-gray-400 bg-gray-100 p-2 rounded text-left">
+                Teszt: <b>admin / 1234</b>, <b>biro / 1234</b>
             </div>
         </div>
     </div>
@@ -37,266 +35,129 @@
         <nav class="bg-zinc-900 text-white p-3 shadow-lg sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <span class="font-bold italic text-lg tracking-wider">IKO SYSTEM</span>
-                    <span id="user-badge" class="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">Vendég</span>
+                    <span class="font-bold italic text-lg tracking-wider">SHOBU HSE</span>
+                    <span id="user-badge" class="text-xs px-2 py-1 rounded bg-gray-700">Vendég</span>
                 </div>
-                
                 <div class="space-x-4 text-xs font-bold uppercase flex items-center">
                     <button id="nav-reg" onclick="switchTab('reg')" class="hidden hover:text-red-500">Nevezés</button>
-                    
-                    <button onclick="switchTab('bracket')" class="text-red-500">Kumite Ágrajz</button>
-                    <button onclick="switchTab('kata')" class="text-blue-400 hover:text-blue-300">KATA Eredmények</button>
-                    
-                    <button onclick="logout()" class="text-gray-500 hover:text-white border-l pl-4 ml-4">Kilépés</button>
+                    <button onclick="switchTab('bracket')" class="text-red-500 hover:text-white">Kumite Ágrajz</button>
+                    <button onclick="switchTab('kata')" class="text-blue-400 hover:text-white">KATA Eredmények</button>
+                    <button onclick="logout()"
+                        class="border-l pl-4 ml-4 text-gray-400 hover:text-white">Kilépés</button>
                 </div>
             </div>
         </nav>
 
         <section id="tab-reg" class="container mx-auto p-8 hidden flex-grow">
             <div class="bg-white p-8 rounded-lg shadow-xl max-w-4xl mx-auto border-t-4 border-red-600">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Saját versenyzők nevezése</h2>
-                
+                <h2 class="text-xl font-bold mb-6">Versenyzők hozzáadása</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <input id="p-name" type="text" placeholder="Név"
-                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
-                    <input id="p-dojo" type="text" placeholder="Ország / Klub"
-                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
-                    <input id="p-weight" type="number" placeholder="Súly (kg)"
-                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
-                    <input id="p-height" type="number" placeholder="Magasság (cm)"
-                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
-                    <input id="p-age" type="number" placeholder="Kor"
-                        class="border-2 border-gray-200 p-3 rounded hover:border-red-500 focus:border-red-500 outline-none transition">
-
-                    <select id="p-cat" class="border-2 border-gray-200 p-3 rounded font-bold text-red-700 bg-white">
-                        <optgroup label="KUMITE (Küzdelem)">
-                            <option value="KumiteGirls 8-9 y.o. -25kg">Kumite Girls 8-9 y.o. -25kg</option>
-                            <option value="Kumite Girls 8-9 y.o. -30kg">Kumite Girls 8-9 y.o. -30kg</option>
-                            <option value="Kumite Girls 8-9 y.o. +30kg">Kumite Girls 8-9 y.o. +30kg</option>
-                            <option value="Kumite Boys 8-9 y.o. -25kg">Kumite Boys 8-9 y.o. -25kg</option>
-                            <option value="Kumite Boys 8-9 y.o. -30kg">Kumite Boys 8-9 y.o. -30kg</option>
-                            <option value="Kumite Boys 8-9 y.o. -35kg">Kumite Boys 8-9 y.o. -35kg</option>
-                            <option value="Kumite Boys 8-9 y.o. +35kg">Kumite Boys 8-9 y.o. +35kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -30kg">Kumite Girls 10-11 y.o. -30kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -35kg">Kumite Girls 10-11 y.o. -35kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -40kg">Kumite Girls 10-11 y.o. -40kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -45kg">Kumite Girls 10-11 y.o. -45kg</option>
-                            <option value="Kumite Girls 10-11 y.o. +45kg">Kumite Girls 10-11 y.o. +45kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -30kg">Kumite Boys 10-11 y.o. -30kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -35kg">Kumite Boys 10-11 y.o. -35kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -40kg">Kumite Boys 10-11 y.o. -40kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -45kg">Kumite Boys 10-11 y.o. -45kg</option>
-                            <option value="Kumite Boys 10-11 y.o. +45kg">Kumite Boys 10-11 y.o. +45kg</option>
-                            <option value="Kumite Girls 12-13 y.o. -40kg">Kumite Girls 12-13 y.o. -40kg</option>
-                            <option value="Kumite Girls 12-13 y.o. -45kg">Kumite Girls 12-13 y.o. -45kg</option>
-                            <option value="Kumite Girls 12-13 y.o. -50kg">Kumite Girls 12-13 y.o. -50kg</option>
-                            <option value="Kumite Girls 12-13 y.o. +50kg">Kumite Girls 12-13 y.o. +50kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -40kg">Kumite Boys 12-13 y.o. -40kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -45kg">Kumite Boys 12-13 y.o. -45kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -50kg">Kumite Boys 12-13 y.o. -50kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -55kg">Kumite Boys 12-13 y.o. -55kg</option>
-                            <option value="Kumite Boys 12-13 y.o. +55kg">Kumite Boys 12-13 y.o. +55kg</option>
-                            <option value="Kumite Girls 14-15 y.o. -50kg">Kumite Girls 14-15 y.o. -50kg</option>
-                            <option value="Kumite Girls 14-15 y.o. -55kg">Kumite Girls 14-15 y.o. -55kg</option>
-                            <option value="Kumite Girls 14-15 y.o. -60kg">Kumite Girls 14-15 y.o. -60kg</option>
-                            <option value="Kumite Girls 14-15 y.o. +60kg">Kumite Girls 14-15 y.o. +60kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -50kg">Kumite Boys 14-15 y.o. -50kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -55kg">Kumite Boys 14-15 y.o. -55kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -60kg">Kumite Boys 14-15 y.o. -60kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -65kg">Kumite Boys 14-15 y.o. -65kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -70kg">Kumite Boys 14-15 y.o. -70kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -75kg">Kumite Boys 14-15 y.o. -75kg</option>
-                            <option value="Kumite Boys 14-15 y.o. +75kg">Kumite Boys 14-15 y.o. +75kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -50kg">Kumite Girls 16-17 y.o. -50kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -55kg">Kumite Girls 16-17 y.o. -55kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -60kg">Kumite Girls 16-17 y.o. -60kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -65kg">Kumite Girls 16-17 y.o. -65kg</option>
-                            <option value="Kumite Girls 16-17 y.o. +65kg">Kumite Girls 16-17 y.o. +65kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -55kg">Kumite Boys 16-17 y.o. -55kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -60kg">Kumite Boys 16-17 y.o. -60kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -65kg">Kumite Boys 16-17 y.o. -65kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -70kg">Kumite Boys 16-17 y.o. -70kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -75kg">Kumite Boys 16-17 y.o. -75kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -80kg">Kumite Boys 16-17 y.o. -80kg</option>
-                            <option value="Kumite Boys 16-17 y.o. +80kg">Kumite Boys 16-17 y.o. +80kg</option>
-                            <option value="Kumite Women 18+ y.o. Open">Kumite Women 18+ y.o. Open</option>
-                            <option value="Kumite Men 18+ y.o. Open">Kumite Men 18+ y.o. Open</option>
-                            <option value="Kumite Women 18+ y.o. -55kg">Kumite Women 18+ y.o. -55kg</option>
-                            <option value="Kumite Women 18+ y.o. -65kg">Kumite Women 18+ y.o. -65kg</option>
-                            <option value="Kumite Women 18+ y.o. +65kg">Kumite Women 18+ y.o. +65kg</option>
-                            <option value="Kumite Men 18+ y.o. -60kg">Kumite Men 18+ y.o. -60kg</option>
-                            <option value="Kumite Men 18+ y.o. -70kg">Kumite Men 18+ y.o. -70kg</option>
-                            <option value="Kumite Men 18+ y.o. -80kg">Kumite Men 18+ y.o. -80kg</option>
-                            <option value="Kumite Men 18+ y.o. -90kg">Kumite Men 18+ y.o. -90kg</option>
-                            <option value="Kumite Men 18+ y.o. +90kg">Kumite Men 18+ y.o. +90kg</option>
-                            <option value="Kumite Women 35+ y.o. -55kg">Kumite Women 35+ y.o. -55kg</option>
-                            <option value="Kumite Women 35+ y.o. -65kg">Kumite Women 35+ y.o. -65kg</option>
-                            <option value="Kumite Women 35+ y.o. +65kg">Kumite Women 35+ y.o. +65kg</option>
-                            <option value="Kumite Men 35-44 y.o. -75kg">Kumite Men 35-44 y.o. -75kg</option>
-                            <option value="Kumite Men 35-44 y.o. -85kg">Kumite Men 35-44 y.o. -85kg</option>
-                            <option value="Kumite Men 35-44 y.o. +85kg">Kumite Men 35-44 y.o. +85kg</option>
-                            <option value="Kumite Men 45+ y.o. -75kg">Kumite Men 45+ y.o. -75kg</option>
-                            <option value="Kumite Men 45+ y.o. -85kg">Kumite Men 45+ y.o. -85kg</option>
-                            <option value="Kumite Men 45+ y.o. +85kg">Kumite Men 45+ y.o. +85kg</option>
                     <input id="p-name" type="text" placeholder="Név" class="border p-3 rounded">
-                    <input id="p-dojo" type="text" placeholder="Klub" class="border p-3 rounded" disabled>
-                    
-                    <select id="p-cat" class="border p-3 rounded font-bold text-red-700 bg-white">
-                        <optgroup label="KUMITE">
-                            <option value="KumiteGirls 8-9 y.o. -25kg">Kumite Girls 8-9 y.o. -25kg</option>
-                            <option value="Kumite Girls 8-9 y.o. -30kg">Kumite Girls 8-9 y.o. -30kg</option>
-                            <option value="Kumite Girls 8-9 y.o. +30kg">Kumite Girls 8-9 y.o. +30kg</option>
-                            <option value="Kumite Boys 8-9 y.o. -25kg">Kumite Boys 8-9 y.o. -25kg</option>
-                            <option value="Kumite Boys 8-9 y.o. -30kg">Kumite Boys 8-9 y.o. -30kg</option>
-                            <option value="Kumite Boys 8-9 y.o. -35kg">Kumite Boys 8-9 y.o. -35kg</option>
-                            <option value="Kumite Boys 8-9 y.o. +35kg">Kumite Boys 8-9 y.o. +35kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -30kg">Kumite Girls 10-11 y.o. -30kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -35kg">Kumite Girls 10-11 y.o. -35kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -40kg">Kumite Girls 10-11 y.o. -40kg</option>
-                            <option value="Kumite Girls 10-11 y.o. -45kg">Kumite Girls 10-11 y.o. -45kg</option>
-                            <option value="Kumite Girls 10-11 y.o. +45kg">Kumite Girls 10-11 y.o. +45kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -30kg">Kumite Boys 10-11 y.o. -30kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -35kg">Kumite Boys 10-11 y.o. -35kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -40kg">Kumite Boys 10-11 y.o. -40kg</option>
-                            <option value="Kumite Boys 10-11 y.o. -45kg">Kumite Boys 10-11 y.o. -45kg</option>
-                            <option value="Kumite Boys 10-11 y.o. +45kg">Kumite Boys 10-11 y.o. +45kg</option>
-                            <option value="Kumite Girls 12-13 y.o. -40kg">Kumite Girls 12-13 y.o. -40kg</option>
-                            <option value="Kumite Girls 12-13 y.o. -45kg">Kumite Girls 12-13 y.o. -45kg</option>
-                            <option value="Kumite Girls 12-13 y.o. -50kg">Kumite Girls 12-13 y.o. -50kg</option>
-                            <option value="Kumite Girls 12-13 y.o. +50kg">Kumite Girls 12-13 y.o. +50kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -40kg">Kumite Boys 12-13 y.o. -40kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -45kg">Kumite Boys 12-13 y.o. -45kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -50kg">Kumite Boys 12-13 y.o. -50kg</option>
-                            <option value="Kumite Boys 12-13 y.o. -55kg">Kumite Boys 12-13 y.o. -55kg</option>
-                            <option value="Kumite Boys 12-13 y.o. +55kg">Kumite Boys 12-13 y.o. +55kg</option>
-                            <option value="Kumite Girls 14-15 y.o. -50kg">Kumite Girls 14-15 y.o. -50kg</option>
-                            <option value="Kumite Girls 14-15 y.o. -55kg">Kumite Girls 14-15 y.o. -55kg</option>
-                            <option value="Kumite Girls 14-15 y.o. -60kg">Kumite Girls 14-15 y.o. -60kg</option>
-                            <option value="Kumite Girls 14-15 y.o. +60kg">Kumite Girls 14-15 y.o. +60kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -50kg">Kumite Boys 14-15 y.o. -50kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -55kg">Kumite Boys 14-15 y.o. -55kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -60kg">Kumite Boys 14-15 y.o. -60kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -65kg">Kumite Boys 14-15 y.o. -65kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -70kg">Kumite Boys 14-15 y.o. -70kg</option>
-                            <option value="Kumite Boys 14-15 y.o. -75kg">Kumite Boys 14-15 y.o. -75kg</option>
-                            <option value="Kumite Boys 14-15 y.o. +75kg">Kumite Boys 14-15 y.o. +75kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -50kg">Kumite Girls 16-17 y.o. -50kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -55kg">Kumite Girls 16-17 y.o. -55kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -60kg">Kumite Girls 16-17 y.o. -60kg</option>
-                            <option value="Kumite Girls 16-17 y.o. -65kg">Kumite Girls 16-17 y.o. -65kg</option>
-                            <option value="Kumite Girls 16-17 y.o. +65kg">Kumite Girls 16-17 y.o. +65kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -55kg">Kumite Boys 16-17 y.o. -55kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -60kg">Kumite Boys 16-17 y.o. -60kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -65kg">Kumite Boys 16-17 y.o. -65kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -70kg">Kumite Boys 16-17 y.o. -70kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -75kg">Kumite Boys 16-17 y.o. -75kg</option>
-                            <option value="Kumite Boys 16-17 y.o. -80kg">Kumite Boys 16-17 y.o. -80kg</option>
-                            <option value="Kumite Boys 16-17 y.o. +80kg">Kumite Boys 16-17 y.o. +80kg</option>
-                            <option value="Kumite Women 18+ y.o. Open">Kumite Women 18+ y.o. Open</option>
-                            <option value="Kumite Men 18+ y.o. Open">Kumite Men 18+ y.o. Open</option>
-                            <option value="Kumite Women 18+ y.o. -55kg">Kumite Women 18+ y.o. -55kg</option>
-                            <option value="Kumite Women 18+ y.o. -65kg">Kumite Women 18+ y.o. -65kg</option>
-                            <option value="Kumite Women 18+ y.o. +65kg">Kumite Women 18+ y.o. +65kg</option>
-                            <option value="Kumite Men 18+ y.o. -60kg">Kumite Men 18+ y.o. -60kg</option>
-                            <option value="Kumite Men 18+ y.o. -70kg">Kumite Men 18+ y.o. -70kg</option>
-                            <option value="Kumite Men 18+ y.o. -80kg">Kumite Men 18+ y.o. -80kg</option>
-                            <option value="Kumite Men 18+ y.o. -90kg">Kumite Men 18+ y.o. -90kg</option>
-                            <option value="Kumite Men 18+ y.o. +90kg">Kumite Men 18+ y.o. +90kg</option>
-                            <option value="Kumite Women 35+ y.o. -55kg">Kumite Women 35+ y.o. -55kg</option>
-                            <option value="Kumite Women 35+ y.o. -65kg">Kumite Women 35+ y.o. -65kg</option>
-                            <option value="Kumite Women 35+ y.o. +65kg">Kumite Women 35+ y.o. +65kg</option>
-                            <option value="Kumite Men 35-44 y.o. -75kg">Kumite Men 35-44 y.o. -75kg</option>
-                            <option value="Kumite Men 35-44 y.o. -85kg">Kumite Men 35-44 y.o. -85kg</option>
-                            <option value="Kumite Men 35-44 y.o. +85kg">Kumite Men 35-44 y.o. +85kg</option>
-                            <option value="Kumite Men 45+ y.o. -75kg">Kumite Men 45+ y.o. -75kg</option>
-                            <option value="Kumite Men 45+ y.o. -85kg">Kumite Men 45+ y.o. -85kg</option>
-                            <option value="Kumite Men 45+ y.o. +85kg">Kumite Men 45+ y.o. +85kg</option>
-                        </optgroup>
-                        <optgroup label="KATA (Formagyakorlat)">
-                            <option value="Kata Boys 8-9 y.o.">Kata Boys 8-9 y.o.</option>
-                            <option value="Kata Girls 8-9 y.o.">Kata Girls 8-9 y.o.</option>
-                            <option value="Kata Boys 10-11 y.o.">Kata Boys 10-11 y.o.</option>
-                            <option value="Kata Girls 10-11 y.o.">Kata Girls 10-11 y.o.</option>
-                            <option value="Kata Boys 12-13 y.o.">Kata Boys 12-13 y.o.</option>
-                            <option value="Kata Girls 12-13 y.o.">Kata Girls 12-13 y.o.</option>
-                            <option value="Kata Boys 14-15 y.o.">Kata Boys 14-15 y.o.</option>
-                            <option value="Kata Girls 14-15 y.o.">Kata Girls 14-15 y.o.</option>
-                            <option value="Kata Boys 16-17 y.o.">Kata Boys 16-17 y.o.</option>
-                            <option value="Kata Girls 16-17 y.o.">Kata Girls 16-17 y.o.</option>
-                            <option value="Kata Men 18-34 y.o.">Kata Men 18-34 y.o.</option>
-                            <option value="Kata Women 18-34 y.o.">Kata Women 18-34 y.o.</option>
-                            <option value="Kata Men 35-49 y.o.">Kata Men 35-49 y.o.</option>
-                            <option value="Kata Women 35-49 y.o.">Kata Women 35-49 y.o.</option>
-                            <option value="Kata Men 50+ y.o.">Kata Men 50+ y.o.</option>
-                            <option value="Kata Women 50+ y.o.">Kata Women 50+ y.o.</option>
-                        </optgroup>
+                    <input id="p-dojo" type="text" placeholder="Klub" class="border p-3 rounded">
+
+                    <select id="p-gender" onchange="updateCategoryDropdown()"
+                        class="border p-3 rounded bg-white font-bold">
+                        <option value="">Nem kiválasztása...</option>
+                        <option value="Boys">Fiú</option>
+                        <option value="Girls">Lány</option>
+                        <option value="Men">Férfi</option>
+                        <option value="Women">Női</option>
+                    </select>
+                    <input id="p-age" type="number" placeholder="Kor" oninput="updateCategoryDropdown()"
+                        class="border p-3 rounded">
+                    <input id="p-weight" type="number" placeholder="Súly (kg)" class="border p-3 rounded">
+                    <input id="p-height" type="number" placeholder="Magasság (cm)" class="border p-3 rounded">
+
+                    <select id="p-cat" class="border p-3 rounded font-bold text-red-700 bg-white md:col-span-2">
+                        <option value="">Előbb add meg a kort és a nemet!</option>
                     </select>
                 </div>
-                
-                <button onclick="addPlayer()" class="bg-zinc-900 text-white px-6 py-3 rounded font-bold w-full hover:bg-red-600 mb-8">HOZZÁADÁS</button>
-                
-                <div class="mb-8">
-                    <h3 class="font-bold mb-3 text-gray-500 uppercase text-xs border-b pb-2">Nevezettek listája</h3>
-                    <ul id="player-list" class="text-sm space-y-2 max-h-60 overflow-y-auto"></ul>
+                <button onclick="addPlayer()"
+                    class="bg-zinc-900 text-white px-6 py-3 rounded font-bold w-full hover:bg-red-600 mb-8">HOZZÁADÁS</button>
+
+                <div class="mb-4">
+                    <h3 class="font-bold border-b pb-2">Nevezettek listája</h3>
+                    <ul id="player-list" class="text-sm space-y-2 mt-2 max-h-40 overflow-y-auto"></ul>
                 </div>
 
-                <div id="admin-controls" class="hidden bg-red-50 p-4 rounded border border-red-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <h3 class="text-red-800 font-bold text-sm mb-2">KUMITE VEZÉRLÉS</h3>
-                        <button onclick="generate()" class="bg-red-600 text-white px-4 py-3 rounded font-bold text-xs uppercase w-full">
-                            Sorsolás Generálása
-                        </button>
-                    </div>
-                    <div>
-                        <h3 class="text-blue-800 font-bold text-sm mb-2">KATA VEZÉRLÉS</h3>
-                        <button onclick="initKataTournament()" class="bg-blue-600 text-white px-4 py-3 rounded font-bold text-xs uppercase w-full">
-                            Kata Verseny Indítása
-                        </button>
-                    </div>
-                    <button onclick="resetAll()" class="col-span-2 mt-2 text-gray-400 text-xs underline w-full text-center">Teljes Adatbázis Törlése</button>
+                <div id="admin-controls" class="hidden grid grid-cols-2 gap-4">
+                    <button onclick="generateKumite()"
+                        class="bg-red-600 text-white py-3 rounded font-bold uppercase text-xs">Kumite Sorsolás</button>
+                    <button onclick="initKataTournament()"
+                        class="bg-blue-600 text-white py-3 rounded font-bold uppercase text-xs">Kata Indítása</button>
+                    <button onclick="resetAll()" class="col-span-2 text-xs text-gray-400 underline text-center">Teljes
+                        Adatbázis Törlése</button>
                 </div>
             </div>
         </section>
 
-        <section id="tab-bracket" class="overflow-x-auto min-h-screen bg-white p-10 hidden">
+        <section id="tab-bracket" class="bg-white min-h-screen hidden overflow-auto">
             <div id="bracket-view" class="bracket-container"></div>
         </section>
 
         <section id="tab-kata" class="container mx-auto p-8 hidden">
-            <div id="kata-content" class="w-full">
-                </div>
+            <div id="kata-content" class="w-full"></div>
         </section>
 
-        <section id="tab-referee" class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-            <div class="bg-zinc-900 text-white p-8 rounded-2xl max-w-4xl w-full border-4 border-red-700 relative">
-                <button onclick="switchTab('bracket')" class="absolute top-6 right-6 text-gray-500 hover:text-white font-bold text-xl">X</button>
-                <div class="text-center mb-10"><h3 id="match-category-title" class="text-red-500 font-bold uppercase mb-4">Kategória</h3></div>
-                <div class="grid grid-cols-2 gap-10 text-center">
+        <section id="tab-referee"
+            class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-zinc-900 text-white p-6 rounded-2xl max-w-5xl w-full border-4 border-red-700 relative">
+                <button onclick="switchTab('bracket')"
+                    class="absolute top-4 right-4 text-gray-500 hover:text-white font-bold text-xl">✕</button>
+
+                <div class="text-center mb-6 border-b border-zinc-800 pb-4">
+                    <h3 id="match-category-title" class="text-red-500 font-bold uppercase tracking-widest mb-2">
+                        Kategória</h3>
+                    <div id="timer" class="text-[6rem] leading-none font-black font-mono text-red-600 timer-glow mb-4">
+                        02:00</div>
+                    <div class="flex justify-center gap-4">
+                        <button onclick="toggleTimer()" id="btn-timer"
+                            class="bg-zinc-700 px-8 py-2 rounded-full font-bold hover:bg-white hover:text-black transition">START</button>
+                        <button onclick="resetMatchScores()"
+                            class="bg-yellow-600 px-8 py-2 rounded-full font-bold hover:bg-yellow-500 text-black transition">RESET</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-12 text-center">
                     <div>
-                        <span class="text-blue-500 font-bold block mb-2">AKA</span>
-                        <div class="text-3xl font-bold text-white mb-4" id="ref-aka">A</div>
-                        <div class="text-6xl font-black mb-4 bg-zinc-800 rounded py-2" id="score-aka">0</div>
-                        <div id="controls-aka">
-                            <button onclick="score('aka', 1)" class="bg-blue-900 px-4 py-2 rounded font-bold border border-blue-500">WAZARI</button>
-                            <button onclick="score('aka', 2)" class="bg-blue-900 px-4 py-2 rounded font-bold border border-blue-500 text-blue-200">IPPON</button>
+                        <div class="flex items-center justify-center gap-2 mb-2">
+                            <div class="w-4 h-4 bg-blue-600"></div><span class="text-blue-500 font-bold">AKA</span>
+                        </div>
+                        <div class="text-2xl font-bold text-white mb-2 truncate" id="ref-aka">A</div>
+                        <div class="text-8xl font-black mb-4 bg-zinc-800 rounded-xl py-2" id="score-aka">0</div>
+                        <div class="flex justify-center gap-2">
+                            <button onclick="score('aka', 1)"
+                                class="bg-blue-900 px-4 py-3 rounded font-bold border-2 border-blue-500 hover:bg-blue-600">WAZARI
+                                (1)</button>
+                            <button onclick="score('aka', 2)"
+                                class="bg-blue-900 px-4 py-3 rounded font-bold border-2 border-blue-500 text-blue-200 hover:bg-blue-500">IPPON
+                                (2)</button>
                         </div>
                     </div>
                     <div>
-                        <span class="text-red-500 font-bold block mb-2">SHIRO</span>
-                        <div class="text-3xl font-bold text-white mb-4" id="ref-shiro">B</div>
-                        <div class="text-6xl font-black mb-4 bg-zinc-800 rounded py-2" id="score-shiro">0</div>
-                        <div id="controls-shiro">
-                            <button onclick="score('shiro', 1)" class="bg-red-900 px-4 py-2 rounded font-bold border border-red-500">WAZARI</button>
-                            <button onclick="score('shiro', 2)" class="bg-red-900 px-4 py-2 rounded font-bold border border-red-500 text-red-200">IPPON</button>
+                        <div class="flex items-center justify-center gap-2 mb-2">
+                            <div class="w-4 h-4 bg-red-600"></div><span class="text-red-500 font-bold">SHIRO</span>
+                        </div>
+                        <div class="text-2xl font-bold text-white mb-2 truncate" id="ref-shiro">B</div>
+                        <div class="text-8xl font-black mb-4 bg-zinc-800 rounded-xl py-2" id="score-shiro">0</div>
+                        <div class="flex justify-center gap-2">
+                            <button onclick="score('shiro', 1)"
+                                class="bg-red-900 px-4 py-3 rounded font-bold border-2 border-red-500 hover:bg-red-600">WAZARI
+                                (1)</button>
+                            <button onclick="score('shiro', 2)"
+                                class="bg-red-900 px-4 py-3 rounded font-bold border-2 border-red-500 text-red-200 hover:bg-red-500">IPPON
+                                (2)</button>
                         </div>
                     </div>
                 </div>
-                <button id="btn-finish-match" onclick="endMatch()" class="w-full bg-green-700 hover:bg-green-600 py-4 mt-8 rounded font-black text-xl uppercase">Eredmény Rögzítése</button>
             </div>
         </section>
     </div>
 
-    <script src="KUMITE.js"></script>
-    <script src="KATA.js"></script>
+    <script src="data.js"></script>
+    <script src="auth.js"></script>
+    <script src="kumite.js"></script>
+    <script src="kata.js"></script>
 </body>
+
 </html>

@@ -1,27 +1,165 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
-body { font-family: 'Roboto', sans-serif; }
 
-/* ÁGRAJZ STÍLUS */
-.bracket-container { display: flex; padding: 20px; align-items: flex-start; }
-.round-column { display: flex; flex-direction: column; justify-content: space-around; margin-right: 60px; }
-.match-wrapper { position: relative; display: flex; flex-direction: column; justify-content: center; width: 240px; margin: 15px 0; }
-
-.player-card {
-    border: 1px solid #ccc; background: white; margin-bottom: 4px; padding: 6px 6px 6px 14px;
-    position: relative; transition: all 0.2s;
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f3f4f6;
 }
-/* Ha kattintható (mert admin/bíró vagy), akkor kéz kurzor */
-.player-card.clickable { cursor: pointer; }
-.player-card.clickable:hover { border-color: #333; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
-.color-strip { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; }
-.aka-strip { background-color: #0047AB; }
-.shiro-strip { background-color: #D32F2F; }
+/* --- A LÉNYEG: VÍZSZINTES ÁGRAJZ --- */
+.bracket-container {
+    display: flex !important;
+    flex-direction: row !important;
+    /* EGYMÁS MELLETT */
+    align-items: center;
+    padding: 40px;
+    gap: 50px;
+    overflow-x: auto;
+    min-height: 80vh;
+}
 
-.winner-card { background-color: #e8f5e9; border: 1px solid #2e7d32; }
+/* --- OSZLOPOK (ROUND 1, ROUND 2...) --- */
+.round-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    /* Egyenletes elosztás */
+    height: 100%;
+    min-width: 280px;
+    /* Fix szélesség */
+    flex-shrink: 0;
+}
 
-/* Vonalazás */
-.match-connector-right { position: absolute; right: -30px; top: 50%; width: 30px; height: 1px; background-color: #000; }
+/* --- MECCS DOBOZ --- */
+.match-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 260px;
+    margin: 20px 0;
+}
 
-/* Rejtés segédosztály */
-.hidden { display: none !important; }
+/* --- JÁTÉKOS KÁRTYA (PIXELPONTOS A KÉPHEZ) --- */
+.player-card {
+    background: white;
+    border: 1px solid #000;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    position: relative;
+    height: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 16px;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Üres hely (Bye) */
+.player-card.empty-slot {
+    background: #f9fafb;
+    border: 1px solid #ccc;
+    height: 40px;
+    /* Kisebb, jelzi hogy üres */
+}
+
+/* Kattintható */
+.player-card.clickable {
+    cursor: pointer;
+}
+
+.player-card.clickable:hover {
+    border-color: #2563eb;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+}
+
+/* Színes csíkok */
+.color-strip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+}
+
+.aka-strip {
+    background-color: #0047AB;
+}
+
+.shiro-strip {
+    background-color: #D32F2F;
+}
+
+/* Szövegek */
+.card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-details {
+    font-size: 10px;
+    color: #666;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Győztes kiemelése (Zöld) */
+.winner-card {
+    background-color: #dcfce7;
+    border: 1px solid #16a34a !important;
+}
+
+/* Vonalak */
+.match-connector {
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    width: 30px;
+    height: 2px;
+    background: #333;
+    z-index: -1;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.timer-glow {
+    text-shadow: 0 0 25px rgba(220, 38, 38, 0.5);
+}
+
+/* KATA */
+.kata-table-wrapper {
+    background: white;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+.kata-header-row {
+    display: flex;
+    background: #f3f4f6;
+    padding: 10px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.kata-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.score-input {
+    width: 45px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 0 2px;
+}

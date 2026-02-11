@@ -1,152 +1,24 @@
-// --- SZIMULÁLT ADATBÁZISOK ---
-const USERS = [
-    { username: 'admin', pass: '1234', role: 'admin', dojo: 'HEADQUARTERS', name: 'Fő Admin' },
-    { username: 'edzo1', pass: '1234', role: 'coach', dojo: 'Honvéd SE', name: 'Kovács Edző' },
-    { username: 'biro',  pass: '1234', role: 'judge', dojo: '-', name: 'Asztalbíró' }
-];
-
-let data = JSON.parse(localStorage.getItem('rbac_db')) || { players: [], matches: [] };
-let currentUser = null; 
-
-// --- AUTHENTIKÁCIÓ ---
-function login() {
-    const u = document.getElementById('login-user').value;
-    const p = document.getElementById('login-pass').value;
-    const foundUser = USERS.find(user => user.username === u && user.pass === p);
-    if (foundUser) setSession(foundUser);
-    else alert("Hibás felhasználónév vagy jelszó!");
-}
-
-function loginAsGuest() {
-    setSession({ role: 'guest', name: 'Néző', dojo: '-' });
-}
-
-function setSession(user) {
-    currentUser = user;
-    document.getElementById('login-overlay').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    updateUIByRole();
-    renderPlayerList();
-    
-    if(user.role === 'coach' || user.role === 'admin') switchTab('reg');
-    else switchTab('bracket');
-    
-    if(typeof renderKata === "function") renderKata();
-}
-
-function logout() { location.reload(); }
-
-// --- UI FRISSÍTÉS JOGOSULTSÁG ALAPJÁN ---
-function updateUIByRole() {
-    const role = currentUser.role;
-    document.getElementById('user-badge').innerText = `${currentUser.name} (${role.toUpperCase()})`;
-    if(role === 'admin') document.getElementById('user-badge').className = "text-xs px-2 py-1 rounded bg-red-600 text-white";
-
-    if (role === 'coach' || role === 'admin') {
-        document.getElementById('nav-reg').classList.remove('hidden');
-        document.getElementById('p-dojo').value = currentUser.dojo;
-        if(role === 'admin') document.getElementById('p-dojo').disabled = false;
-    }
-
-    if (role === 'admin') {
-        document.getElementById('admin-controls').classList.remove('hidden');
-    }
-}
-
-// --- SEGÉDFÜGGVÉNY A KATEGÓRIA TÍPUSÁHOZ ---
-function getCategoryType(catName) {
-    if (catName.includes('Kumite')) return 'KUMITE';
-    if (catName.includes('Kata')) return 'KATA';
-    return 'OTHER';
-}
-
-// --- NEVEZÉS (MÓDOSÍTOTT LOGIKA) ---
-function addPlayer() {
-    if(currentUser.role !== 'coach' && currentUser.role !== 'admin') return;
-
-    const name = document.getElementById('p-name').value.trim(); // Trim: szóközök levágása
-    const dojo = document.getElementById('p-dojo').value;
+function generateKumite() {
+    if (currentUser.role !== 'admin') return;
     const cat = document.getElementById('p-cat').value;
-
-    if (!name || !dojo) {
-        alert("Kérlek töltsd ki a nevet!");
-        return;
-    }
-
-    // 1. ELLENŐRZÉS: Van-e már ilyen nevű versenyző ebben a dojoban?
-    const existingPlayer = data.players.find(p => p.name.toLowerCase() === name.toLowerCase() && p.dojo === dojo);
-
-    if (existingPlayer) {
-        // 2. ELLENŐRZÉS: Ha van, megnézzük a típusokat
-        const oldType = getCategoryType(existingPlayer.cat);
-        const newType = getCategoryType(cat);
-
-        // Ha az egyik Kumite, a másik Kata -> HIBA
-        if (oldType !== newType) {
-            alert(`HIBA: ${name} már nevezve van ${oldType} kategóriában!\nNem indulhat egyszerre Kumite-ban és Katában.`);
-            return; // Megállítjuk a mentést
-        }
-        
-        // Opcionális: Ha ugyanaz a típus (pl. Kumite Open és Kumite -70kg), azt engedhetjük, vagy azt is tilthatjuk.
-        // Jelenleg engedjük, ha a típus azonos.
-    }
-
-    // Ha minden rendben, mentés
-    data.players.push({
-        id: 100 + data.players.length + 1,
-        name: name, 
-        dojo: dojo, 
-        cat: cat,
-        owner: currentUser.username
-    });
-    
-    save(); 
-    renderPlayerList(); 
-    document.getElementById('p-name').value = '';
-}
-
-function renderPlayerList() {
-    const listEl = document.getElementById('player-list');
-    listEl.innerHTML = '';
-    let visiblePlayers = [];
-    if (currentUser.role === 'admin') visiblePlayers = data.players;
-    else if (currentUser.role === 'coach') visiblePlayers = data.players.filter(p => p.owner === currentUser.username);
-
-    visiblePlayers.forEach(p => {
-        // Színkód a típushoz
-        const typeColor = p.cat.includes('Kata') ? 'text-blue-600' : 'text-red-600';
-        
-        listEl.innerHTML += `
-            <li class="border-b py-2 flex justify-between items-center">
-                <span><b>${p.name}</b> (${p.dojo})</span>
-                <span class="text-xs bg-gray-100 px-2 py-1 rounded font-bold ${typeColor}">${p.cat}</span>
-            </li>`;
-    });
-}
-
-// --- KUMITE SORSOLÁS ---
-function generate() {
-    if(currentUser.role !== 'admin') return;
-    data.matches = [];
-    const cat = document.getElementById('p-cat').value; 
-    
-    // Csak akkor generáljunk, ha ez KUMITE kategória!
-    if (cat.includes('Kata')) {
-        alert("Ez egy Kata kategória! Használd a kék 'Kata Verseny Indítása' gombot.");
-        return;
-    }
+    if (cat.includes('Kata')) { alert("Ez Kata kategória!"); return; }
 
     const players = data.players.filter(p => p.cat === cat);
-    if(players.length < 2) { alert("Nincs elég versenyző ebben a kategóriában!"); return; }
+    if (players.length < 2) { alert("Kevés versenyző!"); return; }
 
+    data.matches = [];
     const size = Math.pow(2, Math.ceil(Math.log2(players.length)));
-    for(let i=0; i<size; i+=2) {
-        const p1 = players[i] || { name: "ÜRES", id: null };
-        const p2 = players[i+1] || { name: "---", id: null, isBye: true };
+    let pool = [...players];
+    while (pool.length < size) pool.push(null);
+
+    for (let i = 0; i < size; i += 2) {
+        const p1 = pool[i]; const p2 = pool[i + 1];
+        const winner = (p1 && !p2) ? p1 : (!p1 && p2) ? p2 : null;
         data.matches.push({
-            id: `m1-${i}`, round: 1, cat: cat,
-            aka: p1, shiro: p2, winner: (p1.id && p2.isBye) ? p1 : null,
-            scoreAka: 0, scoreShiro: 0, nextId: `m2-${Math.floor(i/4)}`
+            id: `m1-${i / 2}`, round: 1, cat: cat,
+            aka: p1 || { name: "BYE", id: null }, shiro: p2 || { name: "BYE", id: null },
+            winner: winner, scoreAka: 0, scoreShiro: 0,
+            nextId: `m2-${Math.floor((i / 2) / 2)}`
         });
     }
     checkAdvancements(); save(); switchTab('bracket');
@@ -157,16 +29,24 @@ function checkAdvancements() {
     while (changed) {
         changed = false;
         data.matches.forEach(m => {
-            if (m.winner && m.nextId) {
+            if (m.winner && m.winner.id && m.nextId) {
                 let nextM = data.matches.find(x => x.id === m.nextId);
-                if(!nextM) {
-                    nextM = { id: m.nextId, round: m.round + 1, cat: m.cat, aka: {name:"...",id:null}, shiro: {name:"...",id:null}, winner:null, scoreAka:0, scoreShiro:0, nextId:null};
+                if (!nextM) {
+                    const nextR = m.round + 1;
+                    const nextIdx = parseInt(m.nextId.split('-')[1]);
+                    const nextNextId = (nextR > 5) ? null : `m${nextR + 1}-${Math.floor(nextIdx / 2)}`;
+                    nextM = {
+                        id: m.nextId, round: nextR, cat: m.cat,
+                        aka: { name: "...", id: null }, shiro: { name: "...", id: null },
+                        winner: null, scoreAka: 0, scoreShiro: 0, nextId: nextNextId
+                    };
                     data.matches.push(nextM); changed = true;
                 }
-                if(!nextM.aka.id || nextM.aka.id === m.winner.id) {
-                     if(nextM.aka.id !== m.winner.id) { nextM.aka = m.winner; changed = true; }
+                const prevIdx = parseInt(m.id.split('-')[1]);
+                if (prevIdx % 2 === 0) {
+                    if (!nextM.aka.id || nextM.aka.id !== m.winner.id) { nextM.aka = m.winner; changed = true; }
                 } else {
-                    if (nextM.shiro.id !== m.winner.id) { nextM.shiro = m.winner; changed = true; }
+                    if (!nextM.shiro.id || nextM.shiro.id !== m.winner.id) { nextM.shiro = m.winner; changed = true; }
                 }
             }
         });
@@ -176,61 +56,65 @@ function checkAdvancements() {
 function renderBracket() {
     const container = document.getElementById('bracket-view');
     container.innerHTML = "";
-    const canEdit = (currentUser.role === 'admin' || currentUser.role === 'judge');
-    
-    if(data.matches.length === 0) {
-        container.innerHTML = "<p class='text-gray-400'>Nincs aktív Kumite ágrajz.</p>";
-        return;
-    }
-
+    if (data.matches.length === 0) return;
     const maxRound = Math.max(...data.matches.map(m => m.round));
-    for(let r=1; r<=maxRound; r++) {
-        const matches = data.matches.filter(m => m.round === r);
+    const canEdit = (currentUser.role === 'admin' || currentUser.role === 'judge');
+
+    for (let r = 1; r <= maxRound; r++) {
+        const matches = data.matches.filter(m => m.round === r)
+            .sort((a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]));
+        if (matches.length === 0) continue;
         const col = document.createElement('div');
         col.className = "round-column";
         matches.forEach(m => {
-            const active = !m.winner && m.aka.id && m.shiro.id;
-            const clickAction = (active && canEdit) ? `onclick="openRef('${m.id}')"` : "";
-            col.innerHTML += `
-                <div class="match-wrapper">
-                    <div ${clickAction} class="player-card ${active && canEdit ? 'clickable' : ''} ${m.winner?.id === m.aka.id ? 'winner-card' : ''}">
-                        <div class="color-strip aka-strip"></div><b>${m.aka.name}</b> <span class="float-right">${m.scoreAka}</span>
-                    </div>
-                    <div ${clickAction} class="player-card ${active && canEdit ? 'clickable' : ''} ${m.winner?.id === m.shiro.id ? 'winner-card' : ''}">
-                        <div class="color-strip shiro-strip"></div><b>${m.shiro.name}</b> <span class="float-right">${m.scoreShiro}</span>
-                    </div>
-                    ${ m.nextId ? '<div class="match-connector-right"></div>' : '' }
-                </div>`;
+            const p1 = m.aka.id ? m.aka : null;
+            const p2 = m.shiro.id ? m.shiro : null;
+            const connector = (m.nextId) ? `<div class="match-connector"></div>` : "";
+            const active = !m.winner && p1 && p2;
+            const clickAttr = (active && canEdit) ? `onclick="openRef('${m.id}')"` : "";
+            col.innerHTML += `<div class="match-wrapper">${createCard(p1, 'aka', m, canEdit, clickAttr)}${createCard(p2, 'shiro', m, canEdit, clickAttr)}${connector}</div>`;
         });
         container.appendChild(col);
     }
 }
 
-// --- KUMITE BÍRÓI PANEL ---
-let currMatch = null;
+function createCard(p, side, m, canEdit, attr) {
+    if (!p || !p.id) return `<div class="player-card empty-slot"></div>`;
+    const isWin = m.winner && m.winner.id === p.id;
+    const style = `${isWin ? 'winner-card' : ''} ${(!m.winner && m.aka.id && m.shiro.id && canEdit) ? 'clickable' : ''}`;
+    const clr = side === 'aka' ? '#0047AB' : '#D32F2F';
+    return `<div class="player-card ${style}" ${attr}><div class="color-strip ${side}-strip"></div><div class="card-content"><div class="card-name" style="color:${clr}">[${p.id}] ${p.name}</div><div class="card-details">${p.dojo}</div></div>${(m.scoreAka > 0 || m.scoreShiro > 0) ? `<div style="position:absolute;right:10px;font-weight:bold">${side === 'aka' ? m.scoreAka : m.scoreShiro}</div>` : ''}</div>`;
+}
+
+let currMatch = null, timerInt = null, time = 120;
 function openRef(id) {
-    if (currentUser.role !== 'admin' && currentUser.role !== 'judge') return;
     currMatch = data.matches.find(m => m.id === id);
     document.getElementById('ref-aka').innerText = currMatch.aka.name;
     document.getElementById('ref-shiro').innerText = currMatch.shiro.name;
-    switchTab('referee');
+    updateRefUI();
+    clearInterval(timerInt); time = 120; updateTimerUI();
+    document.getElementById('btn-timer').innerText = "START";
+    document.getElementById('tab-referee').classList.remove('hidden');
 }
 function score(who, pt) {
-    if(who === 'aka') currMatch.scoreAka += pt; else currMatch.scoreShiro += pt;
-    document.getElementById('score-aka').innerText = currMatch.scoreAka;
-    document.getElementById('score-shiro').innerText = currMatch.scoreShiro;
+    if (who === 'aka') currMatch.scoreAka += pt; else currMatch.scoreShiro += pt;
+    updateRefUI();
+    if (currMatch.scoreAka >= 2) { setTimeout(() => { alert("GYŐZTES: AKA"); endMatch(); }, 100); }
+    else if (currMatch.scoreShiro >= 2) { setTimeout(() => { alert("GYŐZTES: SHIRO"); endMatch(); }, 100); }
 }
+function resetMatchScores() {
+    if (!confirm("Reset?")) return;
+    currMatch.scoreAka = 0; currMatch.scoreShiro = 0; updateRefUI();
+    clearInterval(timerInt); time = 120; updateTimerUI();
+}
+function updateRefUI() { document.getElementById('score-aka').innerText = currMatch.scoreAka; document.getElementById('score-shiro').innerText = currMatch.scoreShiro; }
+function toggleTimer() {
+    if (timerInt) { clearInterval(timerInt); timerInt = null; document.getElementById('btn-timer').innerText = "START"; }
+    else { document.getElementById('btn-timer').innerText = "STOP"; timerInt = setInterval(() => { time--; updateTimerUI(); if (time <= 0) clearInterval(timerInt); }, 1000); }
+}
+function updateTimerUI() { let m = Math.floor(time / 60), s = time % 60; document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' + s : s}`; }
 function endMatch() {
-    currMatch.winner = currMatch.scoreAka >= currMatch.scoreShiro ? currMatch.aka : currMatch.shiro;
-    checkAdvancements(); save(); switchTab('bracket');
+    if (currMatch.scoreAka === currMatch.scoreShiro) { alert("Döntetlen!"); return; }
+    currMatch.winner = currMatch.scoreAka > currMatch.scoreShiro ? currMatch.aka : currMatch.shiro;
+    checkAdvancements(); save(); switchTab('bracket'); document.getElementById('tab-referee').classList.add('hidden');
 }
-
-// --- SEGÉD ---
-function switchTab(id) {
-    document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
-    document.getElementById('tab-'+id).classList.remove('hidden');
-    if(id === 'bracket') renderBracket();
-    if(id === 'kata') renderKata(); 
-}
-function save() { localStorage.setItem('rbac_db', JSON.stringify(data)); }
-function resetAll() { if(confirm("Törlés?")) { localStorage.clear(); location.reload(); }}
