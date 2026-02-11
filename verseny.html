@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IKO Tournament System</title>
+    <title>Shobu HSE versenyrendszer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="stilus.css">
 </head>
@@ -14,8 +14,8 @@
     <div id="app" class="min-h-screen flex flex-col">
         <nav class="bg-zinc-900 text-white p-3 shadow-lg sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
-                <span class="font-bold italic text-lg tracking-wider">IKO SYSTEM <span
-                        class="text-red-600">MANAGER</span></span>
+                <span class="font-bold italic text-lg tracking-wider">Shobu HSE 
+                    <span class="text-red-600">Versenyrendszer</span></span>
                 <div class="space-x-4 text-xs font-bold uppercase">
                     <button onclick="switchTab('reg')" class="hover:text-red-500 transition-colors">Nevezés</button>
                     <button onclick="switchTab('bracket')" class="text-red-500 transition-colors">Kumite Ágrajz</button>
@@ -45,9 +45,74 @@
 
                     <select id="p-cat" class="border-2 border-gray-200 p-3 rounded font-bold text-red-700 bg-white">
                         <optgroup label="KUMITE (Küzdelem)">
-                            <option value="Kumite Girls ">Kumite Girls 10-11y</option>
-                            <option value="Kumite Boys 12-13y">Kumite Boys 12-13y</option>
-                            <option value="Felnőtt Férfi Open">Felnőtt Férfi Open</option>
+                            <option value="KumiteGirls 8-9 y.o. -25kg">Kumite Girls 8-9 y.o. -25kg</option>
+                            <option value="Kumite Girls 8-9 y.o. -30kg">Kumite Girls 8-9 y.o. -30kg</option>
+                            <option value="Kumite Girls 8-9 y.o. +30kg">Kumite Girls 8-9 y.o. +30kg</option>
+                            <option value="Kumite Boys 8-9 y.o. -25kg">Kumite Boys 8-9 y.o. -25kg</option>
+                            <option value="Kumite Boys 8-9 y.o. -30kg">Kumite Boys 8-9 y.o. -30kg</option>
+                            <option value="Kumite Boys 8-9 y.o. -35kg">Kumite Boys 8-9 y.o. -35kg</option>
+                            <option value="Kumite Boys 8-9 y.o. +35kg">Kumite Boys 8-9 y.o. +35kg</option>
+                            <option value="Kumite Girls 10-11 y.o. -30kg">Kumite Girls 10-11 y.o. -30kg</option>
+                            <option value="Kumite Girls 10-11 y.o. -35kg">Kumite Girls 10-11 y.o. -35kg</option>
+                            <option value="Kumite Girls 10-11 y.o. -40kg">Kumite Girls 10-11 y.o. -40kg</option>
+                            <option value="Kumite Girls 10-11 y.o. -45kg">Kumite Girls 10-11 y.o. -45kg</option>
+                            <option value="Kumite Girls 10-11 y.o. +45kg">Kumite Girls 10-11 y.o. +45kg</option>
+                            <option value="Kumite Boys 10-11 y.o. -30kg">Kumite Boys 10-11 y.o. -30kg</option>
+                            <option value="Kumite Boys 10-11 y.o. -35kg">Kumite Boys 10-11 y.o. -35kg</option>
+                            <option value="Kumite Boys 10-11 y.o. -40kg">Kumite Boys 10-11 y.o. -40kg</option>
+                            <option value="Kumite Boys 10-11 y.o. -45kg">Kumite Boys 10-11 y.o. -45kg</option>
+                            <option value="Kumite Boys 10-11 y.o. +45kg">Kumite Boys 10-11 y.o. +45kg</option>
+                            <option value="Kumite Girls 12-13 y.o. -40kg">Kumite Girls 12-13 y.o. -40kg</option>
+                            <option value="Kumite Girls 12-13 y.o. -45kg">Kumite Girls 12-13 y.o. -45kg</option>
+                            <option value="Kumite Girls 12-13 y.o. -50kg">Kumite Girls 12-13 y.o. -50kg</option>
+                            <option value="Kumite Girls 12-13 y.o. +50kg">Kumite Girls 12-13 y.o. +50kg</option>
+                            <option value="Kumite Boys 12-13 y.o. -40kg">Kumite Boys 12-13 y.o. -40kg</option>
+                            <option value="Kumite Boys 12-13 y.o. -45kg">Kumite Boys 12-13 y.o. -45kg</option>
+                            <option value="Kumite Boys 12-13 y.o. -50kg">Kumite Boys 12-13 y.o. -50kg</option>
+                            <option value="Kumite Boys 12-13 y.o. -55kg">Kumite Boys 12-13 y.o. -55kg</option>
+                            <option value="Kumite Boys 12-13 y.o. +55kg">Kumite Boys 12-13 y.o. +55kg</option>
+                            <option value="Kumite Girls 14-15 y.o. -50kg">Kumite Girls 14-15 y.o. -50kg</option>
+                            <option value="Kumite Girls 14-15 y.o. -55kg">Kumite Girls 14-15 y.o. -55kg</option>
+                            <option value="Kumite Girls 14-15 y.o. -60kg">Kumite Girls 14-15 y.o. -60kg</option>
+                            <option value="Kumite Girls 14-15 y.o. +60kg">Kumite Girls 14-15 y.o. +60kg</option>
+                            <option value="Kumite Boys 14-15 y.o. -50kg">Kumite Boys 14-15 y.o. -50kg</option>
+                            <option value="Kumite Boys 14-15 y.o. -55kg">Kumite Boys 14-15 y.o. -55kg</option>
+                            <option value="Kumite Boys 14-15 y.o. -60kg">Kumite Boys 14-15 y.o. -60kg</option>
+                            <option value="Kumite Boys 14-15 y.o. -65kg">Kumite Boys 14-15 y.o. -65kg</option>
+                            <option value="Kumite Boys 14-15 y.o. -70kg">Kumite Boys 14-15 y.o. -70kg</option>
+                            <option value="Kumite Boys 14-15 y.o. -75kg">Kumite Boys 14-15 y.o. -75kg</option>
+                            <option value="Kumite Boys 14-15 y.o. +75kg">Kumite Boys 14-15 y.o. +75kg</option>
+                            <option value="Kumite Girls 16-17 y.o. -50kg">Kumite Girls 16-17 y.o. -50kg</option>
+                            <option value="Kumite Girls 16-17 y.o. -55kg">Kumite Girls 16-17 y.o. -55kg</option>
+                            <option value="Kumite Girls 16-17 y.o. -60kg">Kumite Girls 16-17 y.o. -60kg</option>
+                            <option value="Kumite Girls 16-17 y.o. -65kg">Kumite Girls 16-17 y.o. -65kg</option>
+                            <option value="Kumite Girls 16-17 y.o. +65kg">Kumite Girls 16-17 y.o. +65kg</option>
+                            <option value="Kumite Boys 16-17 y.o. -55kg">Kumite Boys 16-17 y.o. -55kg</option>
+                            <option value="Kumite Boys 16-17 y.o. -60kg">Kumite Boys 16-17 y.o. -60kg</option>
+                            <option value="Kumite Boys 16-17 y.o. -65kg">Kumite Boys 16-17 y.o. -65kg</option>
+                            <option value="Kumite Boys 16-17 y.o. -70kg">Kumite Boys 16-17 y.o. -70kg</option>
+                            <option value="Kumite Boys 16-17 y.o. -75kg">Kumite Boys 16-17 y.o. -75kg</option>
+                            <option value="Kumite Boys 16-17 y.o. -80kg">Kumite Boys 16-17 y.o. -80kg</option>
+                            <option value="Kumite Boys 16-17 y.o. +80kg">Kumite Boys 16-17 y.o. +80kg</option>
+                            <option value="Kumite Women 18+ y.o. Open">Kumite Women 18+ y.o. Open</option>
+                            <option value="Kumite Men 18+ y.o. Open">Kumite Men 18+ y.o. Open</option>
+                            <option value="Kumite Women 18+ y.o. -55kg">Kumite Women 18+ y.o. -55kg</option>
+                            <option value="Kumite Women 18+ y.o. -65kg">Kumite Women 18+ y.o. -65kg</option>
+                            <option value="Kumite Women 18+ y.o. +65kg">Kumite Women 18+ y.o. +65kg</option>
+                            <option value="Kumite Men 18+ y.o. -60kg">Kumite Men 18+ y.o. -60kg</option>
+                            <option value="Kumite Men 18+ y.o. -70kg">Kumite Men 18+ y.o. -70kg</option>
+                            <option value="Kumite Men 18+ y.o. -80kg">Kumite Men 18+ y.o. -80kg</option>
+                            <option value="Kumite Men 18+ y.o. -90kg">Kumite Men 18+ y.o. -90kg</option>
+                            <option value="Kumite Men 18+ y.o. +90kg">Kumite Men 18+ y.o. +90kg</option>
+                            <option value="Kumite Women 35+ y.o. -55kg">Kumite Women 35+ y.o. -55kg</option>
+                            <option value="Kumite Women 35+ y.o. -65kg">Kumite Women 35+ y.o. -65kg</option>
+                            <option value="Kumite Women 35+ y.o. +65kg">Kumite Women 35+ y.o. +65kg</option>
+                            <option value="Kumite Men 35-44 y.o. -75kg">Kumite Men 35-44 y.o. -75kg</option>
+                            <option value="Kumite Men 35-44 y.o. -85kg">Kumite Men 35-44 y.o. -85kg</option>
+                            <option value="Kumite Men 35-44 y.o. +85kg">Kumite Men 35-44 y.o. +85kg</option>
+                            <option value="Kumite Men 45+ y.o. -75kg">Kumite Men 45+ y.o. -75kg</option>
+                            <option value="Kumite Men 45+ y.o. -85kg">Kumite Men 45+ y.o. -85kg</option>
+                            <option value="Kumite Men 45+ y.o. +85kg">Kumite Men 45+ y.o. +85kg</option>
                         </optgroup>
                         <optgroup label="KATA (Formagyakorlat)">
                             <option value="Kata Boys 8-9 y.o.">Kata Boys 8-9 y.o.</option>
