@@ -5,6 +5,29 @@ body {
     background-color: #f3f4f6;
 }
 
+.login-card {
+    position: relative; /* Ez tartja a képet a dobozon belül */
+    overflow: hidden;   /* Levágja a kép sarkait, hogy kövesse a lekerekítést */
+    background-color: rgb(255, 255, 255); /* Alapszín, ha a kép nem töltene be */
+}
+
+.login-card::before {
+    content: "";
+    background-image: url('logo.jpg'); /* KARATE KÉP */
+    background-size: cover;
+    background-position: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    
+    /* ITT ÁLLÍTSD AZ ÁTLÁTSZÓSÁGOT (0.1 = nagyon halvány, 1.0 = teljesen látszik) */
+    opacity: 0.30; 
+    
+    z-index: 0; /* A szöveg mögé kerül */
+}
+
 /* --- A LÉNYEG: VÍZSZINTES ÁGRAJZ --- */
 .bracket-container {
     display: flex !important;

@@ -13,20 +13,21 @@
 <body class="bg-gray-100 text-zinc-900 font-sans">
 
     <div id="login-overlay" class="fixed inset-0 bg-zinc-900 z-[100] flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-96 text-center">
-            <h1 class="text-2xl font-black italic mb-6">SHOBU HSE <span class="text-red-600">SYSTEM</span></h1>
-            <div class="space-y-4">
-                <input id="login-user" type="text" placeholder="Felhasználónév" class="w-full border p-3 rounded">
-                <input id="login-pass" type="password" placeholder="Jelszó" class="w-full border p-3 rounded">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-96 text-center login-card">
+
+            <h1 class="text-2xl font-black italic mb-6 relative z-10">SHOBU HSE <span class="text-red-600">SYSTEM</span>
+            </h1>
+
+            <div class="space-y-4 relative z-10">
+                <input id="login-user" type="text" placeholder="Felhasználónév"
+                    class="w-full border p-3 rounded bg-white/80 backdrop-blur-sm">
+                <input id="login-pass" type="password" placeholder="Jelszó"
+                    class="w-full border p-3 rounded bg-white/80 backdrop-blur-sm">
                 <button onclick="login()"
-                    class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">BELÉPÉS</button>
-            </div>
-            <div class="mt-6 border-t pt-4">
-                <button onclick="loginAsGuest()" class="text-gray-500 text-sm hover:text-black underline">Folytatás
-                    vendégként</button>
+                    class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 shadow-lg">BELÉPÉS</button>
             </div>
             <div class="mt-4 text-xs text-gray-400 bg-gray-100 p-2 rounded text-left">
-                Teszt: <b>admin / 1234</b>, <b>biro / 1234</b>
+                Teszt: <b>KoloMarki / 1234</b>, <b>A tatami / A-tatami</b>, <b>Balint.Tornai / 1234</b>
             </div>
         </div>
     </div>
@@ -158,6 +159,17 @@
     <script src="auth.js"></script>
     <script src="kumite.js"></script>
     <script src="kata.js"></script>
+    <script>
+        // Ellenőrzés: Kiírjuk a konzolra, ha valami nem töltött be
+        window.onload = function () {
+            console.log("Rendszer betöltve.");
+            if (typeof login !== 'function') console.error("HIBA: Az auth.js nem töltődött be!");
+            if (typeof USERS === 'undefined') console.error("HIBA: A data.js nem töltődött be!");
+        };
+    </script>
+</body>
+
+</html>
 </body>
 
 </html>

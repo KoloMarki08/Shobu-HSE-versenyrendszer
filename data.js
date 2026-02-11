@@ -95,41 +95,67 @@ const ALL_CATEGORIES = [
 
 ];
 
+// 2. FELHASZNÁLÓK
+const USERS = [
+    { username: 'KoloMarki', pass: '1234', role: 'admin', dojo: 'admin', name: 'Admin' },
+    { username: 'A tatami', pass: 'A-tatami', role: 'judge', dojo: '-', name: 'A_Tatami' },
+    { username: 'Balint.Tornai', pass: '1234', role: 'coach', dojo: 'Shobu HSE', name: 'Edző' }
+];
+
+// 3. GLOBÁLIS VÁLTOZÓK (CSAK ITT DEKLARÁLJUK ŐKET!)
 let data = JSON.parse(localStorage.getItem('iko_db')) || { players: [], matches: [] };
-let currentUser = null;
+let currentUser = null; 
 
-function save() { localStorage.setItem('iko_db', JSON.stringify(data)); }
-function resetAll() { if (confirm("Mindent törölsz?")) { localStorage.clear(); location.reload(); } }
+// 4. SEGÉDFÜGGVÉNYEK
+function save() { 
+    localStorage.setItem('iko_db', JSON.stringify(data)); 
+}
 
+function resetAll() { 
+    if(confirm("Mindent törölsz? Ez nem visszavonható!")) { 
+        localStorage.clear(); 
+        location.reload(); 
+    } 
+}
+
+// 5. NEVEZÉS LOGIKA
 function updateCategoryDropdown() {
     const gender = document.getElementById('p-gender').value;
     const age = parseInt(document.getElementById('p-age').value);
     const catSelect = document.getElementById('p-cat');
+    
     catSelect.innerHTML = "";
     if (!gender || isNaN(age)) return;
-
+    
     const filtered = ALL_CATEGORIES.filter(c => (c.gender === gender || c.gender === 'Vegyes') && age >= c.minAge && age <= c.maxAge);
-    const grpK = document.createElement('optgroup'); grpK.label = "KUMITE";
-    const grpF = document.createElement('optgroup'); grpF.label = "KATA";
+    
+    if(filtered.length === 0) {
+        catSelect.innerHTML = "<option>Nincs találat</option>";
+        return;
+    }
 
+    const grpK = document.createElement('optgroup'); grpK.label="KUMITE";
+    const grpF = document.createElement('optgroup'); grpF.label="KATA";
+    
     filtered.forEach(c => {
-        const o = document.createElement('option'); o.value = c.name; o.innerText = c.name;
-        if (c.type === "KUMITE") grpK.appendChild(o); else grpF.appendChild(o);
+        const o = document.createElement('option'); o.value=c.name; o.innerText=c.name;
+        if(c.type==="KUMITE") grpK.appendChild(o); else grpF.appendChild(o);
     });
-    if (grpK.children.length > 0) catSelect.appendChild(grpK);
-    if (grpF.children.length > 0) catSelect.appendChild(grpF);
+    
+    if(grpK.children.length>0) catSelect.appendChild(grpK);
+    if(grpF.children.length>0) catSelect.appendChild(grpF);
 }
 
 function addPlayer() {
-    if (currentUser.role !== 'admin' && currentUser.role !== 'coach') return;
-    const name = document.getElementById('p-name').value;
+    if(currentUser.role!=='admin' && currentUser.role!=='coach') return;
+    const name = document.getElementById('p-name').value.trim();
     const dojo = document.getElementById('p-dojo').value;
     const cat = document.getElementById('p-cat').value;
-
-    if (!name || !cat) { alert("Hiányos adatok!"); return; }
-
-    const exists = data.players.some(p => p.name === name && p.cat === cat);
-    if (exists) { alert("Már nevezve van ide!"); return; }
+    
+    if(!name || !cat) { alert("Hiányos adatok!"); return; }
+    
+    const exists = data.players.some(p => p.name===name && p.cat===cat);
+    if(exists) { alert("Már nevezve van ide!"); return; }
 
     data.players.push({
         id: 100 + data.players.length + 1,
@@ -138,12 +164,15 @@ function addPlayer() {
         age: document.getElementById('p-age').value,
         owner: currentUser.username
     });
-    save(); renderPlayerList(); document.getElementById('p-name').value = '';
+    save(); renderPlayerList(); document.getElementById('p-name').value='';
 }
 
 function renderPlayerList() {
     const l = document.getElementById('player-list'); l.innerHTML = '';
-    let vis = (currentUser.role === 'admin') ? data.players : data.players.filter(p => p.owner === currentUser.username);
+    // Ha nincs bejelentkezve senki, ne haljon meg a kód
+    if(!currentUser) return;
+
+    let vis = (currentUser.role==='admin') ? data.players : data.players.filter(p=>p.owner===currentUser.username);
     vis.forEach(p => {
         l.innerHTML += `<li class="border-b py-1 flex justify-between text-sm"><span><b>${p.name}</b> (${p.dojo})</span><span>${p.cat}</span></li>`;
     });
