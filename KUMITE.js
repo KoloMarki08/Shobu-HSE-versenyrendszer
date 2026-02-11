@@ -154,10 +154,10 @@ function generate() {
 
 function checkAdvancements() {
     let changed = true;
-    while(changed) {
+    while (changed) {
         changed = false;
         data.matches.forEach(m => {
-            if(m.winner && m.nextId) {
+            if (m.winner && m.nextId) {
                 let nextM = data.matches.find(x => x.id === m.nextId);
                 if(!nextM) {
                     nextM = { id: m.nextId, round: m.round + 1, cat: m.cat, aka: {name:"...",id:null}, shiro: {name:"...",id:null}, winner:null, scoreAka:0, scoreShiro:0, nextId:null};
@@ -166,7 +166,7 @@ function checkAdvancements() {
                 if(!nextM.aka.id || nextM.aka.id === m.winner.id) {
                      if(nextM.aka.id !== m.winner.id) { nextM.aka = m.winner; changed = true; }
                 } else {
-                     if(nextM.shiro.id !== m.winner.id) { nextM.shiro = m.winner; changed = true; }
+                    if (nextM.shiro.id !== m.winner.id) { nextM.shiro = m.winner; changed = true; }
                 }
             }
         });
