@@ -1,179 +1,351 @@
-// --- KATEGÓRIA  ---
-const ALL_CATEGORIES = [
+// ==========================================
+// 1. ADATBÁZIS: KATEGÓRIÁK
+// Itt van az összes kategória felsorolva
+// ==========================================
+const OSSZES_KATEGORIA = [
 
     // --- KUMITE (LÁNYOK) ---
-    { name: "Kumite Girls 8-9 y.o. -25kg", type: "KUMITE", gender: "Girls", minAge: 8, maxAge: 9 },
-    { name: "Kumite Girls 8-9 y.o. -30kg", type: "KUMITE", gender: "Girls", minAge: 8, maxAge: 9 },
-    { name: "Kumite Girls 8-9 y.o. +30kg", type: "KUMITE", gender: "Girls", minAge: 8, maxAge: 9 },
-    { name: "Kumite Girls 10-11 y.o. -30kg", type: "KUMITE", gender: "Girls", minAge: 10, maxAge: 11 },
-    { name: "Kumite Girls 10-11 y.o. -35kg", type: "KUMITE", gender: "Girls", minAge: 10, maxAge: 11 },
-    { name: "Kumite Girls 10-11 y.o. -40kg", type: "KUMITE", gender: "Girls", minAge: 10, maxAge: 11 },
-    { name: "Kumite Girls 10-11 y.o. -45kg", type: "KUMITE", gender: "Girls", minAge: 10, maxAge: 11 },
-    { name: "Kumite Girls 10-11 y.o. +45kg", type: "KUMITE", gender: "Girls", minAge: 10, maxAge: 11 },
-    { name: "Kumite Girls 12-13 y.o. -40kg", type: "KUMITE", gender: "Girls", minAge: 12, maxAge: 13 },
-    { name: "Kumite Girls 12-13 y.o. -45kg", type: "KUMITE", gender: "Girls", minAge: 12, maxAge: 13 },
-    { name: "Kumite Girls 12-13 y.o. -50kg", type: "KUMITE", gender: "Girls", minAge: 12, maxAge: 13 },
-    { name: "Kumite Girls 12-13 y.o. +50kg", type: "KUMITE", gender: "Girls", minAge: 12, maxAge: 13 },
-    { name: "Kumite Girls 14-15 y.o. -50kg", type: "KUMITE", gender: "Girls", minAge: 14, maxAge: 15 },
-    { name: "Kumite Girls 14-15 y.o. -55kg", type: "KUMITE", gender: "Girls", minAge: 14, maxAge: 15 },
-    { name: "Kumite Girls 14-15 y.o. -60kg", type: "KUMITE", gender: "Girls", minAge: 14, maxAge: 15 },
-    { name: "Kumite Girls 14-15 y.o. +60kg", type: "KUMITE", gender: "Girls", minAge: 14, maxAge: 15 },
-    { name: "Kumite Girls 16-17 y.o. -50kg", type: "KUMITE", gender: "Girls", minAge: 16, maxAge: 17 },
-    { name: "Kumite Girls 16-17 y.o. -55kg", type: "KUMITE", gender: "Girls", minAge: 16, maxAge: 17 },
-    { name: "Kumite Girls 16-17 y.o. -60kg", type: "KUMITE", gender: "Girls", minAge: 16, maxAge: 17 },
-    { name: "Kumite Girls 16-17 y.o. -65kg", type: "KUMITE", gender: "Girls", minAge: 16, maxAge: 17 },
-    { name: "Kumite Girls 16-17 y.o. +65kg", type: "KUMITE", gender: "Girls", minAge: 16, maxAge: 17 },
-    { name: "Kumite Women 18+ y.o. Open", type: "KUMITE", gender: "Women", minAge: 18, maxAge: 99 },
-    { name: "Kumite Women 18+ y.o. -55kg", type: "KUMITE", gender: "Women", minAge: 18, maxAge: 99 },
-    { name: "Kumite Women 18+ y.o. -65kg", type: "KUMITE", gender: "Women", minAge: 18, maxAge: 99 },
-    { name: "Kumite Women 18+ y.o. +65kg", type: "KUMITE", gender: "Women", minAge: 18, maxAge: 99 },
-    { name: "Kumite Women 35+ y.o. -55kg", type: "KUMITE", gender: "Women", minAge: 35, maxAge: 99 },
-    { name: "Kumite Women 35+ y.o. -65kg", type: "KUMITE", gender: "Women", minAge: 35, maxAge: 99 },
-    { name: "Kumite Women 35+ y.o. +65kg", type: "KUMITE", gender: "Women", minAge: 35, maxAge: 99 },
+    { nev: "Kumite Girls 8-9 y.o. -25kg", tipus: "KUMITE", nem: "Girls", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Girls 8-9 y.o. -30kg", tipus: "KUMITE", nem: "Girls", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Girls 8-9 y.o. +30kg", tipus: "KUMITE", nem: "Girls", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Girls 10-11 y.o. -30kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Girls 10-11 y.o. -35kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Girls 10-11 y.o. -40kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Girls 10-11 y.o. -45kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Girls 10-11 y.o. +45kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Girls 12-13 y.o. -40kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Girls 12-13 y.o. -45kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Girls 12-13 y.o. -50kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Girls 12-13 y.o. +50kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Girls 14-15 y.o. -50kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Girls 14-15 y.o. -55kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Girls 14-15 y.o. -60kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Girls 14-15 y.o. +60kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Girls 16-17 y.o. -50kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Girls 16-17 y.o. -55kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Girls 16-17 y.o. -60kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Girls 16-17 y.o. -65kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Girls 16-17 y.o. +65kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Women 18+ y.o. Open", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Women 18+ y.o. -55kg", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Women 18+ y.o. -65kg", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Women 18+ y.o. +65kg", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Women 35+ y.o. -55kg", tipus: "KUMITE", nem: "Women", minKor: 35, maxKor: 99 },
+    { nev: "Kumite Women 35+ y.o. -65kg", tipus: "KUMITE", nem: "Women", minKor: 35, maxKor: 99 },
+    { nev: "Kumite Women 35+ y.o. +65kg", tipus: "KUMITE", nem: "Women", minKor: 35, maxKor: 99 },
 
     // --- KUMITE (FIÚK) ---
-    { name: "Kumite Boys 8-9 y.o. -25kg", type: "KUMITE", gender: "Boys", minAge: 8, maxAge: 9 },
-    { name: "Kumite Boys 8-9 y.o. -30kg", type: "KUMITE", gender: "Boys", minAge: 8, maxAge: 9 },
-    { name: "Kumite Boys 8-9 y.o. -35kg", type: "KUMITE", gender: "Boys", minAge: 8, maxAge: 9 },
-    { name: "Kumite Boys 8-9 y.o. +35kg", type: "KUMITE", gender: "Boys", minAge: 8, maxAge: 9 },
-    { name: "Kumite Boys 10-11 y.o. -30kg", type: "KUMITE", gender: "Boys", minAge: 10, maxAge: 11 },
-    { name: "Kumite Boys 10-11 y.o. -35kg", type: "KUMITE", gender: "Boys", minAge: 10, maxAge: 11 },
-    { name: "Kumite Boys 10-11 y.o. -40kg", type: "KUMITE", gender: "Boys", minAge: 10, maxAge: 11 },
-    { name: "Kumite Boys 10-11 y.o. -45kg", type: "KUMITE", gender: "Boys", minAge: 10, maxAge: 11 },
-    { name: "Kumite Boys 10-11 y.o. +45kg", type: "KUMITE", gender: "Boys", minAge: 10, maxAge: 11 },
-    { name: "Kumite Boys 12-13 y.o. -40kg", type: "KUMITE", gender: "Boys", minAge: 12, maxAge: 13 },
-    { name: "Kumite Boys 12-13 y.o. -45kg", type: "KUMITE", gender: "Boys", minAge: 12, maxAge: 13 },
-    { name: "Kumite Boys 12-13 y.o. -50kg", type: "KUMITE", gender: "Boys", minAge: 12, maxAge: 13 },
-    { name: "Kumite Boys 12-13 y.o. -55kg", type: "KUMITE", gender: "Boys", minAge: 12, maxAge: 13 },
-    { name: "Kumite Boys 12-13 y.o. +55kg", type: "KUMITE", gender: "Boys", minAge: 12, maxAge: 13 },
-    { name: "Kumite Boys 14-15 y.o. -50kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 14-15 y.o. -55kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 14-15 y.o. -60kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 14-15 y.o. -65kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 14-15 y.o. -70kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 14-15 y.o. -75kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 14-15 y.o. +75kg", type: "KUMITE", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kumite Boys 16-17 y.o. -55kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Boys 16-17 y.o. -60kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Boys 16-17 y.o. -65kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Boys 16-17 y.o. -70kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Boys 16-17 y.o. -75kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Boys 16-17 y.o. -80kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Boys 16-17 y.o. +80kg", type: "KUMITE", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kumite Men 18+ y.o. Open", type: "KUMITE", gender: "Men", minAge: 18, maxAge: 99 },
-    { name: "Kumite Men 18+ y.o. -60kg", type: "KUMITE", gender: "Men", minAge: 18, maxAge: 99 },
-    { name: "Kumite Men 18+ y.o. -70kg", type: "KUMITE", gender: "Men", minAge: 18, maxAge: 99 },
-    { name: "Kumite Men 18+ y.o. -80kg", type: "KUMITE", gender: "Men", minAge: 18, maxAge: 99 },
-    { name: "Kumite Men 18+ y.o. -90kg", type: "KUMITE", gender: "Men", minAge: 18, maxAge: 99 },
-    { name: "Kumite Men 18+ y.o. +90kg", type: "KUMITE", gender: "Men", minAge: 18, maxAge: 99 },
-    { name: "Kumite Men 35-44 y.o. -75kg", type: "KUMITE", gender: "Men", minAge: 35, maxAge: 44 },
-    { name: "Kumite Men 35-44 y.o. -85kg", type: "KUMITE", gender: "Men", minAge: 35, maxAge: 44 },
-    { name: "Kumite Men 35-44 y.o. +85kg", type: "KUMITE", gender: "Men", minAge: 35, maxAge: 44 },
-    { name: "Kumite Men 45+ y.o. -75kg", type: "KUMITE", gender: "Men", minAge: 45, maxAge: 99 },
-    { name: "Kumite Men 45+ y.o. -85kg", type: "KUMITE", gender: "Men", minAge: 45, maxAge: 99 },
-    { name: "Kumite Men 45+ y.o. +85kg", type: "KUMITE", gender: "Men", minAge: 45, maxAge: 99 },
+    { nev: "Kumite Boys 8-9 y.o. -25kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Boys 8-9 y.o. -30kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Boys 8-9 y.o. -35kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Boys 8-9 y.o. +35kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9 },
+    { nev: "Kumite Boys 10-11 y.o. -30kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Boys 10-11 y.o. -35kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Boys 10-11 y.o. -40kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Boys 10-11 y.o. -45kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Boys 10-11 y.o. +45kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11 },
+    { nev: "Kumite Boys 12-13 y.o. -40kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Boys 12-13 y.o. -45kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Boys 12-13 y.o. -50kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Boys 12-13 y.o. -55kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Boys 12-13 y.o. +55kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13 },
+    { nev: "Kumite Boys 14-15 y.o. -50kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 14-15 y.o. -55kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 14-15 y.o. -60kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 14-15 y.o. -65kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 14-15 y.o. -70kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 14-15 y.o. -75kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 14-15 y.o. +75kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kumite Boys 16-17 y.o. -55kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Boys 16-17 y.o. -60kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Boys 16-17 y.o. -65kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Boys 16-17 y.o. -70kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Boys 16-17 y.o. -75kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Boys 16-17 y.o. -80kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Boys 16-17 y.o. +80kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kumite Men 18+ y.o. Open", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Men 18+ y.o. -60kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Men 18+ y.o. -70kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Men 18+ y.o. -80kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Men 18+ y.o. -90kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Men 18+ y.o. +90kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99 },
+    { nev: "Kumite Men 35-44 y.o. -75kg", tipus: "KUMITE", nem: "Men", minKor: 35, maxKor: 44 },
+    { nev: "Kumite Men 35-44 y.o. -85kg", tipus: "KUMITE", nem: "Men", minKor: 35, maxKor: 44 },
+    { nev: "Kumite Men 35-44 y.o. +85kg", tipus: "KUMITE", nem: "Men", minKor: 35, maxKor: 44 },
+    { nev: "Kumite Men 45+ y.o. -75kg", tipus: "KUMITE", nem: "Men", minKor: 45, maxKor: 99 },
+    { nev: "Kumite Men 45+ y.o. -85kg", tipus: "KUMITE", nem: "Men", minKor: 45, maxKor: 99 },
+    { nev: "Kumite Men 45+ y.o. +85kg", tipus: "KUMITE", nem: "Men", minKor: 45, maxKor: 99 },
 
     // --- KATA (LÁNYOK) ---
-    { name: "Kata Girls 8-9 y.o.", type: "KATA", gender: "Girls", minAge: 8, maxAge: 9 },
-    { name: "Kata Girls 10-11 y.o.", type: "KATA", gender: "Girls", minAge: 10, maxAge: 11 },
-    { name: "Kata Girls 12-13 y.o.", type: "KATA", gender: "Girls", minAge: 12, maxAge: 13 },
-    { name: "Kata Girls 14-15 y.o.", type: "KATA", gender: "Girls", minAge: 14, maxAge: 15 },
-    { name: "Kata Girls 16-17 y.o.", type: "KATA", gender: "Girls", minAge: 16, maxAge: 17 },
-    { name: "Kata Women 18-34 y.o.", type: "KATA", gender: "Women", minAge: 18, maxAge: 34 },
-    { name: "Kata Women 35-49 y.o.", type: "KATA", gender: "Women", minAge: 35, maxAge: 49 },
-    { name: "Kata Women 50+ y.o.", type: "KATA", gender: "Women", minAge: 50, maxAge: 99 },
+    { nev: "Kata Girls 8-9 y.o.", tipus: "KATA", nem: "Girls", minKor: 8, maxKor: 9 },
+    { nev: "Kata Girls 10-11 y.o.", tipus: "KATA", nem: "Girls", minKor: 10, maxKor: 11 },
+    { nev: "Kata Girls 12-13 y.o.", tipus: "KATA", nem: "Girls", minKor: 12, maxKor: 13 },
+    { nev: "Kata Girls 14-15 y.o.", tipus: "KATA", nem: "Girls", minKor: 14, maxKor: 15 },
+    { nev: "Kata Girls 16-17 y.o.", tipus: "KATA", nem: "Girls", minKor: 16, maxKor: 17 },
+    { nev: "Kata Women 18-34 y.o.", tipus: "KATA", nem: "Women", minKor: 18, maxKor: 34 },
+    { nev: "Kata Women 35-49 y.o.", tipus: "KATA", nem: "Women", minKor: 35, maxKor: 49 },
+    { nev: "Kata Women 50+ y.o.", tipus: "KATA", nem: "Women", minKor: 50, maxKor: 99 },
 
     // --- KATA (FIÚK) ---
-    { name: "Kata Boys 8-9 y.o.", type: "KATA", gender: "Boys", minAge: 8, maxAge: 9 },
-    { name: "Kata Boys 10-11 y.o.", type: "KATA", gender: "Boys", minAge: 10, maxAge: 11 },
-    { name: "Kata Boys 12-13 y.o.", type: "KATA", gender: "Boys", minAge: 12, maxAge: 13 },
-    { name: "Kata Boys 14-15 y.o.", type: "KATA", gender: "Boys", minAge: 14, maxAge: 15 },
-    { name: "Kata Boys 16-17 y.o.", type: "KATA", gender: "Boys", minAge: 16, maxAge: 17 },
-    { name: "Kata Men 18-34 y.o.", type: "KATA", gender: "Men", minAge: 18, maxAge: 34 },
-    { name: "Kata Men 35-49 y.o.", type: "KATA", gender: "Men", minAge: 35, maxAge: 49 },
-    { name: "Kata Men 50+ y.o.", type: "KATA", gender: "Men", minAge: 50, maxAge: 99 }
+    { nev: "Kata Boys 8-9 y.o.", tipus: "KATA", nem: "Boys", minKor: 8, maxKor: 9 },
+    { nev: "Kata Boys 10-11 y.o.", tipus: "KATA", nem: "Boys", minKor: 10, maxKor: 11 },
+    { nev: "Kata Boys 12-13 y.o.", tipus: "KATA", nem: "Boys", minKor: 12, maxKor: 13 },
+    { nev: "Kata Boys 14-15 y.o.", tipus: "KATA", nem: "Boys", minKor: 14, maxKor: 15 },
+    { nev: "Kata Boys 16-17 y.o.", tipus: "KATA", nem: "Boys", minKor: 16, maxKor: 17 },
+    { nev: "Kata Men 18-34 y.o.", tipus: "KATA", nem: "Men", minKor: 18, maxKor: 34 },
+    { nev: "Kata Men 35-49 y.o.", tipus: "KATA", nem: "Men", minKor: 35, maxKor: 49 },
+    { nev: "Kata Men 50+ y.o.", tipus: "KATA", nem: "Men", minKor: 50, maxKor: 99 }
 
 ];
 
+// ==========================================
 // 2. FELHASZNÁLÓK
-const USERS = [
-    { username: 'KoloMarki', pass: '1234', role: 'admin', dojo: 'admin', name: 'Admin' },
-    { username: 'A tatami', pass: 'A-tatami', role: 'judge', dojo: '-', name: 'A_Tatami' },
-    { username: 'Balint.Tornai', pass: '1234', role: 'coach', dojo: 'Shobu HSE', name: 'Edző' }
+// Itt vannak a belépési adatok. Junior megoldás, de működik!
+// ==========================================
+const FELHASZNALOK = [
+    { felhasznalonev: 'KoloMarki', jelszo: '1234', szerepkor: 'admin', klub: 'admin', nev: 'Admin' },
+    { felhasznalonev: 'A tatami', jelszo: 'A-tatami', szerepkor: 'judge', klub: '-', nev: 'A_Tatami' },
+    { felhasznalonev: 'Balint.Tornai', jelszo: '1234', szerepkor: 'coach', klub: 'Shobu HSE', nev: 'Edző' }
 ];
 
-// 3. GLOBÁLIS VÁLTOZÓK (CSAK ITT DEKLARÁLJUK ŐKET!)
-let data = JSON.parse(localStorage.getItem('iko_db')) || { players: [], matches: [] };
-let currentUser = null; 
+// ==========================================
+// 3. GLOBÁLIS VÁLTOZÓK
+// Fontos: ezeket minden függvényből el kell érni!
+// ==========================================
+// Megpróbáljuk betölteni a mentett dolgokat. Ha nincs, csinálunk egy üreset.
+var adatokSzovegkent = localStorage.getItem('iko_db');
+var adatok;
 
-// 4. SEGÉDFÜGGVÉNYEK
-function save() { 
-    localStorage.setItem('iko_db', JSON.stringify(data)); 
+if (adatokSzovegkent === null) {
+    // Még nem járt itt senki, üres minden
+    adatok = { 
+        versenyzok: [], 
+        meccsek: [] 
+    };
+} else {
+    // Visszaalakítjuk a szöveget rendes JavaScript objektummá
+    adatok = JSON.parse(adatokSzovegkent);
 }
 
-function resetAll() { 
-    if(confirm("Mindent törölsz? Ez nem visszavonható!")) { 
+// Ide mentjük el, hogy éppen ki van belépve. Kezdetben senki (null).
+// JAVÍTÁS: Ennek a neve aktualisFelhasznalo, ezt kell használni mindenhol!
+var aktualisFelhasznalo = null; 
+
+// ==========================================
+// 4. SEGÉDFÜGGVÉNYEK
+// ==========================================
+function mentes() { 
+    // Átalakítjuk szöveggé és betesszük a böngésző memóriájába
+    var szoveg = JSON.stringify(adatok);
+    localStorage.setItem('iko_db', szoveg); 
+}
+
+function toroljMindent() { 
+    var biztos = confirm("Mindent törölsz? Ez nem visszavonható!");
+    if(biztos === true) { 
         localStorage.clear(); 
-        location.reload(); 
+        location.reload(); // Frissíti az oldalt
     } 
 }
 
+// ==========================================
 // 5. NEVEZÉS LOGIKA
-function updateCategoryDropdown() {
-    const gender = document.getElementById('p-gender').value;
-    const age = parseInt(document.getElementById('p-age').value);
-    const catSelect = document.getElementById('p-cat');
-    
-    catSelect.innerHTML = "";
-    if (!gender || isNaN(age)) return;
-    
-    const filtered = ALL_CATEGORIES.filter(c => (c.gender === gender || c.gender === 'Vegyes') && age >= c.minAge && age <= c.maxAge);
-    
-    if(filtered.length === 0) {
-        catSelect.innerHTML = "<option>Nincs találat</option>";
+// ==========================================
+
+// Ez frissíti a legördülő listát, amikor beírják a kort vagy a nemet
+function frissitKategoriaLegordulot() {
+    // Lekérjük a dobozokat
+    var nemValaszto = document.getElementById("p-gender");
+    var korBevitel = document.getElementById("p-age");
+    var kategoriaValaszto = document.getElementById("p-cat");
+
+    // Kiolvassuk, mik vannak beleírva
+    var kivalasztottNem = nemValaszto.value;
+    // Számmá kell alakítani, mert a szövegdobozból string jön
+    var beirtKor = parseInt(korBevitel.value);
+
+    // Kiürítjük a régit
+    kategoriaValaszto.innerHTML = "";
+
+    // Ha valamelyik üres, akkor kilépünk, mert nem tudunk számolni
+    if (kivalasztottNem === "" || isNaN(beirtKor) === true) {
         return;
     }
 
-    const grpK = document.createElement('optgroup'); grpK.label="KUMITE";
-    const grpF = document.createElement('optgroup'); grpF.label="KATA";
-    
-    filtered.forEach(c => {
-        const o = document.createElement('option'); o.value=c.name; o.innerText=c.name;
-        if(c.type==="KUMITE") grpK.appendChild(o); else grpF.appendChild(o);
-    });
-    
-    if(grpK.children.length>0) catSelect.appendChild(grpK);
-    if(grpF.children.length>0) catSelect.appendChild(grpF);
+    var szurtKategoriak = [];
+
+    // Végigmegyünk az összes kategórián egy sima for ciklussal
+    for (var i = 0; i < OSSZES_KATEGORIA.length; i++) {
+        var aktualisKategoria = OSSZES_KATEGORIA[i];
+        
+        var joANem = false;
+        var joAKor = false;
+
+        // Megnézzük a nemet
+        if (aktualisKategoria.nem === kivalasztottNem || aktualisKategoria.nem === "Vegyes") {
+            joANem = true;
+        }
+
+        // Megnézzük a kort
+        if (beirtKor >= aktualisKategoria.minKor && beirtKor <= aktualisKategoria.maxKor) {
+            joAKor = true;
+        }
+
+        // Ha mindkettő igaz, beletesszük a jó listába
+        if (joANem === true && joAKor === true) {
+            szurtKategoriak.push(aktualisKategoria);
+        }
+    }
+
+    // Ha egyet sem találtunk
+    if (szurtKategoriak.length === 0) {
+        kategoriaValaszto.innerHTML = "<option>Nincs találat</option>";
+        return;
+    }
+
+    // Csoportokat csinálunk, hogy szép legyen
+    var kumiteCsoport = document.createElement("optgroup");
+    kumiteCsoport.label = "KUMITE";
+
+    var kataCsoport = document.createElement("optgroup");
+    kataCsoport.label = "KATA";
+
+    // Beletesszük a csoportokba az opciókat
+    for (var j = 0; j < szurtKategoriak.length; j++) {
+        var kategoriaAmiKell = szurtKategoriak[j];
+        
+        var ujOpcio = document.createElement("option");
+        ujOpcio.value = kategoriaAmiKell.nev;
+        ujOpcio.innerText = kategoriaAmiKell.nev;
+
+        if (kategoriaAmiKell.tipus === "KUMITE") {
+            kumiteCsoport.appendChild(ujOpcio);
+        } else {
+            kataCsoport.appendChild(ujOpcio);
+        }
+    }
+
+    // Hozzáadjuk a HTML-hez
+    if (kumiteCsoport.children.length > 0) {
+        kategoriaValaszto.appendChild(kumiteCsoport);
+    }
+    if (kataCsoport.children.length > 0) {
+        kategoriaValaszto.appendChild(kataCsoport);
+    }
 }
 
-function addPlayer() {
-    if(currentUser.role!=='admin' && currentUser.role!=='coach') return;
-    const name = document.getElementById('p-name').value.trim();
-    const dojo = document.getElementById('p-dojo').value;
-    const cat = document.getElementById('p-cat').value;
-    
-    if(!name || !cat) { alert("Hiányos adatok!"); return; }
-    
-    const exists = data.players.some(p => p.name===name && p.cat===cat);
-    if(exists) { alert("Már nevezve van ide!"); return; }
+// Amikor megnyomják a HOZZÁADÁS gombot
+function hozzaadVersenyzot() {
+    // Ezt JAVÍTOTTAM: aktualisFelhasznalo a globális változó neve, nem jelenlegiFelhasznalo!
+    var bejelentkezettEmber = aktualisFelhasznalo;
 
-    data.players.push({
-        id: 100 + data.players.length + 1,
-        name, dojo, cat,
-        weight: document.getElementById('p-weight').value,
-        age: document.getElementById('p-age').value,
-        owner: currentUser.username
-    });
-    save(); renderPlayerList(); document.getElementById('p-name').value='';
+    // Megnézzük, van-e joga ehhez
+    var vanJoga = false;
+    if (bejelentkezettEmber.szerepkor === "admin" || bejelentkezettEmber.szerepkor === "coach") {
+        vanJoga = true;
+    }
+
+    if (vanJoga === false) {
+        alert("Nincs jogod ehhez!");
+        return;
+    }
+
+    // Kiszedjük a dobozokból az értékeket
+    var nevDoboz = document.getElementById("p-name");
+    var versenyzoNeve = nevDoboz.value.trim(); // A trim() levágja a felesleges szóközöket
+    
+    var versenyzoDojo = document.getElementById("p-dojo").value;
+    var kivalasztottKategoria = document.getElementById("p-cat").value;
+    var versenyzoSulya = document.getElementById("p-weight").value;
+    var versenyzoKora = document.getElementById("p-age").value;
+
+    // Ellenőrizzük, hogy ki van-e töltve a név és a kategória
+    if (versenyzoNeve === "" || kivalasztottKategoria === "") {
+        alert("Hiányos adatok! Add meg a nevet és a kategóriát is.");
+        return;
+    }
+
+    // Megnézzük, benne van-e már a listában
+    var marBenneVan = false;
+    for (var i = 0; i < adatok.versenyzok.length; i++) {
+        var vizsgaltVersenyzo = adatok.versenyzok[i];
+        
+        if (vizsgaltVersenyzo.nev === versenyzoNeve && vizsgaltVersenyzo.kategoria === kivalasztottKategoria) {
+            marBenneVan = true;
+            break; // Megtaláltuk, nem kell tovább pörgetni a ciklust
+        }
+    }
+
+    if (marBenneVan === true) {
+        alert("Már nevezve van ide ez a versenyző!");
+        return;
+    }
+
+    // Új ID-t csinálunk: 100-ról indul
+    var eddigiJatekosokSzama = adatok.versenyzok.length;
+    var ujAzonosito = 100 + eddigiJatekosokSzama + 1;
+    
+    // Csinálunk egy új objektumot a versenyzőnek
+    var ujVersenyzo = {
+        azonosito: ujAzonosito,
+        nev: versenyzoNeve,
+        klub: versenyzoDojo,
+        kategoria: kivalasztottKategoria,
+        suly: versenyzoSulya,
+        kor: versenyzoKora,
+        // Ide írjuk, hogy ki vette fel (a JAVÍTOTT változóval)
+        tulajdonos: bejelentkezettEmber.felhasznalonev  
+    };
+
+    // Betesszük a nagy tömbbe
+    adatok.versenyzok.push(ujVersenyzo);
+
+    // Elmentjük a gépre
+    mentes();
+
+    // Frissítjük a képernyőt
+    rajzolVersenyzokListajat();
+
+    // Kiürítjük a név dobozt, hogy lehessen írni a következőt
+    nevDoboz.value = "";
 }
 
-function renderPlayerList() {
-    const l = document.getElementById('player-list'); l.innerHTML = '';
-    // Ha nincs bejelentkezve senki, ne haljon meg a kód
-    if(!currentUser) return;
+// Ez rajzolja ki a listát alulra
+function rajzolVersenyzokListajat() {
+    var listaElem = document.getElementById("player-list");
+    listaElem.innerHTML = ""; // Letöröljük a régit
 
-    let vis = (currentUser.role==='admin') ? data.players : data.players.filter(p=>p.owner===currentUser.username);
-    vis.forEach(p => {
-        l.innerHTML += `<li class="border-b py-1 flex justify-between text-sm"><span><b>${p.name}</b> (${p.dojo})</span><span>${p.cat}</span></li>`;
-    });
-}
+    // JAVÍTVA: Ha nincs senki belépve, akkor nem rajzolunk semmit
+    if (aktualisFelhasznalo === null) {
+        return;
+    }
+
+    var miketMutassunk = [];
+    var kiVanBent = aktualisFelhasznalo;
+
+    if (kiVanBent.szerepkor === "admin") {
+        // Az admin mindent lát
+        miketMutassunk = adatok.versenyzok;
+    } else {
+        // Az edző csak a sajátjait látja
+        for (var i = 0; i < adatok.versenyzok.length; i++) {
+            var ember = adatok.versenyzok[i];
+            if (ember.tulajdonos === kiVanBent.felhasznalonev) {
+                miketMutassunk.push(ember);
+            }
+        }
+    }
+
+    // Végigmegyünk azon, amit mutatni kell, és HTML-t ragasztunk össze
+    for (var j = 0; j < miketMutassunk.length; j++) {
+        var mutatasraVaroEmber = miketMutassunk[j];
+        
+        var htmlDarab = '<li class="border-b py-1 flex justify-between text-sm">';
+        // Sima string összefűzés, ahogy az iskolában tanultuk!
+        htmlDarab = htmlDarab + '<span><b>' + mutatasraVaroEmber.nev + '</b> (' + mutatasraVaroEmber.klub + ')</span>';
+        htmlDarab = htmlDarab + '<span>' + mutatasraVaroEmber.kategoria + '</span>';
+        htmlDarab = htmlDarab + '</li>';
+        
+        listaElem.innerHTML = listaElem.innerHTML + htmlDarab;
+    }
+};

@@ -12,6 +12,10 @@
 
 <body class="bg-gray-100 text-zinc-900 font-sans">
 
+    <!-- ============================================ -->
+    <!-- BEJELENTKEZÉSI KÉPERNYŐ -->
+    <!-- Ez a rész látható, amíg a felhasználó nem jelentkezik be -->
+    <!-- ============================================ -->
     <div id="login-overlay" class="fixed inset-0 bg-zinc-900 z-[100] flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-2xl w-96 text-center login-card">
 
@@ -23,7 +27,7 @@
                     class="w-full border p-3 rounded bg-white/80 backdrop-blur-sm">
                 <input id="login-pass" type="password" placeholder="Jelszó"
                     class="w-full border p-3 rounded bg-white/80 backdrop-blur-sm">
-                <button onclick="login()"
+                <button onclick="bejelentkezes()"
                     class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 shadow-lg">BELÉPÉS</button>
             </div>
             <div class="mt-4 text-xs text-gray-400 bg-gray-100 p-2 rounded text-left">
@@ -32,7 +36,11 @@
         </div>
     </div>
 
+    <!-- ============================================ -->
+    <!-- FŐ ALKALMAZÁS - Ez jelenik meg bejelentkezés után -->
+    <!-- ============================================ -->
     <div id="app" class="min-h-screen flex flex-col hidden">
+        <!-- Navigációs sáv - felső menü -->
         <nav class="bg-zinc-900 text-white p-3 shadow-lg sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-4">
@@ -40,15 +48,18 @@
                     <span id="user-badge" class="text-xs px-2 py-1 rounded bg-gray-700">Vendég</span>
                 </div>
                 <div class="space-x-4 text-xs font-bold uppercase flex items-center">
-                    <button id="nav-reg" onclick="switchTab('reg')" class="hidden hover:text-red-500">Nevezés</button>
-                    <button onclick="switchTab('bracket')" class="text-red-500 hover:text-white">Kumite Ágrajz</button>
-                    <button onclick="switchTab('kata')" class="text-blue-400 hover:text-white">KATA Eredmények</button>
-                    <button onclick="logout()"
+                    <button id="nav-reg" onclick="valtFul('reg')" class="hidden hover:text-red-500">Nevezés</button>
+                    <button onclick="valtFul('bracket')" class="text-red-500 hover:text-white">Kumite Ágrajz</button>
+                    <button onclick="valtFul('kata')" class="text-blue-400 hover:text-white">KATA Eredmények</button>
+                    <button onclick="kijelentkezes()"
                         class="border-l pl-4 ml-4 text-gray-400 hover:text-white">Kilépés</button>
                 </div>
             </div>
         </nav>
 
+        <!-- ============================================ -->
+        <!-- NEVEZÉS FÜL - Versenyzők hozzáadása -->
+        <!-- ============================================ -->
         <section id="tab-reg" class="container mx-auto p-8 hidden flex-grow">
             <div class="bg-white p-8 rounded-lg shadow-xl max-w-4xl mx-auto border-t-4 border-red-600">
                 <h2 class="text-xl font-bold mb-6">Versenyzők hozzáadása</h2>
@@ -56,7 +67,7 @@
                     <input id="p-name" type="text" placeholder="Név" class="border p-3 rounded">
                     <input id="p-dojo" type="text" placeholder="Klub" class="border p-3 rounded">
 
-                    <select id="p-gender" onchange="updateCategoryDropdown()"
+                    <select id="p-gender" onchange="frissitKategoriaLegordulot()"
                         class="border p-3 rounded bg-white font-bold">
                         <option value="">Nem kiválasztása...</option>
                         <option value="Boys">Fiú</option>
@@ -64,7 +75,7 @@
                         <option value="Men">Férfi</option>
                         <option value="Women">Női</option>
                     </select>
-                    <input id="p-age" type="number" placeholder="Kor" oninput="updateCategoryDropdown()"
+                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()"
                         class="border p-3 rounded">
                     <input id="p-weight" type="number" placeholder="Súly (kg)" class="border p-3 rounded">
                     <input id="p-height" type="number" placeholder="Magasság (cm)" class="border p-3 rounded">
@@ -73,7 +84,7 @@
                         <option value="">Előbb add meg a kort és a nemet!</option>
                     </select>
                 </div>
-                <button onclick="addPlayer()"
+                <button onclick="hozzaadVersenyzot()"
                     class="bg-zinc-900 text-white px-6 py-3 rounded font-bold w-full hover:bg-red-600 mb-8">HOZZÁADÁS</button>
 
                 <div class="mb-4">
@@ -82,28 +93,38 @@
                 </div>
 
                 <div id="admin-controls" class="hidden grid grid-cols-2 gap-4">
-                    <button onclick="generateKumite()"
+                    <button onclick="generalKumite()"
                         class="bg-red-600 text-white py-3 rounded font-bold uppercase text-xs">Kumite Sorsolás</button>
-                    <button onclick="initKataTournament()"
+                    <button onclick="inditKataVerseny()"
                         class="bg-blue-600 text-white py-3 rounded font-bold uppercase text-xs">Kata Indítása</button>
-                    <button onclick="resetAll()" class="col-span-2 text-xs text-gray-400 underline text-center">Teljes
+                    <button onclick="mindentTorol()" class="col-span-2 text-xs text-gray-400 underline text-center">Teljes
                         Adatbázis Törlése</button>
                 </div>
             </div>
         </section>
 
+        <!-- ============================================ -->
+        <!-- KUMITE ÁGRAJZ FÜL - Verseny ágrajz megjelenítése -->
+        <!-- ============================================ -->
         <section id="tab-bracket" class="bg-white min-h-screen hidden overflow-auto">
             <div id="bracket-view" class="bracket-container"></div>
         </section>
 
+        <!-- ============================================ -->
+        <!-- KATA EREDMÉNYEK FÜL - Kata pontozás és fordulók -->
+        <!-- ============================================ -->
         <section id="tab-kata" class="container mx-auto p-8 hidden">
             <div id="kata-content" class="w-full"></div>
         </section>
 
+        <!-- ============================================ -->
+        <!-- BÍRÓI PANEL - Kumite meccs pontozása -->
+        <!-- Ez egy felugró ablak, ami a meccsek pontozásához kell -->
+        <!-- ============================================ -->
         <section id="tab-referee"
             class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center backdrop-blur-sm">
             <div class="bg-zinc-900 text-white p-6 rounded-2xl max-w-5xl w-full border-4 border-red-700 relative">
-                <button onclick="switchTab('bracket')"
+                <button onclick="valtFul('bracket')"
                     class="absolute top-4 right-4 text-gray-500 hover:text-white font-bold text-xl">✕</button>
 
                 <div class="text-center mb-6 border-b border-zinc-800 pb-4">
@@ -112,9 +133,9 @@
                     <div id="timer" class="text-[6rem] leading-none font-black font-mono text-red-600 timer-glow mb-4">
                         02:00</div>
                     <div class="flex justify-center gap-4">
-                        <button onclick="toggleTimer()" id="btn-timer"
+                        <button onclick="kapcsolIdozitot()" id="btn-timer"
                             class="bg-zinc-700 px-8 py-2 rounded-full font-bold hover:bg-white hover:text-black transition">START</button>
-                        <button onclick="resetMatchScores()"
+                        <button onclick="nullazMeccsPontszamokat()"
                             class="bg-yellow-600 px-8 py-2 rounded-full font-bold hover:bg-yellow-500 text-black transition">RESET</button>
                     </div>
                 </div>
@@ -127,10 +148,10 @@
                         <div class="text-2xl font-bold text-white mb-2 truncate" id="ref-aka">A</div>
                         <div class="text-8xl font-black mb-4 bg-zinc-800 rounded-xl py-2" id="score-aka">0</div>
                         <div class="flex justify-center gap-2">
-                            <button onclick="score('aka', 1)"
+                            <button onclick="pontszamAdas('aka', 1)"
                                 class="bg-blue-900 px-4 py-3 rounded font-bold border-2 border-blue-500 hover:bg-blue-600">WAZARI
                                 (1)</button>
-                            <button onclick="score('aka', 2)"
+                            <button onclick="pontszamAdas('aka', 2)"
                                 class="bg-blue-900 px-4 py-3 rounded font-bold border-2 border-blue-500 text-blue-200 hover:bg-blue-500">IPPON
                                 (2)</button>
                         </div>
@@ -142,10 +163,10 @@
                         <div class="text-2xl font-bold text-white mb-2 truncate" id="ref-shiro">B</div>
                         <div class="text-8xl font-black mb-4 bg-zinc-800 rounded-xl py-2" id="score-shiro">0</div>
                         <div class="flex justify-center gap-2">
-                            <button onclick="score('shiro', 1)"
+                            <button onclick="pontszamAdas('shiro', 1)"
                                 class="bg-red-900 px-4 py-3 rounded font-bold border-2 border-red-500 hover:bg-red-600">WAZARI
                                 (1)</button>
-                            <button onclick="score('shiro', 2)"
+                            <button onclick="pontszamAdas('shiro', 2)"
                                 class="bg-red-900 px-4 py-3 rounded font-bold border-2 border-red-500 text-red-200 hover:bg-red-500">IPPON
                                 (2)</button>
                         </div>
@@ -155,21 +176,54 @@
         </section>
     </div>
 
-    <script src="data.js"></script>
-    <script src="auth.js"></script>
-    <script src="kumite.js"></script>
-    <script src="kata.js"></script>
+    <!-- ============================================ -->
+    <!-- SCRIPT FÁJLOK BETÖLTÉSE - RENDEZETT SORRENDBEN -->
+    <!-- ============================================ -->
+    
+    <!-- 1. DATA.JS - Alapadatok betöltése -->
+    <!-- Ez a fájl tartalmazza: versenyzők listája, kategóriák, felhasználók adatai -->
+    <script src="DATA.js"></script>
+    
+    <!-- 2. AUTH.JS - Bejelentkezés és jogosultságok -->
+    <!-- Ez a fájl kezeli: belépés, kijelentkezés, felhasználói szerepkörök, nézetváltás -->
+    <script src="AUTH.js"></script>
+    
+    <!-- 3. KUMITE.JS - Kumite verseny kezelése -->
+    <!-- Ez a fájl kezeli: sorsolás, ágrajz generálása, bírói panel, pontszámítás -->
+    <script src="KUMITE.js"></script>
+    
+    <!-- 4. KATA.JS - Kata verseny kezelése -->
+    <!-- Ez a fájl kezeli: kata pontozás, fordulók, TOP 6 kiválasztása -->
+    <script src="KATA.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- BETÖLTÉSI ELLENŐRZÉS - DEBUG KÓD -->
+    <!-- ============================================ -->
     <script>
-        // Ellenőrzés: Kiírjuk a konzolra, ha valami nem töltött be
+        // Ez a függvény ellenőrzi, hogy minden szükséges fájl betöltődött-e
+        // Ha valami hiányzik, hibát ír a konzolra, hogy könnyebb legyen a hibakeresés
+        function ellenorizFuggvenyeket() {
+            // Első lépés: ellenőrizzük az auth.js fájlt
+            // A bejelentkezes függvénynek léteznie kell, ha az auth.js betöltődött
+            var bejelentkezesFuggvenyLetezik = typeof bejelentkezes === "function";
+            if (!bejelentkezesFuggvenyLetezik) {
+                console.error("HIBA: Az AUTH.js nem töltődött be, a bejelentkezes függvény hiányzik!");
+            }
+
+            // Második lépés: ellenőrizzük a data.js fájlt
+            // A FELHASZNALOK tömbnek léteznie kell, ha a data.js betöltődött
+            var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
+            if (!felhasznalokTombLetezik) {
+                console.error("HIBA: A DATA.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
+            }
+        }
+
+        // Amikor az oldal teljesen betöltődött, futtatjuk az ellenőrzést
         window.onload = function () {
             console.log("Rendszer betöltve.");
-            if (typeof login !== 'function') console.error("HIBA: Az auth.js nem töltődött be!");
-            if (typeof USERS === 'undefined') console.error("HIBA: A data.js nem töltődött be!");
+            // Külön lépésben ellenőrizzük a függőségeket
+            ellenorizFuggvenyeket();
         };
     </script>
 </body>
-
-</html>
-</body>
-
 </html>
