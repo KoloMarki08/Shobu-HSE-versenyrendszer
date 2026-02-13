@@ -18,7 +18,7 @@ function generalKumite() {
     }
 
     var jatekosok = [];
-    
+
     // Kiválogatjuk azokat, akik ebbe a kategóriába neveztek
     for (var i = 0; i < adatok.versenyzok.length; i++) {
         var ember = adatok.versenyzok[i];

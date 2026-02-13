@@ -10,165 +10,136 @@
     <link rel="icon" href="logo.jpg">
 </head>
 
-<body class="bg-gray-100 text-zinc-900 font-sans">
+<body class="oldal-alap-hattere">
 
-    <!-- ============================================ -->
-    <!-- BEJELENTKEZÉSI KÉPERNYŐ -->
-    <!-- Ez a rész látható, amíg a felhasználó nem jelentkezik be -->
-    <!-- ============================================ -->
-    <div id="login-overlay" class="fixed inset-0 bg-zinc-900 z-[100] flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-2xl w-96 text-center login-card">
+    <div id="login-overlay" class="teljes-kepernyos-fekete-hatter">
+        <div class="feher-bejelentkezo-doboz login-card">
 
-            <h1 class="text-2xl font-black italic mb-6 relative z-10">SHOBU HSE <span class="text-red-600">VERSENYRENDSZER</span>
+            <h1 class="focim">
+                SHOBU HSE <span class="piros-kiemeles">VERSENYRENDSZER</span>
             </h1>
 
-            <div class="space-y-4 relative z-10">
-                <input id="login-user" type="text" placeholder="Felhasználónév"
-                    class="w-full border p-3 rounded bg-white/80 backdrop-blur-sm">
-                <input id="login-pass" type="password" placeholder="Jelszó"
-                    class="w-full border p-3 rounded bg-white/80 backdrop-blur-sm">
-                <button onclick="bejelentkezes()"
-                    class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 shadow-lg">BELÉPÉS</button>
+            <div class="beviteli-mezok-taroloja">
+                <input id="login-user" type="text" placeholder="Felhasználónév" class="szoveg-doboz">
+                <input id="login-pass" type="password" placeholder="Jelszó" class="szoveg-doboz">
+                <button onclick="bejelentkezes()" class="belepes-gomb">BELÉPÉS</button>
             </div>
-            <div class="mt-4 text-xs text-gray-400 bg-gray-100 p-2 rounded text-left">
+            
+            <div class="jelszo-emlekezteto-doboz">
                 Teszt: <b>KoloMarki / 1234</b>, <b>A tatami / A-tatami</b>, <b>Balint.Tornai / 1234</b>
             </div>
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- FŐ ALKALMAZÁS - Ez jelenik meg bejelentkezés után -->
-    <!-- ============================================ -->
-    <div id="app" class="min-h-screen flex flex-col hidden">
-        <!-- Navigációs sáv - felső menü -->
-        <nav class="bg-zinc-900 text-white p-3 shadow-lg sticky top-0 z-50">
-            <div class="container mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <span class="font-bold italic text-lg tracking-wider">SHOBU HSE <span class="text-red-600">Versenyrendszer</span></span>
-                    <span id="user-badge" class="text-xs px-2 py-1 rounded bg-gray-700">Vendég</span>
+    <div id="app" class="fo-alkalmazas-tarolo hidden">
+        
+        <nav class="felso-menusor">
+            <div class="menu-tartalom">
+                
+                <div class="logonk">
+                    <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
+                    <span id="user-badge" class="felhasznalo-jelzo">Vendég</span>
                 </div>
-                <div class="space-x-4 text-xs font-bold uppercase flex items-center">
-                    <button id="nav-reg" onclick="valtFul('reg')" class="hidden hover:text-red-500">Nevezés</button>
-                    <button onclick="valtFul('bracket')" class="text-red-500 hover:text-white">Kumite Ágrajz</button>
-                    <button onclick="valtFul('kata')" class="text-blue-400 hover:text-white">KATA Eredmények</button>
-                    <button onclick="kijelentkezes()"
-                        class="border-l pl-4 ml-4 text-gray-400 hover:text-white">Kilépés</button>
+                
+                <div class="menu-gombok">
+                    <button id="nav-reg" onclick="valtFul('reg')" class="menu-gomb-nevezes hidden">Nevezés</button>
+                    <button onclick="valtFul('bracket')" class="menu-gomb-kumite">Kumite Ágrajz</button>
+                    <button onclick="valtFul('kata')" class="menu-gomb-kata">KATA Eredmények</button>
+                    <button onclick="kijelentkezes()" class="menu-gomb-kilepes">Kilépés</button>
                 </div>
+
             </div>
         </nav>
 
-        <!-- ============================================ -->
-        <!-- NEVEZÉS FÜL - Versenyzők hozzáadása -->
-        <!-- ============================================ -->
-        <section id="tab-reg" class="container mx-auto p-8 hidden flex-grow">
-            <div class="bg-white p-8 rounded-lg shadow-xl max-w-4xl mx-auto border-t-4 border-red-600">
-                <h2 class="text-xl font-bold mb-6">Versenyzők hozzáadása</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <input id="p-name" type="text" placeholder="Név" class="border p-3 rounded">
-                    <input id="p-dojo" type="text" placeholder="Klub" class="border p-3 rounded">
+        <section id="tab-reg" class="nevezes-oldal hidden">
+            <div class="nevezes-feher-doboz">
+                <h2 class="doboz-cime">Versenyzők hozzáadása</h2>
+                
+                <div class="urlap-racs">
+                    <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
+                    <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
 
-                    <select id="p-gender" onchange="frissitKategoriaLegordulot()"
-                        class="border p-3 rounded bg-white font-bold">
+                    <select id="p-gender" onchange="frissitKategoriaLegordulot()" class="urlap-legordulo">
                         <option value="">Nem kiválasztása...</option>
                         <option value="Boys">Fiú</option>
                         <option value="Girls">Lány</option>
                         <option value="Men">Férfi</option>
                         <option value="Women">Női</option>
                     </select>
-                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()"
-                        class="border p-3 rounded">
-                    <input id="p-weight" type="number" placeholder="Súly (kg)" class="border p-3 rounded">
-                    <input id="p-height" type="number" placeholder="Magasság (cm)" class="border p-3 rounded">
+                    
+                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()" class="urlap-szamdoboz">
+                    <input id="p-weight" type="number" placeholder="Súly (kg)" class="urlap-szamdoboz">
+                    <input id="p-height" type="number" placeholder="Magasság (cm)" class="urlap-szamdoboz">
 
-                    <select id="p-cat" class="border p-3 rounded font-bold text-red-700 bg-white md:col-span-2">
+                    <select id="p-cat" class="urlap-kategoria-valaszto">
                         <option value="">Előbb add meg a kort és a nemet!</option>
                     </select>
                 </div>
-                <button onclick="hozzaadVersenyzot()"
-                    class="bg-zinc-900 text-white px-6 py-3 rounded font-bold w-full hover:bg-red-600 mb-8">HOZZÁADÁS</button>
+                
+                <button onclick="hozzaadVersenyzot()" class="hozzaadas-gomb">HOZZÁADÁS</button>
 
-                <div class="mb-4">
-                    <h3 class="font-bold border-b pb-2">Nevezettek listája</h3>
-                    <ul id="player-list" class="text-sm space-y-2 mt-2 max-h-40 overflow-y-auto"></ul>
+                <div class="nevezettek-listaja-doboz">
+                    <h3 class="lista-cime">Nevezettek listája</h3>
+                    <ul id="player-list" class="lista-elemek"></ul>
                 </div>
 
-                <div id="admin-controls" class="hidden grid grid-cols-2 gap-4">
-                    <button onclick="generalKumite()"
-                        class="bg-red-600 text-white py-3 rounded font-bold uppercase text-xs">Kumite Sorsolás</button>
-                    <button onclick="inditKataVerseny()"
-                        class="bg-blue-600 text-white py-3 rounded font-bold uppercase text-xs">Kata Indítása</button>
-                    <button onclick="mindentTorol()" class="col-span-2 text-xs text-gray-400 underline text-center">Teljes
-                        Adatbázis Törlése</button>
+                <div id="admin-controls" class="admin-gombok hidden">
+                    <button onclick="generalKumite()" class="admin-gomb-sorsolas">Kumite Sorsolás</button>
+                    <button onclick="inditKataVerseny()" class="admin-gomb-kata">Kata Indítása</button>
+                    <button onclick="toroljMindent()" class="admin-gomb-torles">Teljes Adatbázis Törlése</button>
                 </div>
             </div>
         </section>
 
-        <!-- ============================================ -->
-        <!-- KUMITE ÁGRAJZ FÜL - Verseny ágrajz megjelenítése -->
-        <!-- ============================================ -->
-        <section id="tab-bracket" class="bg-white min-h-screen hidden overflow-auto">
-            <div id="bracket-view" class="bracket-container"></div>
+        <section id="tab-bracket" class="kumite-agrajz-oldal hidden">
+            <div id="bracket-view" class="agrajz-taroloja bracket-container"></div>
         </section>
 
-        <!-- ============================================ -->
-        <!-- KATA EREDMÉNYEK FÜL - Kata pontozás és fordulók -->
-        <!-- ============================================ -->
-        <section id="tab-kata" class="container mx-auto p-8 hidden">
-            <div id="kata-content" class="w-full"></div>
+        <section id="tab-kata" class="kata-eredmenyek-oldal hidden">
+            <div id="kata-content" class="kata-taroloja"></div>
         </section>
 
-        <!-- ============================================ -->
-        <!-- BÍRÓI PANEL - Kumite meccs pontozása -->
-        <!-- Ez egy felugró ablak, ami a meccsek pontozásához kell -->
-        <!-- ============================================ -->
-        <section id="tab-referee"
-            class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center backdrop-blur-sm">
-            <div class="bg-zinc-900 text-white p-6 rounded-2xl max-w-5xl w-full border-4 border-red-700 relative">
-                <button onclick="valtFul('bracket')"
-                    class="absolute top-4 right-4 text-gray-500 hover:text-white font-bold text-xl">✕</button>
+        <section id="tab-referee" class="biroi-panel-hatter hidden">
+            <div class="biroi-panel-doboz">
+                
+                <button onclick="valtFul('bracket')" class="bezaras-gomb">✕</button>
 
-                <div class="text-center mb-6 border-b border-zinc-800 pb-4">
-                    <h3 id="match-category-title" class="text-red-500 font-bold uppercase tracking-widest mb-2">
-                        Kategória</h3>
-                    <div id="timer" class="text-[6rem] leading-none font-black font-mono text-red-600 timer-glow mb-4">
-                        02:00</div>
-                    <div class="flex justify-center gap-4">
-                        <button onclick="kapcsolIdozitot()" id="btn-timer"
-                            class="bg-zinc-700 px-8 py-2 rounded-full font-bold hover:bg-white hover:text-black transition">START</button>
-                        <button onclick="nullazMeccsPontszamokat()"
-                            class="bg-yellow-600 px-8 py-2 rounded-full font-bold hover:bg-yellow-500 text-black transition">RESET</button>
+                <div class="idozito-reszleg">
+                    <h3 id="match-category-title" class="meccs-kategoria-cime">Kategória</h3>
+                    <div id="timer" class="hatalmas-idozito timer-glow">02:00</div>
+                    
+                    <div class="idozito-gombok">
+                        <button onclick="kapcsolIdozitot()" id="btn-timer" class="ido-start-gomb">START</button>
+                        <button onclick="nullazMeccsPontszamokat()" class="ido-reset-gomb">RESET</button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-12 text-center">
-                    <div>
-                        <div class="flex items-center justify-center gap-2 mb-2">
-                            <div class="w-4 h-4 bg-blue-600"></div><span class="text-blue-500 font-bold">AKA</span>
+                <div class="jatekosok-reszlege">
+                    <div class="kek-jatekos-oldala">
+                        <div class="szin-jelzo">
+                            <div class="kicsi-kek-negyzet"></div>
+                            <span class="szin-szoveg-kek">AKA</span>
                         </div>
-                        <div class="text-2xl font-bold text-white mb-2 truncate" id="ref-aka">A</div>
-                        <div class="text-8xl font-black mb-4 bg-zinc-800 rounded-xl py-2" id="score-aka">0</div>
-                        <div class="flex justify-center gap-2">
-                            <button onclick="pontszamAdas('aka', 1)"
-                                class="bg-blue-900 px-4 py-3 rounded font-bold border-2 border-blue-500 hover:bg-blue-600">WAZARI
-                                (1)</button>
-                            <button onclick="pontszamAdas('aka', 2)"
-                                class="bg-blue-900 px-4 py-3 rounded font-bold border-2 border-blue-500 text-blue-200 hover:bg-blue-500">IPPON
-                                (2)</button>
+                        <div class="jatekos-neve" id="ref-aka">A Játékos</div>
+                        <div class="jatekos-pontja" id="score-aka">0</div>
+                        
+                        <div class="pontadas-gombok">
+                            <button onclick="pontszamAdas('aka', 1)" class="pont-gomb pont-gomb-kek">WAZARI (1)</button>
+                            <button onclick="pontszamAdas('aka', 2)" class="pont-gomb pont-gomb-kek-vilagos">IPPON (2)</button>
                         </div>
                     </div>
-                    <div>
-                        <div class="flex items-center justify-center gap-2 mb-2">
-                            <div class="w-4 h-4 bg-red-600"></div><span class="text-red-500 font-bold">SHIRO</span>
+                    
+                    <div class="piros-jatekos-oldala">
+                        <div class="szin-jelzo">
+                            <div class="kicsi-piros-negyzet"></div>
+                            <span class="szin-szoveg-piros">SHIRO</span>
                         </div>
-                        <div class="text-2xl font-bold text-white mb-2 truncate" id="ref-shiro">B</div>
-                        <div class="text-8xl font-black mb-4 bg-zinc-800 rounded-xl py-2" id="score-shiro">0</div>
-                        <div class="flex justify-center gap-2">
-                            <button onclick="pontszamAdas('shiro', 1)"
-                                class="bg-red-900 px-4 py-3 rounded font-bold border-2 border-red-500 hover:bg-red-600">WAZARI
-                                (1)</button>
-                            <button onclick="pontszamAdas('shiro', 2)"
-                                class="bg-red-900 px-4 py-3 rounded font-bold border-2 border-red-500 text-red-200 hover:bg-red-500">IPPON
-                                (2)</button>
+                        <div class="jatekos-neve" id="ref-shiro">B Játékos</div>
+                        <div class="jatekos-pontja" id="score-shiro">0</div>
+                        
+                        <div class="pontadas-gombok">
+                            <button onclick="pontszamAdas('shiro', 1)" class="pont-gomb pont-gomb-piros">WAZARI (1)</button>
+                            <button onclick="pontszamAdas('shiro', 2)" class="pont-gomb pont-gomb-piros-vilagos">IPPON (2)</button>
                         </div>
                     </div>
                 </div>
@@ -176,26 +147,50 @@
         </section>
     </div>
 
+    <footer class="lablec-tarolo">
+        <div class="lablec-tartalom">
+            
+            <div class="lablec-bal-oldal">
+                <h3 class="lablec-cime">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></h3>
+                <p class="lablec-leiras">
+                    Professzionális Kyokushin Karate versenykezelő szoftver. 
+                    Készült a modern és gyors versenybonyolítás támogatására.
+                    Készítette: Kolonics Márk
+                </p>
+            </div>
+            
+            <div class="lablec-jobb-oldal">
+                <a href="#" class="lablec-link">Kapcsolat</a>
+                <a href="#" class="lablec-link">Adatvédelem</a>
+                <a href="#" class="lablec-link">Súgó</a>
+            </div>
+
+        </div>
+        
+        <div class="lablec-also-sav">
+            <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
+        </div>
+    </footer>
     <!-- ============================================ -->
     <!-- SCRIPT FÁJLOK BETÖLTÉSE - RENDEZETT SORRENDBEN -->
     <!-- ============================================ -->
-    
-    <!-- 1. DATA.JS - Alapadatok betöltése -->
+
+    <!-- 1. data.js - Alapadatok betöltése -->
     <!-- Ez a fájl tartalmazza: versenyzők listája, kategóriák, felhasználók adatai -->
-    <script src="DATA.js"></script>
-    
-    <!-- 2. AUTH.JS - Bejelentkezés és jogosultságok -->
+    <script src="data.js"></script>
+
+    <!-- 2. auth.js - Bejelentkezés és jogosultságok -->
     <!-- Ez a fájl kezeli: belépés, kijelentkezés, felhasználói szerepkörök, nézetváltás -->
-    <script src="AUTH.js"></script>
-    
-    <!-- 3. KUMITE.JS - Kumite verseny kezelése -->
+    <script src="auth.js"></script>
+
+    <!-- 3. kumite.js - Kumite verseny kezelése -->
     <!-- Ez a fájl kezeli: sorsolás, ágrajz generálása, bírói panel, pontszámítás -->
-    <script src="KUMITE.js"></script>
-    
-    <!-- 4. KATA.JS - Kata verseny kezelése -->
+    <script src="kumite.js"></script>
+
+    <!-- 4. kata.js - Kata verseny kezelése -->
     <!-- Ez a fájl kezeli: kata pontozás, fordulók, TOP 6 kiválasztása -->
-    <script src="KATA.js"></script>
-    
+    <script src="kata.js"></script>
+
     <!-- ============================================ -->
     <!-- BETÖLTÉSI ELLENŐRZÉS - DEBUG KÓD -->
     <!-- ============================================ -->
@@ -207,15 +202,15 @@
             // A bejelentkezes függvénynek léteznie kell, ha az auth.js betöltődött
             var bejelentkezesFuggvenyLetezik = typeof bejelentkezes === "function";
             if (!bejelentkezesFuggvenyLetezik) {
-                console.error("HIBA: Az AUTH.js nem töltődött be, a bejelentkezes függvény hiányzik!");
+                console.error("HIBA: Az auth.js nem töltődött be, a bejelentkezes függvény hiányzik!");
             }
-
             // Második lépés: ellenőrizzük a data.js fájlt
             // A FELHASZNALOK tömbnek léteznie kell, ha a data.js betöltődött
             var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
             if (!felhasznalokTombLetezik) {
-                console.error("HIBA: A DATA.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
+                console.error("HIBA: A data.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
             }
+
         }
 
         // Amikor az oldal teljesen betöltődött, futtatjuk az ellenőrzést

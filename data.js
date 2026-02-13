@@ -105,7 +105,7 @@ const OSSZES_KATEGORIA = [
 const FELHASZNALOK = [
     { felhasznalonev: 'KoloMarki', jelszo: '1234', szerepkor: 'admin', klub: 'admin', nev: 'Admin' },
     { felhasznalonev: 'A tatami', jelszo: 'A-tatami', szerepkor: 'judge', klub: '-', nev: 'A_Tatami' },
-    { felhasznalonev: 'Balint.Tornai', jelszo: '1234', szerepkor: 'coach', klub: 'Shobu HSE', nev: 'Edző' }
+    { felhasznalonev: 'Balint.Tornai', jelszo: '1234', szerepkor: 'coach', klub: 'Vácrátóti HSE', nev: 'Tornai Balint' }
 ];
 
 // ==========================================

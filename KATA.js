@@ -1,289 +1,387 @@
-/* kata.js - Kata pontozási és forduló-kezelési logika, egyszerű, "junior" stílusban megírva */
+/* KATA.js - Kata pontozási és forduló-kezelési logika, junior stílusban! */
 
-// Kata verseny inicializálása: ellenőrzések és adatok előkészítése
-function inicializalKataVersenyt() {
-    // 1. lépés: Ellenőrizzük, hogy admin-e a felhasználó
-    // Csak admin indíthat kata versenyt
+// ==========================================
+// 1. KATA VERSENY INDÍTÁSA
+// ==========================================
+function inditKataVerseny() {
     if (aktualisFelhasznalo.szerepkor !== 'admin') {
-        alert("Csak Admin!");
-        return; // Ha nem admin, kilépünk a függvényből
+        alert("Csak Admin indíthatja el!");
+        return;
     }
 
-    // 2. lépés: Kiolvassuk a kiválasztott kategóriát
     var kategoriaSelect = document.getElementById('p-cat');
     var kivalasztottKategoria = kategoriaSelect.value;
 
-    // 3. lépés: Ellenőrizzük, hogy Kata típusú-e a kategória
-    // A kategória nevében szerepelnie kell a "Kata" szónak
     var kataKategoriaE = kivalasztottKategoria.includes("Kata");
-    if (!kataKategoriaE) {
-        alert("Nem Kata!");
-        return; // Ha nem Kata kategória, kilépünk
+    if (kataKategoriaE === false) {
+        alert("Ez nem Kata kategória!");
+        return;
     }
 
-    // 4. lépés: Kiszűrjük azokat a játékosokat, akik ebben a kategóriában neveztek
-    var osszesJatekos = adatok.players;
+    var osszesJatekos = adatok.versenyzok;
     var jatekosokKategoriaban = [];
     
     for (var i = 0; i < osszesJatekos.length; i++) {
         var aktualisJatekos = osszesJatekos[i];
-        if (aktualisJatekos.cat === kivalasztottKategoria) {
+        if (aktualisJatekos.kategoria === kivalasztottKategoria) {
             jatekosokKategoriaban.push(aktualisJatekos);
         }
     }
 
-    // 5. lépés: Ellenőrizzük, hogy van-e legalább egy nevezett játékos
-    var jatekosokSzama = jatekosokKategoriaban.length;
-    if (jatekosokSzama === 0) {
-        alert("Üres!");
-        return; // Ha nincs játékos, kilépünk
+    if (jatekosokKategoriaban.length === 0) {
+        alert("Nincs nevező ebben a kategóriában!");
+        return;
     }
 
-    // 6. lépés: Előkészítjük az első forduló játékosait
-    // Minden játékosnak 5 pontszáma lesz (5 bíró), kezdetben mind 0
     var elsoForduloJatekosok = [];
     for (var j = 0; j < jatekosokKategoriaban.length; j++) {
         var jatekos = jatekosokKategoriaban[j];
         var jatekosPontszamokkal = {
-            id: jatekos.id,
-            name: jatekos.name,
-            dojo: jatekos.dojo,
-            cat: jatekos.cat,
-            scores: [0, 0, 0, 0, 0], // 5 bíró pontszámai
-            total: 0 // Összesített pontszám (később számoljuk)
+            azonosito: jatekos.azonosito,
+            nev: jatekos.nev,
+            klub: jatekos.klub,
+            kategoria: jatekos.kategoria,
+            pontszamok: [0, 0, 0, 0, 0], // 5 bíró pontszámai, kezdetben nulla
+            osszesitett: 0, // Ide jön a 3 középső összege
+            kiesettMin: 0,  // Itt tároljuk a legkisebb eldobottat
+            kiesettMax: 0   // Itt tároljuk a legnagyobb eldobottat
         };
         elsoForduloJatekosok.push(jatekosPontszamokkal);
     }
 
-    // 7. lépés: Létrehozzuk a kata verseny adatstruktúráját
-    // Ez egy objektum, ami tartalmazza a kategóriát, az első és második forduló játékosait
-    var kataData = {
-        category: kivalasztottKategoria, // Melyik kategória
-        round1: elsoForduloJatekosok,      // Első forduló játékosai
-        round2: [],                 // Második forduló játékosai (még üres)
-        activeRound: 1              // Melyik forduló aktív (1 = első, 2 = második)
+    var kataAdatbazis = {
+        kategoria: kivalasztottKategoria, 
+        elsoFordulo: elsoForduloJatekosok,      
+        masodikFordulo: [],                 
+        aktivFordulo: 1              
     };
 
-    // 8. lépés: Elmentjük a localStorage-ba, hogy később is elérhető legyen
-    var kataDataJson = JSON.stringify(kataData);
+    var kataDataJson = JSON.stringify(kataAdatbazis);
     localStorage.setItem('iko_kata_db', kataDataJson);
 
-    // 9. lépés: Megjelenítjük a kata pontozási felületet és átváltunk a kata fülre
     rajzolKata();
     valtFul('kata');
 }
 
-// Bemeneti mező formázása: csak számokat engedünk be, és automatikusan pontot teszünk közé
+// ==========================================
+// 2. BEVITEL FORMÁZÁSA (Pl. 75 -> 7.5)
+// ==========================================
 function formazKataBevitel(bevitelMezo, jatekosIndex, biroIndex) {
-    // 1. lépés: Kiolvassuk a beírt értéket
-    var bemenetErtek = bemenet.value;
+    var bemenetErtek = bevitelMezo.value;
 
-    // 2. lépés: Eltávolítjuk az összes nem-szám karaktert (betűk, szóközök, stb.)
-    // A replace(/\D/g, '') azt jelenti: cserélj le minden nem-szám karaktert üres stringre
-    // \D = minden karakter, ami NEM szám (0-9)
-    // g = "global", azaz az összes előfordulást cseréljük le, nem csak az elsőt
+    // Kicserélünk mindent, ami nem szám, a semmire (töröljük a betűket)
     var csakSzamok = bemenetErtek.replace(/\D/g, '');
-
-    // 3. lépés: Ha pontosan 2 számjegyet írtak be, formázzuk "X.Y" formátumra
-    // Például: "75" -> "7.5"
     var bemenetHossz = csakSzamok.length;
     
+    // Ha beírtak két számot, teszünk közé egy pontot
     if (bemenetHossz === 2) {
-        // Két számjegy esetén: első számjegy + pont + második számjegy
         var elsoSzamjegy = csakSzamok[0];
         var masodikSzamjegy = csakSzamok[1];
         var formazottErtek = elsoSzamjegy + "." + masodikSzamjegy;
         
-        // Beállítjuk a formázott értéket a mezőbe
-        bemenet.value = formazottErtek;
+        bevitelMezo.value = formazottErtek;
         
-        // Frissítjük a pontszámot az adatbázisban
+        // Szólunk a másik függvénynek, hogy számoljon!
         frissitKataPontszam(jatekosIndex, biroIndex, formazottErtek);
         
-        // Automatikusan átugrik a következő mezőre (ha van)
-        var kovetkezoBemenet = bemenet.nextElementSibling;
-        if (kovetkezoBemenet) {
+        // Automatikusan ugrunk a következő dobozra
+        var kovetkezoBemenet = bevitelMezo.nextElementSibling;
+        if (kovetkezoBemenet !== null) {
             kovetkezoBemenet.focus();
         }
     } else {
-        // Ha nem 2 számjegy, csak a számokat hagyjuk meg (de nem formázzuk)
-        bemenet.value = csakSzamok;
+        bevitelMezo.value = csakSzamok;
     }
 }
 
-// Kata pontozási táblázat megjelenítése
-function rajzolKata() {
-    // 1. lépés: Betöltjük a kata adatokat a localStorage-ból
-    var kataAdatJson = localStorage.getItem('iko_kata_db');
-    
-    // Ha nincs adat, kilépünk
-    if (!kataAdatJson) {
-        return;
+// ==========================================
+// 3. PONTSZÁMOK, ÖSSZEG ÉS HOLTVERSENY KEZELÉSE
+// ==========================================
+function frissitKataPontszam(jatekosIndex, biroIndex, ertek) {
+    var kataDataJson = localStorage.getItem('iko_kata_db');
+    var kataData = JSON.parse(kataDataJson);
+
+    var jatekosokLista = [];
+    if (kataData.aktivFordulo === 1) {
+        jatekosokLista = kataData.elsoFordulo;
+    } else {
+        jatekosokLista = kataData.masodikFordulo;
     }
+
+    // Beírjuk a bíró pontját a tömbbe
+    var pontszamSzamkent = parseFloat(ertek);
+    if (isNaN(pontszamSzamkent)) {
+        pontszamSzamkent = 0; 
+    }
+    jatekosokLista[jatekosIndex].pontszamok[biroIndex] = pontszamSzamkent;
+
+    var pontszamok = jatekosokLista[jatekosIndex].pontszamok;
+    var osszeg = 0;
+    var nullasBirokSzama = 0; 
+    
+    for (var i = 0; i < pontszamok.length; i++) {
+        osszeg = osszeg + pontszamok[i];
+        if (pontszamok[i] === 0) {
+            nullasBirokSzama = nullasBirokSzama + 1;
+        }
+    }
+
+    // Ha mind az 5 bíró adott pontot:
+    if (nullasBirokSzama === 0) {
+        var legkisebbPontszam = pontszamok[0];
+        for (var j = 1; j < pontszamok.length; j++) {
+            if (pontszamok[j] < legkisebbPontszam) {
+                legkisebbPontszam = pontszamok[j];
+            }
+        }
+
+        var legnagyobbPontszam = pontszamok[0];
+        for (var k = 1; k < pontszamok.length; k++) {
+            if (pontszamok[k] > legnagyobbPontszam) {
+                legnagyobbPontszam = pontszamok[k];
+            }
+        }
+
+        var veglegesOsszeg = osszeg - legkisebbPontszam - legnagyobbPontszam;
+        var kerekitettVeglegesOsszeg = Math.round(veglegesOsszeg * 100) / 100;
+
+        // Eltároljuk az értékeket a játékosnál
+        jatekosokLista[jatekosIndex].osszesitett = kerekitettVeglegesOsszeg;
+        jatekosokLista[jatekosIndex].kiesettMin = legkisebbPontszam;
+        jatekosokLista[jatekosIndex].kiesettMax = legnagyobbPontszam;
+
+    } else {
+        jatekosokLista[jatekosIndex].osszesitett = 0;
+        jatekosokLista[jatekosIndex].kiesettMin = 0;
+        jatekosokLista[jatekosIndex].kiesettMax = 0;
+    }
+
+    // --- TELJES HOLTVERSENY ELLENŐRZÉSE ---
+    // Megnézzük, hogy az egész csoportban mindenkinek megvan-e már az 5 pontja
+    var mindenkiKesz = true;
+    for (var m = 0; m < jatekosokLista.length; m++) {
+        if (jatekosokLista[m].osszesitett === 0) {
+            mindenkiKesz = false;
+        }
+    }
+
+    // Ha vége a körnek, ellenőrizzük, van-e abszolút döntetlen!
+    if (mindenkiKesz === true) {
+        for (var a = 0; a < jatekosokLista.length - 1; a++) {
+            for (var b = a + 1; b < jatekosokLista.length; b++) {
+                var ember1 = jatekosokLista[a];
+                var ember2 = jatekosokLista[b];
+
+                // Ha a pont, a min, ÉS a max is teljesen ugyanaz
+                if (ember1.osszesitett === ember2.osszesitett &&
+                    ember1.kiesettMin === ember2.kiesettMin &&
+                    ember1.kiesettMax === ember2.kiesettMax &&
+                    ember1.osszesitett > 0) {
+
+                    alert("⚠️ ABSZOLÚT DÖNTETLEN!\n\n" + ember1.nev + " és " + ember2.nev + " pontjai teljesen megegyeznek (Összeg, Min és Max is).\nÚjra kell katázniuk, a pontjaikat töröltük!");
+
+                    // Pontok törlése mindkét embernél
+                    ember1.pontszamok = [0, 0, 0, 0, 0];
+                    ember1.osszesitett = 0;
+                    ember1.kiesettMin = 0;
+                    ember1.kiesettMax = 0;
+
+                    ember2.pontszamok = [0, 0, 0, 0, 0];
+                    ember2.osszesitett = 0;
+                    ember2.kiesettMin = 0;
+                    ember2.kiesettMax = 0;
+                }
+            }
+        }
+    }
+
+    var frissitettKataDataJson = JSON.stringify(kataData);
+    localStorage.setItem('iko_kata_db', frissitettKataDataJson);
+
+    rajzolKata();
+}
+
+// ==========================================
+// 4. KÉPERNYŐ KIRAJZOLÁSA ÉS HELYEZÉSEK
+// ==========================================
+function rajzolKata() {
+    var kataAdatJson = localStorage.getItem('iko_kata_db');
+    if (kataAdatJson === null) return;
     
     var kataData = JSON.parse(kataAdatJson);
-
-    // 2. lépés: Megkeressük a tárolót, ahova a tartalmat írni fogjuk
     var tartalom = document.getElementById('kata-content');
-    tartalom.innerHTML = ""; // Ürítjük a tárolót
+    tartalom.innerHTML = ""; 
 
-    // 3. lépés: Ellenőrizzük, hogy van-e első forduló adat
-    if (!kataData || !kataData.round1) {
-        return; // Ha nincs adat, kilépünk
+    if (kataData === null || kataData.elsoFordulo === undefined) return;
+
+    var szerkeszthetoE = false;
+    if (aktualisFelhasznalo.szerepkor === 'admin' || aktualisFelhasznalo.szerepkor === 'judge') {
+        szerkeszthetoE = true;
     }
 
-    // 4. lépés: Meghatározzuk, hogy ki szerkesztheti a pontszámokat
-    // Admin és bíró szerkeszthet, mások csak nézhetik
-    var felhasznaloSzerepkor = jelenlegiFelhasznalo.szerepkor;
-    var szerkeszthetoE = (felhasznaloSzerepkor === 'admin' || felhasznaloSzerepkor === 'judge');
+    var bevitelOsztaly = szerkeszthetoE ? "score-input border bg-white text-center w-12" : "score-input bg-gray-100 disabled text-center w-12"; 
 
-    // 5. lépés: CSS osztályok beállítása a szerkeszhetőség alapján
-    var bevitelOsztaly;
-    if (szerkeszthetoE) {
-        bevitelOsztaly = "score-input border bg-white"; // Szerkeszthető: fehér háttér, szegély
+    tartalom.innerHTML += '<h2 class="text-xl font-bold mb-4 border-b pb-2">Kata: ' + kataData.kategoria + '</h2>';
+
+    var megjelenitendoJatekosok = [];
+    if (kataData.aktivFordulo === 1) {
+        megjelenitendoJatekosok = kataData.elsoFordulo; 
     } else {
-        bevitelOsztaly = "score-input bg-gray-100 disabled"; // Csak olvasható: szürke háttér
+        megjelenitendoJatekosok = kataData.masodikFordulo; 
     }
 
-    // 6. lépés: Fejléc HTML létrehozása
-    var kategoriaNev = kataData.category;
-    var fejlecHtml = '<h2 class="text-xl font-bold mb-4 border-b pb-2">Kata: ' + kategoriaNev + '</h2>';
-    tartalom.innerHTML += fejlecHtml;
+    // --- VÉGEREDMÉNY ELLENŐRZÉSE A 2. KÖRBEN ---
+    var vegeVanE = false;
+    var helyezesekListaja = [];
 
-    // 7. lépés: Meghatározzuk, melyik forduló adatait kell megjeleníteni
-    var aktivFordulo = kataData.activeRound;
-    var megjelenitendoJatekosok;
-    if (aktivFordulo === 1) {
-        megjelenitendoJatekosok = kataData.round1; // Első forduló játékosai
-    } else {
-        megjelenitendoJatekosok = kataData.round2; // Második forduló játékosai
+    if (kataData.aktivFordulo === 2) {
+        var mindenkiPontozva = true;
+        for (var e = 0; e < megjelenitendoJatekosok.length; e++) {
+            if (megjelenitendoJatekosok[e].osszesitett === 0) {
+                mindenkiPontozva = false;
+            }
+        }
+
+        // Ha mindenkinek van végleges pontja, kiszámoljuk a helyezéseket!
+        if (mindenkiPontozva === true && megjelenitendoJatekosok.length > 0) {
+            vegeVanE = true;
+            
+            // Lemásoljuk a játékosokat a rendezéshez
+            for (var m = 0; m < megjelenitendoJatekosok.length; m++) {
+                helyezesekListaja.push(megjelenitendoJatekosok[m]);
+            }
+            
+            // JUNIOR RENDEZÉS Szuper Erős Holtverseny Szabállyal!
+            for (var r1 = 0; r1 < helyezesekListaja.length - 1; r1++) {
+                for (var r2 = r1 + 1; r2 < helyezesekListaja.length; r2++) {
+                    var csere = false;
+                    var jatekos1 = helyezesekListaja[r1];
+                    var jatekos2 = helyezesekListaja[r2];
+
+                    if (jatekos1.osszesitett < jatekos2.osszesitett) {
+                        csere = true;
+                    } else if (jatekos1.osszesitett === jatekos2.osszesitett) {
+                        // Ha egyenlő a pont, nézzük a MIN-t! (Akinek nagyobb, az nyer)
+                        if (jatekos1.kiesettMin < jatekos2.kiesettMin) {
+                            csere = true;
+                        } else if (jatekos1.kiesettMin === jatekos2.kiesettMin) {
+                            // Ha még a MIN is egyenlő, nézzük a MAX-ot!
+                            if (jatekos1.kiesettMax < jatekos2.kiesettMax) {
+                                csere = true;
+                            }
+                        }
+                    }
+
+                    if (csere === true) {
+                        var tempHelyezes = helyezesekListaja[r1];
+                        helyezesekListaja[r1] = helyezesekListaja[r2];
+                        helyezesekListaja[r2] = tempHelyezes;
+                    }
+                }
+            }
+        }
     }
+    // ------------------------------------------
 
-    // 8. lépés: Táblázat HTML kezdete
     var tablaHtml = '<div class="bg-white border rounded shadow">';
 
-    // 9. lépés: Végigmegyünk minden játékoson és létrehozzuk a sorokat
+    // Kirajzoljuk a játékosokat a képernyőre
     for (var i = 0; i < megjelenitendoJatekosok.length; i++) {
         var jatekos = megjelenitendoJatekosok[i];
-        var jatekosNeve = jatekos.name;
+        
+        // Név és (Min/Max) kijelzése
+        var nevKijelzes = jatekos.nev;
+        if (jatekos.osszesitett > 0) {
+            nevKijelzes += " <span class='text-xs text-gray-500 font-normal ml-2'>(Min: " + jatekos.kiesettMin + " | Max: " + jatekos.kiesettMax + ")</span>";
+        }
 
-        // 10. lépés: 5 bemeneti mező létrehozása (5 bíró pontszámai)
+        // Helyezés kiírása, ha vége van a 2. körnek
+        if (vegeVanE === true) {
+            var hanyadik = 0;
+            for (var h = 0; h < helyezesekListaja.length; h++) {
+                if (helyezesekListaja[h].azonosito === jatekos.azonosito) {
+                    hanyadik = h + 1;
+                }
+            }
+            
+            if (hanyadik === 1) {
+                nevKijelzes += " <span class='ml-2 text-yellow-500 font-black text-lg'>🏆 1. HELY</span>";
+            } else if (hanyadik === 2) {
+                nevKijelzes += " <span class='ml-2 text-gray-400 font-black'>🥈 2. HELY</span>";
+            } else if (hanyadik === 3) {
+                nevKijelzes += " <span class='ml-2 text-orange-600 font-black'>🥉 3. HELY</span>";
+            } else {
+                nevKijelzes += " <span class='ml-2 text-zinc-500 font-bold'>(" + hanyadik + ". hely)</span>";
+            }
+        }
+
         var bevitelMezokHtml = "";
         for (var j = 0; j < 5; j++) {
-            var pontszamErtek = jatekos.scores[j] || ''; // Ha nincs érték, üres string
-            var letiltottAttr = szerkeszthetoE ? '' : 'disabled'; // Ha nem szerkeszthető, disabled attribútum
+            var pontszamErtek = jatekos.pontszamok[j];
+            if (pontszamErtek === 0) pontszamErtek = '';
             
-            var bevitelHtml = '<input type="text" maxlength="2" class="' + bevitelOsztaly + '" value="' + pontszamErtek + '" ' + letiltottAttr + ' oninput="formazKataBevitel(this, ' + i + ', ' + j + ')">';
+            var letiltottAttr = (szerkeszthetoE === false) ? "disabled" : "";
+            
+            var bevitelHtml = '<input type="text" maxlength="2" class="' + bevitelOsztaly + ' mx-1" value="' + pontszamErtek + '" ' + letiltottAttr + ' oninput="formazKataBevitel(this, ' + i + ', ' + j + ')">';
             bevitelMezokHtml += bevitelHtml;
         }
 
-        // 11. lépés: Egy sor HTML létrehozása: név + 5 bemeneti mező + összesített pontszám
-        var osszesitettPontszam = jatekos.total;
+        var osszesitettPontszam = jatekos.osszesitett;
+        if (osszesitettPontszam === 0) {
+            osszesitettPontszam = "-";
+        }
+
         var sorHtml = '<div class="flex items-center border-b p-2">';
-        sorHtml += '<div class="flex-1 font-bold text-sm">' + jatekosNeve + '</div>';
+        sorHtml += '<div class="flex-1 font-bold text-sm">' + nevKijelzes + '</div>';
         sorHtml += bevitelMezokHtml;
-        sorHtml += '<div class="w-16 text-center font-bold ml-2 border-l">' + osszesitettPontszam + '</div>';
+        sorHtml += '<div class="w-16 text-center text-red-600 font-black ml-2 border-l">' + osszesitettPontszam + '</div>';
         sorHtml += '</div>';
         
         tablaHtml += sorHtml;
     }
 
-    // 12. lépés: Táblázat HTML zárása
     tablaHtml += '</div>';
     tartalom.innerHTML += tablaHtml;
 
-    // 13. lépés: Ha admin vagyunk és az első forduló aktív, megjelenítjük a "TOP 6 Továbbjut" gombot
-    if (jelenlegiFelhasznalo.szerepkor === 'admin' && aktivFordulo === 1) {
-        var gombHtml = '<button onclick="befejezElsoKataFordulot()" class="mt-4 bg-zinc-800 text-white w-full py-2 rounded">TOP 6 Továbbjut</button>';
+    // Gomb a 2. kör indításához
+    if (aktualisFelhasznalo.szerepkor === 'admin' && kataData.aktivFordulo === 1) {
+        var gombHtml = '<button onclick="befejezElsoKataFordulot()" class="mt-4 bg-zinc-800 text-white w-full py-2 font-bold rounded hover:bg-red-600 transition">TOP 6 Továbbjut (Második kör indítása)</button>';
         tartalom.innerHTML += gombHtml;
     }
 }
 
-// Pontszám frissítése: amikor egy bíró pontszámot ad
-function frissitKataPontszam(jatekosIndex, biroIndex, ertek) {
-    // 1. lépés: Betöltjük a kata adatokat
-    var kataDataJson = localStorage.getItem('iko_kata_db');
-    var kataData = JSON.parse(kataDataJson);
-
-    // 2. lépés: Meghatározzuk, melyik forduló aktív
-    var aktivFordulo = kataData.activeRound;
-    var jatekosokLista;
-    if (aktivFordulo === 1) {
-        jatekosokLista = kataData.round1;
-    } else {
-        jatekosokLista = kataData.round2;
-    }
-
-    // 3. lépés: Frissítjük a konkrét bíró pontszámát
-    // jatekosIndex = játékos indexe, biroIndex = bíró indexe (0-4)
-    var pontszamSzamkent = parseFloat(ertek);
-    if (isNaN(pontszamSzamkent)) {
-        pontszamSzamkent = 0; // Ha nem szám, 0-ra állítjuk
-    }
-    jatekosokLista[jatekosIndex].scores[biroIndex] = pontszamSzamkent;
-
-    // 4. lépés: Kiszámoljuk az összesített pontszámot
-    // A kata pontszámítás szabálya: összeadjuk az 5 pontszámot, majd kivonjuk a legkisebbet és a legnagyobbat
-    var pontszamok = jatekosokLista[jatekosIndex].scores;
-    
-    // Összeadjuk az összes pontszámot
-    var osszeg = 0;
-    for (var i = 0; i < pontszamok.length; i++) {
-        osszeg = osszeg + pontszamok[i];
-    }
-
-    // Megkeressük a legkisebb pontszámot
-    var legkisebbPontszam = pontszamok[0];
-    for (var j = 1; j < pontszamok.length; j++) {
-        if (pontszamok[j] < legkisebbPontszam) {
-            legkisebbPontszam = pontszamok[j];
-        }
-    }
-
-    // Megkeressük a legnagyobb pontszámot
-    var legnagyobbPontszam = pontszamok[0];
-    for (var k = 1; k < pontszamok.length; k++) {
-        if (pontszamok[k] > legnagyobbPontszam) {
-            legnagyobbPontszam = pontszamok[k];
-        }
-    }
-
-    // Kivonjuk a legkisebbet és a legnagyobbat az összegből
-    var osszegMinMaxNelkul = osszeg - legkisebbPontszam - legnagyobbPontszam;
-
-    // Kerekítjük 1 tizedesjegyre (Math.round szorozva 10-el, majd osztva 10-el)
-    var kerekitettOsszesitett = Math.round(osszegMinMaxNelkul * 10) / 10;
-
-    // Beállítjuk az összesített pontszámot
-    jatekosokLista[jatekosIndex].total = kerekitettOsszesitett;
-
-    // 5. lépés: Elmentjük a frissített adatokat
-    var frissitettKataDataJson = JSON.stringify(kataData);
-    localStorage.setItem('iko_kata_db', frissitettKataDataJson);
-
-    // 6. lépés: Újra megjelenítjük a táblázatot (frissített pontszámokkal)
-    rajzolKata();
-}
-
-// Első forduló befejezése: TOP 6 játékos továbbjutása a második fordulóba
-function befejezElsoFordulot() {
-    // 1. lépés: Betöltjük a kata adatokat
+// ==========================================
+// 5. TOVÁBBJUTÁS A 2. KÖRBE (TOP 6)
+// ==========================================
+function befejezElsoKataFordulot() {
     var kataAdatJson = localStorage.getItem('iko_kata_db');
     var kataAdat = JSON.parse(kataAdatJson);
 
-    // 2. lépés: Másolatot készítünk az első forduló játékosairól
-    // (Így nem módosítjuk az eredetit, amíg nem kell)
     var elsoForduloMasolat = [];
     for (var i = 0; i < kataAdat.elsoFordulo.length; i++) {
         elsoForduloMasolat.push(kataAdat.elsoFordulo[i]);
     }
 
-    // 3. lépés: Rendezzük a játékosokat pontszám szerint csökkenő sorrendben
-    // A legjobb pontszámú játékos lesz az első
+    // RENDEZÉS A HOLTVERSENY SZABÁLYOKKAL (Összeg -> Min -> Max)
     for (var j = 0; j < elsoForduloMasolat.length - 1; j++) {
         for (var k = j + 1; k < elsoForduloMasolat.length; k++) {
-            if (elsoForduloMasolat[j].osszesitett < elsoForduloMasolat[k].osszesitett) {
-                // Csere: ha a j-edik játékos pontszáma kisebb, mint a k-adiké, cseréljük meg őket
+            var csere = false;
+            var jatekosJ = elsoForduloMasolat[j];
+            var jatekosK = elsoForduloMasolat[k];
+
+            if (jatekosJ.osszesitett < jatekosK.osszesitett) {
+                csere = true;
+            } else if (jatekosJ.osszesitett === jatekosK.osszesitett) {
+                if (jatekosJ.kiesettMin < jatekosK.kiesettMin) {
+                    csere = true;
+                } else if (jatekosJ.kiesettMin === jatekosK.kiesettMin) {
+                    if (jatekosJ.kiesettMax < jatekosK.kiesettMax) {
+                        csere = true;
+                    }
+                }
+            }
+
+            if (csere === true) {
                 var temp = elsoForduloMasolat[j];
                 elsoForduloMasolat[j] = elsoForduloMasolat[k];
                 elsoForduloMasolat[k] = temp;
@@ -291,48 +389,44 @@ function befejezElsoFordulot() {
         }
     }
 
-    // 4. lépés: Kiválasztjuk az első 6 játékost (TOP 6)
     var top6Versenyzok = [];
     var maxVersenyzok = 6;
     if (elsoForduloMasolat.length < maxVersenyzok) {
-        maxVersenyzok = elsoForduloMasolat.length; // Ha kevesebb mint 6 játékos van, akkor annyit veszünk
+        maxVersenyzok = elsoForduloMasolat.length; 
     }
     
     for (var m = 0; m < maxVersenyzok; m++) {
         top6Versenyzok.push(elsoForduloMasolat[m]);
     }
 
-    // 5. lépés: Megfordítjuk a sorrendet (a legrosszabb pontszámú lesz az első)
-    // Ez azért kell, mert a második fordulóban fordított sorrendben jelennek meg
+    // --- FORDÍTOTT SORREND ---
+    // A 6. helyezett megy a lista elejére (ő kezd a tatamin)
     var megforditottTop6 = [];
     for (var n = top6Versenyzok.length - 1; n >= 0; n--) {
         megforditottTop6.push(top6Versenyzok[n]);
     }
 
-    // 6. lépés: Előkészítjük a második forduló játékosait
-    // Minden játékosnak újra nullázzuk a pontszámait
     var masodikForduloVersenyzoi = [];
     for (var p = 0; p < megforditottTop6.length; p++) {
         var versenyzo = megforditottTop6[p];
         var versenyzoMasodikFordulohoz = {
-            id: versenyzo.id,
+            azonosito: versenyzo.azonosito,
             nev: versenyzo.nev,
             klub: versenyzo.klub,
             kategoria: versenyzo.kategoria,
-            pontszamok: [0, 0, 0, 0, 0], // Újra 5 bíró, mind 0
-            osszesitett: 0 // Újra 0 az összesített pontszám
+            pontszamok: [0, 0, 0, 0, 0], 
+            osszesitett: 0,
+            kiesettMin: 0,
+            kiesettMax: 0
         };
         masodikForduloVersenyzoi.push(versenyzoMasodikFordulohoz);
     }
 
-    // 7. lépés: Beállítjuk a második forduló játékosait és aktívvá tesszük a második fordulót
     kataAdat.masodikFordulo = masodikForduloVersenyzoi;
     kataAdat.aktivFordulo = 2;
 
-    // 8. lépés: Elmentjük a frissített adatokat
     var frissitettKataAdatJson = JSON.stringify(kataAdat);
     localStorage.setItem('iko_kata_db', frissitettKataAdatJson);
 
-    // 9. lépés: Újra megjelenítjük a táblázatot (második fordulóval)
     rajzolKata();
 }
