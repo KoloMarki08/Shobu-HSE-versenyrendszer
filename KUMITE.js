@@ -1,10 +1,9 @@
-/* KUMITE.js - Kumite verseny, ágrajz és pontozás kezelése */
+/* KUMITE.js - Kumite verseny, ágrajz és pontozás kezelése (Tisztított, Adatbázis-kész verzió) */
 
 // ==========================================
 // 1. ÁGRAJZ GENERÁLÁSA
 // ==========================================
 function generalKumite() {
-    // Ellenőrizzük, hogy admin van-e belépve
     if (aktualisFelhasznalo.szerepkor !== 'admin') {
         alert("Csak admin generálhat ágrajzot!");
         return;
@@ -19,7 +18,6 @@ function generalKumite() {
 
     var jatekosok = [];
 
-    // Kiválogatjuk azokat, akik ebbe a kategóriába neveztek
     for (var i = 0; i < adatok.versenyzok.length; i++) {
         var ember = adatok.versenyzok[i];
         if (ember.kategoria === kivalasztottKategoria) {
@@ -32,10 +30,8 @@ function generalKumite() {
         return;
     }
 
-    // Új ágrajzt kezdünk, töröljük az eddigi meccseket
     adatok.meccsek = [];
 
-    // Kiszámoljuk, mekkora fa kell (2, 4, 8, 16...)
     var jatekosokSzama = jatekosok.length;
     var logErtek = Math.log2(jatekosokSzama);
     var felfeleKerekitve = Math.ceil(logErtek);
@@ -46,19 +42,16 @@ function generalKumite() {
         pool.push(jatekosok[j]);
     }
 
-    // Feltöltjük "üres" (null) helyekkel, hogy kijöjjön a 2-es hatvány
     while (pool.length < agrajzMerete) {
         pool.push(null);
     }
 
-    // Első kör meccseinek legenerálása
     for (var k = 0; k < agrajzMerete; k += 2) {
         var versenyzo1 = pool[k];
         var versenyzo2 = pool[k + 1];
         var meccsIndex = k / 2;
 
         var gyoztes = null;
-        // Ha valakinek nincs ellenfele (BYE), az egyből nyer
         if (versenyzo1 !== null && versenyzo2 === null) {
             gyoztes = versenyzo1;
         } else if (versenyzo1 === null && versenyzo2 !== null) {
@@ -68,7 +61,6 @@ function generalKumite() {
         var kovetkezoKorMeccsIndex = Math.floor(meccsIndex / 2);
         var kovetkezoMeccsId = 'm2-' + kovetkezoKorMeccsIndex;
 
-        // "Junior" módszer: ha nincs játékos, berakunk egy "BYE" kamujátékost
         var ember1 = versenyzo1;
         if (ember1 === null) {
             ember1 = { nev: "BYE", azonosito: null };
@@ -79,7 +71,6 @@ function generalKumite() {
             ember2 = { nev: "BYE", azonosito: null };
         }
 
-        // Létrehozzuk a meccs objektumot (kevert angol-magyar a CSS/HTML miatt)
         var meccs = {
             id: 'm1-' + meccsIndex,
             round: 1,
@@ -95,10 +86,13 @@ function generalKumite() {
         adatok.meccsek.push(meccs);
     }
 
-    // Számoljuk ki, ki jutott tovább (pl. BYE miatti automatikus győztesek)
     ellenorizTovabbjutasokat();
-    mentes();
-    valtFul('bracket');
+    
+    // Elmentjük a meccseket
+    var mentesKesz = vegrehajtMentes();
+    if (mentesKesz) {
+        valtFul('bracket');
+    }
 }
 
 // ==========================================
@@ -107,17 +101,13 @@ function generalKumite() {
 function ellenorizTovabbjutasokat() {
     var valtozasTortent = true;
     
-    // Addig pörgetjük, amíg van olyan meccs, ami frissül
     while (valtozasTortent) {
         valtozasTortent = false;
 
         for (var i = 0; i < adatok.meccsek.length; i++) {
             var meccs = adatok.meccsek[i];
             
-            // Ha van győztes és nem BYE (van azonosítója), ÉS van következő meccs ahova mehet
             if (meccs.winner && meccs.winner.azonosito !== null && meccs.nextId !== null) {
-                
-                // Megkeressük a következő meccset
                 var kovetkezoMeccs = null;
                 for (var j = 0; j < adatok.meccsek.length; j++) {
                     if (adatok.meccsek[j].id === meccs.nextId) {
@@ -126,14 +116,12 @@ function ellenorizTovabbjutasokat() {
                     }
                 }
 
-                // Ha még nincs ilyen meccs a tömbben, akkor csinálunk egyet
                 if (kovetkezoMeccs === null) {
                     var kovetkezoKorSzama = meccs.round + 1;
                     var kovetkezoMeccsIdReszek = meccs.nextId.split('-');
                     var kovetkezoMeccsIndex = parseInt(kovetkezoMeccsIdReszek[1]);
 
                     var kovetkezoKovetkezoId = null;
-                    // Csak maximum 5 körig megyünk el (ez a mi kis szabályunk most)
                     if (kovetkezoKorSzama <= 5) {
                         var kovetkezoKovetkezoIndex = Math.floor(kovetkezoMeccsIndex / 2);
                         kovetkezoKovetkezoId = 'm' + (kovetkezoKorSzama + 1) + '-' + kovetkezoKovetkezoIndex;
@@ -155,19 +143,16 @@ function ellenorizTovabbjutasokat() {
                     valtozasTortent = true;
                 }
 
-                // Hova tegyük a győztest? (Páros vagy páratlan ág?)
                 var aktualisMeccsIdReszek = meccs.id.split('-');
                 var aktualisMeccsIndex = parseInt(aktualisMeccsIdReszek[1]);
                 var parosIndexE = (aktualisMeccsIndex % 2 === 0);
 
                 if (parosIndexE === true) {
-                    // Páros -> AKA ág (kék)
                     if (kovetkezoMeccs.aka.azonosito !== meccs.winner.azonosito) {
                         kovetkezoMeccs.aka = meccs.winner;
                         valtozasTortent = true;
                     }
                 } else {
-                    // Páratlan -> SHIRO ág (piros)
                     if (kovetkezoMeccs.shiro.azonosito !== meccs.winner.azonosito) {
                         kovetkezoMeccs.shiro = meccs.winner;
                         valtozasTortent = true;
@@ -189,7 +174,6 @@ function rajzolAgrajz() {
         return;
     }
 
-    // Megkeressük, hány körből áll a verseny
     var maxKor = 1;
     for (var i = 0; i < adatok.meccsek.length; i++) {
         if (adatok.meccsek[i].round > maxKor) {
@@ -199,17 +183,13 @@ function rajzolAgrajz() {
 
     var bejelentkezettEmber = aktualisFelhasznalo;
     var szerkeszthetE = false;
-    // Ha admin vagy judge, akkor kattinthat a meccsekre
     if (bejelentkezettEmber !== null) {
         if (bejelentkezettEmber.szerepkor === 'admin' || bejelentkezettEmber.szerepkor === 'judge') {
             szerkeszthetE = true;
         }
     }
 
-    // Oszlopokat rajzolunk körönként
     for (var kor = 1; kor <= maxKor; kor++) {
-        
-        // Kigyűjtjük a meccseket, amik ehhez a körhöz tartoznak
         var korMeccsei = [];
         for (var j = 0; j < adatok.meccsek.length; j++) {
             if (adatok.meccsek[j].round === kor) {
@@ -217,7 +197,6 @@ function rajzolAgrajz() {
             }
         }
 
-        // Sorba rendezzük őket az ID alapján
         korMeccsei.sort(function(a, b) {
             var aIndex = parseInt(a.id.split('-')[1]);
             var bIndex = parseInt(b.id.split('-')[1]);
@@ -228,15 +207,13 @@ function rajzolAgrajz() {
             continue;
         }
 
-        // Csinálunk egy dobozt (oszlopot) a körnek
         var oszlop = document.createElement('div');
-        oszlop.className = "round-column";
+        // JAVÍTVA: Magyar CSS osztály
+        oszlop.className = "fordulok-oszlopa round-column"; 
 
-        // Végigmegyünk az oszlop meccsein
         for (var m = 0; m < korMeccsei.length; m++) {
             var meccs = korMeccsei[m];
             
-            // Ha van azonosítója, akkor igazi versenyző, nem csak egy pötty "..."
             var versenyzo1 = null;
             if (meccs.aka.azonosito !== null) {
                 versenyzo1 = meccs.aka;
@@ -249,13 +226,12 @@ function rajzolAgrajz() {
 
             var kapcsoloHtml = "";
             if (meccs.nextId !== null) {
-                kapcsoloHtml = '<div class="match-connector"></div>';
+                // JAVÍTVA: Magyar CSS osztály
+                kapcsoloHtml = '<div class="meccs-osszekoto-vonal match-connector"></div>';
             }
 
-            // Csak akkor indulhat a meccs, ha nincs még győztes, de van már két versenyző!
             var aktivE = false;
             if (meccs.winner === null && versenyzo1 !== null && versenyzo2 !== null) {
-                // Nem lehetnek BYE-ok (mert azokat a gép automatikusan tovább is lövi a winnerbe)
                 if (versenyzo1.nev !== "BYE" && versenyzo2.nev !== "BYE") {
                     aktivE = true;
                 }
@@ -266,11 +242,11 @@ function rajzolAgrajz() {
                 kattintasAttributum = 'onclick="nyitBiroiPanelt(\'' + meccs.id + '\')"';
             }
 
-            // Kártyák csinálása (HTML kód)
             var kartya1Html = keszitKartyat(versenyzo1, 'aka', meccs, szerkeszthetE, kattintasAttributum);
             var kartya2Html = keszitKartyat(versenyzo2, 'shiro', meccs, szerkeszthetE, kattintasAttributum);
 
-            var meccsWrapperHtml = '<div class="match-wrapper">' + 
+            // JAVÍTVA: Magyar CSS osztály
+            var meccsWrapperHtml = '<div class="meccs-doboza match-wrapper">' + 
                                      kartya1Html + 
                                      kartya2Html + 
                                      kapcsoloHtml + 
@@ -284,11 +260,12 @@ function rajzolAgrajz() {
 }
 
 // ==========================================
-// 4. KÁRTYA GENERÁLÁSA
+// 4. KÁRTYA GENERÁLÁSA (Tisztított HTML)
 // ==========================================
 function keszitKartyat(versenyzo, oldal, meccs, szerkeszthetE, kattintasAttributum) {
     if (versenyzo === null || versenyzo.azonosito === null) {
-        return '<div class="player-card empty-slot"></div>';
+        // Üres hely kártyája
+        return '<div class="versenyzo-kartya ures-kartya player-card empty-slot"></div>';
     }
 
     var gyoztesE = false;
@@ -296,35 +273,34 @@ function keszitKartyat(versenyzo, oldal, meccs, szerkeszthetE, kattintasAttribut
         gyoztesE = true;
     }
 
-    var stilusOsztalyok = "";
+    var stilusOsztalyok = "versenyzo-kartya player-card ";
     if (gyoztesE === true) {
-        stilusOsztalyok += "winner-card ";
+        stilusOsztalyok += "gyoztes-kartya winner-card ";
     }
     
-    // Ha kattintható
     if (kattintasAttributum !== "") {
-        stilusOsztalyok += "clickable ";
+        stilusOsztalyok += "kattinthat-kartya clickable ";
     }
 
     var kartyaSzine = "";
+    var csikOsztaly = "";
     if (oldal === 'shiro') {
         kartyaSzine = '#D32F2F'; // Piros
+        csikOsztaly = "szines-csik-piros shiro-strip";
     } else {
         kartyaSzine = '#0047AB'; // Kék
+        csikOsztaly = "szines-csik-kek aka-strip";
     }
 
-    var kartyaHtml = '<div class="player-card ' + stilusOsztalyok.trim() + '" ' + kattintasAttributum + '>';
-    kartyaHtml += '<div class="color-strip ' + oldal + '-strip"></div>';
-    kartyaHtml += '<div class="card-content">';
-    kartyaHtml += '<div class="card-name" style="color:' + kartyaSzine + '">';
-    
-    // JAVÍTVA: Magyar "nev" változó a név megjelenítéséhez!
+    var kartyaHtml = '<div class="' + stilusOsztalyok.trim() + '" ' + kattintasAttributum + '>';
+    kartyaHtml += '<div class="szines-csik color-strip ' + csikOsztaly + '"></div>';
+    kartyaHtml += '<div class="kartya-belso-tartalom card-content">';
+    kartyaHtml += '<div class="kartya-nev card-name" style="color:' + kartyaSzine + '">';
     kartyaHtml += '[' + versenyzo.azonosito + '] ' + versenyzo.nev;
     kartyaHtml += '</div>';
-    kartyaHtml += '<div class="card-details">' + versenyzo.klub + '</div>';
+    kartyaHtml += '<div class="kartya-klub card-details">' + versenyzo.klub + '</div>';
     kartyaHtml += '</div>';
 
-    // Ha van pontszám, rajzoljuk ki
     var vanPontszam = (meccs.scoreAka > 0 || meccs.scoreShiro > 0);
     if (vanPontszam === true) {
         var pontszamErtek = 0;
@@ -333,7 +309,7 @@ function keszitKartyat(versenyzo, oldal, meccs, szerkeszthetE, kattintasAttribut
         } else {
             pontszamErtek = meccs.scoreShiro;
         }
-        kartyaHtml += '<div style="position:absolute;right:10px;font-weight:bold">' + pontszamErtek + '</div>';
+        kartyaHtml += '<div class="kartya-pontszam">' + pontszamErtek + '</div>';
     }
 
     kartyaHtml += '</div>';
@@ -360,13 +336,11 @@ function nyitBiroiPanelt(azonosito) {
         return;
     }
 
-    // A magyar "nev" attribútummal iratjuk ki
     document.getElementById('ref-aka').innerText = aktualisMeccs.aka.nev;
     document.getElementById('ref-shiro').innerText = aktualisMeccs.shiro.nev;
 
     frissitBiroiFeluletet();
 
-    // Időzítő reset
     if (idozitoInterval !== null) {
         clearInterval(idozitoInterval);
     }
@@ -380,20 +354,29 @@ function nyitBiroiPanelt(azonosito) {
 
 function pontszamAdas(kihez, pont) {
     if (kihez === 'aka') {
-        aktualisMeccs.scoreAka += pont;
+        aktualisMeccs.scoreAka = aktualisMeccs.scoreAka + pont;
+        
+        // Ha 2 fölé ment, visszavágjuk 2-re!
+        if (aktualisMeccs.scoreAka > 2) {
+            aktualisMeccs.scoreAka = 2;
+        }
     } else {
-        aktualisMeccs.scoreShiro += pont;
+        aktualisMeccs.scoreShiro = aktualisMeccs.scoreShiro + pont;
+        
+        // Ha 2 fölé ment, visszavágjuk 2-re!
+        if (aktualisMeccs.scoreShiro > 2) {
+            aktualisMeccs.scoreShiro = 2;
+        }
     }
 
     frissitBiroiFeluletet();
 
-    // Szabály: ha valaki eléri a 2 pontot (Ippon), egyből nyer!
-    if (aktualisMeccs.scoreAka >= 2) {
+    if (aktualisMeccs.scoreAka === 2) {
         setTimeout(function() {
             alert("GYŐZTES: AKA");
             befejezMeccset();
         }, 100);
-    } else if (aktualisMeccs.scoreShiro >= 2) {
+    } else if (aktualisMeccs.scoreShiro === 2) {
         setTimeout(function() {
             alert("GYŐZTES: SHIRO");
             befejezMeccset();
@@ -443,7 +426,7 @@ function kapcsolIdozitot() {
                 alert("Lejárt az idő!");
                 document.getElementById('btn-timer').innerText = "START";
             }
-        }, 1000); // Ez mondja meg a gépnek, hogy 1 másodpercenként fusson
+        }, 1000); 
     }
 }
 
@@ -461,7 +444,6 @@ function frissitIdozitoFeluletet() {
 }
 
 function befejezMeccset() {
-    // Ha döntetlen, még nem lehet vége
     if (aktualisMeccs.scoreAka === aktualisMeccs.scoreShiro) {
         alert("Döntetlen állásnál nem lehet befejezni a meccset!");
         return;
@@ -474,17 +456,35 @@ function befejezMeccset() {
     }
 
     ellenorizTovabbjutasokat();
-    mentes();
-    valtFul('bracket');
-    
-    document.getElementById('tab-referee').classList.add('hidden');
+    var mentesKesz = vegrehajtMentes();
+    if (mentesKesz) {
+        valtFul('bracket');
+        document.getElementById('tab-referee').classList.add('hidden');
+    }
 }
 
-// Biztonsági Alias-ok, hátha a HTML oldalról még a régi angol nevekkel hívjuk őket
-function score(kihez, pont) { pontszamAdas(kihez, pont); }
-function updateRefUI() { frissitBiroiFeluletet(); }
-function updateTimerUI() { frissitIdozitoFeluletet(); }
-function toggleTimer() { kapcsolIdozitot(); }
-function resetMatchScores() { nullazMeccsPontszamokat(); }
-function endMatch() { befejezMeccset(); }
-function openRef(azonosito) { nyitBiroiPanelt(azonosito); }
+// ==========================================
+// 6. ADATBÁZIS MENTÉS SEGÉD (A Pincér hívása)
+// ==========================================
+function vegrehajtMentes() {
+    // 1. Megpróbáljuk elküldeni a MySQL-nek (ha majd lesz)
+    fetch('api.php?akcio=meccsMentes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(adatok)
+    })
+    .then(function(valasz) {
+        return valasz.json();
+    })
+    .then(function(eredmeny) {
+        console.log("Ágrajz mentve az adatbázisba!");
+    })
+    .catch(function(hiba) {
+        // 2. Ha nincs PHP (pl. GitHubon vagyunk), elmentjük a böngésző memóriájába!
+        console.log("Offline mód: Ágrajz mentése a böngészőbe...");
+        var szoveg = JSON.stringify(adatok);
+        localStorage.setItem('iko_db', szoveg); 
+    });
+
+    return true; // Visszaadja, hogy "Kész vagyok", mehet tovább a folyamat
+}

@@ -12,44 +12,41 @@
 
 <body class="oldal-alap-hattere">
 
-    <div id="login-overlay" class="teljes-kepernyos-fekete-hatter">
-        <div class="feher-bejelentkezo-doboz login-card">
-
-            <h1 class="focim">
-                SHOBU HSE <span class="piros-kiemeles">VERSENYRENDSZER</span>
-            </h1>
-
-            <div class="beviteli-mezok-taroloja">
-                <input id="login-user" type="text" placeholder="Felhasználónév" class="szoveg-doboz">
-                <input id="login-pass" type="password" placeholder="Jelszó" class="szoveg-doboz">
-                <button onclick="bejelentkezes()" class="belepes-gomb">BELÉPÉS</button>
-            </div>
-            
-            <div class="jelszo-emlekezteto-doboz">
-                Teszt: <b>KoloMarki / 1234</b>, <b>A tatami / A-tatami</b>, <b>Balint.Tornai / 1234</b>
-            </div>
-        </div>
-    </div>
-
-    <div id="app" class="fo-alkalmazas-tarolo hidden">
+    <div id="app" class="fo-alkalmazas-tarolo">
         
         <nav class="felso-menusor">
             <div class="menu-tartalom">
-                
                 <div class="logonk">
                     <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
-                    <span id="user-badge" class="felhasznalo-jelzo">Vendég</span>
+                    <span id="user-badge" class="felhasznalo-jelzo">Betöltés...</span>
                 </div>
                 
                 <div class="menu-gombok">
+                    <button onclick="valtFul('kategoriak')" class="menu-gomb-kategoriak">Kategóriák</button>
                     <button id="nav-reg" onclick="valtFul('reg')" class="menu-gomb-nevezes hidden">Nevezés</button>
                     <button onclick="valtFul('bracket')" class="menu-gomb-kumite">Kumite Ágrajz</button>
                     <button onclick="valtFul('kata')" class="menu-gomb-kata">KATA Eredmények</button>
-                    <button onclick="kijelentkezes()" class="menu-gomb-kilepes">Kilépés</button>
+                    <button onclick="kijelentkezesVersenybol()" class="menu-gomb-kilepes">Kilépés</button>
                 </div>
-
             </div>
         </nav>
+
+        <section id="tab-kategoriak" class="kategoriak-oldal hidden">
+            <div class="kategoriak-feher-doboz">
+                <h2 class="doboz-cime">Kategóriák és beosztások</h2>
+                
+                <table class="kategoria-tabla">
+                    <thead class="kategoria-tabla-fejlec">
+                        <tr>
+                            <th class="kategoria-tabla-cella">Kategória neve (Category name)</th>
+                            <th class="kategoria-tabla-cella">Tatami (Mate name)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kategoria-tabla-torzs" class="kategoria-tabla-torzs">
+                        </tbody>
+                </table>
+            </div>
+        </section>
 
         <section id="tab-reg" class="nevezes-oldal hidden">
             <div class="nevezes-feher-doboz">
@@ -72,7 +69,7 @@
                     <input id="p-height" type="number" placeholder="Magasság (cm)" class="urlap-szamdoboz">
 
                     <select id="p-cat" class="urlap-kategoria-valaszto">
-                        <option value="">Előbb add meg a kort és a nemet!</option>
+                        <option value="">Előbb adja meg a kort és a nemet!</option>
                     </select>
                 </div>
                 
@@ -145,79 +142,57 @@
                 </div>
             </div>
         </section>
+        
+        <footer class="lablec-tarolo">
+            <div class="lablec-tartalom">
+                <div class="lablec-bal-oldal">
+                    <h3 class="lablec-cime">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></h3>
+                    <p class="lablec-leiras">
+                        Professzionális Kyokushin Karate versenykezelő szoftver. 
+                        Készült a modern és gyors versenybonyolítás támogatására.
+                        Készítette: Kolonics Márk
+                    </p>
+                </div>
+                <div class="lablec-jobb-oldal">
+                    <a href="#" class="lablec-link">Kapcsolat</a>
+                    <a href="#" class="lablec-link">Adatvédelem</a>
+                    <a href="#" class="lablec-link">Súgó</a>
+                </div>
+            </div>
+            <div class="lablec-also-sav">
+                <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
+            </div>
+        </footer>
     </div>
 
-    <footer class="lablec-tarolo">
-        <div class="lablec-tartalom">
-            
-            <div class="lablec-bal-oldal">
-                <h3 class="lablec-cime">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></h3>
-                <p class="lablec-leiras">
-                    Professzionális Kyokushin Karate versenykezelő szoftver. 
-                    Készült a modern és gyors versenybonyolítás támogatására.
-                    Készítette: Kolonics Márk
-                </p>
-            </div>
-            
-            <div class="lablec-jobb-oldal">
-                <a href="#" class="lablec-link">Kapcsolat</a>
-                <a href="#" class="lablec-link">Adatvédelem</a>
-                <a href="#" class="lablec-link">Súgó</a>
-            </div>
-
-        </div>
-        
-        <div class="lablec-also-sav">
-            <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
-        </div>
-    </footer>
-    <!-- ============================================ -->
-    <!-- SCRIPT FÁJLOK BETÖLTÉSE - RENDEZETT SORRENDBEN -->
-    <!-- ============================================ -->
-
-    <!-- 1. data.js - Alapadatok betöltése -->
-    <!-- Ez a fájl tartalmazza: versenyzők listája, kategóriák, felhasználók adatai -->
     <script src="data.js"></script>
-
-    <!-- 2. auth.js - Bejelentkezés és jogosultságok -->
-    <!-- Ez a fájl kezeli: belépés, kijelentkezés, felhasználói szerepkörök, nézetváltás -->
     <script src="auth.js"></script>
-
-    <!-- 3. kumite.js - Kumite verseny kezelése -->
-    <!-- Ez a fájl kezeli: sorsolás, ágrajz generálása, bírói panel, pontszámítás -->
     <script src="kumite.js"></script>
-
-    <!-- 4. kata.js - Kata verseny kezelése -->
-    <!-- Ez a fájl kezeli: kata pontozás, fordulók, TOP 6 kiválasztása -->
     <script src="kata.js"></script>
-
-    <!-- ============================================ -->
-    <!-- BETÖLTÉSI ELLENŐRZÉS - DEBUG KÓD -->
-    <!-- ============================================ -->
+    
     <script>
         // Ez a függvény ellenőrzi, hogy minden szükséges fájl betöltődött-e
-        // Ha valami hiányzik, hibát ír a konzolra, hogy könnyebb legyen a hibakeresés
         function ellenorizFuggvenyeket() {
             // Első lépés: ellenőrizzük az auth.js fájlt
-            // A bejelentkezes függvénynek léteznie kell, ha az auth.js betöltődött
-            var bejelentkezesFuggvenyLetezik = typeof bejelentkezes === "function";
+            var bejelentkezesFuggvenyLetezik = typeof bejelentkezes === "function" || typeof bejelentkezesKezdolaprol === "function" || typeof ellenorizBejelentkezestVersenyOldalon === "function";
             if (!bejelentkezesFuggvenyLetezik) {
-                console.error("HIBA: Az auth.js nem töltődött be, a bejelentkezes függvény hiányzik!");
+                console.error("HIBA: Az auth.js nem töltődött be rendesen!");
             }
             // Második lépés: ellenőrizzük a data.js fájlt
-            // A FELHASZNALOK tömbnek léteznie kell, ha a data.js betöltődött
             var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
             if (!felhasznalokTombLetezik) {
                 console.error("HIBA: A data.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
             }
-
         }
 
         // Amikor az oldal teljesen betöltődött, futtatjuk az ellenőrzést
         window.onload = function () {
             console.log("Rendszer betöltve.");
-            // Külön lépésben ellenőrizzük a függőségeket
             ellenorizFuggvenyeket();
+            // Verseny oldali specifikus belépés ellenőrző futtatása, ha létezik
+            if (typeof ellenorizBejelentkezestVersenyOldalon === "function") {
+                ellenorizBejelentkezestVersenyOldalon();
+            }
         };
     </script>
 </body>

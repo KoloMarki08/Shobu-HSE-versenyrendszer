@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHOBU HSE Versenyrendszer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="stilus.css">
+    <link rel="icon" href="logo.jpg">
+</head>
+<body class="oldal-alap-hattere">
+
+    <nav class="felso-menusor">
+        <div class="menu-tartalom">
+            <div class="logonk">
+                <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
+            </div>
+            </div>
+    </nav>
+
+    <div class="kezdolap-tarolo">
+        
+        <div class="kezdolap-bal-oldal">
+            <h2 class="szekcio-cim">Archív és Aktív versenyek</h2>
+            
+            <div class="esemeny-kartya">
+                <div class="esemeny-kep-helye"><img src="teszt_2.jpg" alt="VI. Rátót Kupa, 2023.09.30, Vácrátót" title="VI. Rátót Kupa, 2023.09.30, Vácrátót"></div>
+                
+                <div class="esemeny-adatok">
+                    <h3 class="esemeny-cime">VI. Rátót Kupa, 2023.09.30, Vácrátót</h3>
+                    
+                    <div class="esemeny-idopont">
+                        <span class="cimke-nyitva">Nevezés nyitva</span>
+                        <span class="idopont-szoveg">2026-03-01 - 2026-05-01</span>
+                    </div>
+                    
+                    <div class="esemeny-gombok-taroloja">
+                        <button class="esemeny-gomb">Közönség panel</button>
+                        <button class="esemeny-gomb">Szervezői infók</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="esemeny-kartya">
+                <div class="esemeny-kep-helye"><img src="teszt_1.jpg" alt="VII. Rátót Kupa, 2025.10.11, Vácrátót" title="VII. Rátót Kupa, 2025.10.11, Vácrátót"></div>
+                
+                <div class="esemeny-adatok">
+                    <h3 class="esemeny-cime">VII. Rátót Kupa, 2025.10.11, Vácrátót</h3>
+                    
+                    <div class="esemeny-idopont">
+                        <span class="cimke-zarva">Nevezés lezárult</span>
+                        <span class="idopont-szoveg">2026-01-12 - 2026-01-15</span>
+                    </div>
+                    
+                    <div class="esemeny-gombok-taroloja">
+                        <button class="esemeny-gomb">Közönség panel</button>
+                        <button class="esemeny-gomb">Eredmények</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="kezdolap-jobb-oldal">
+            <div class="belepes-fejlec">
+                Bejelentkezés utáni funkciók
+            </div>
+            
+            <div class="belepes-doboz">
+                <label class="urlap-cimke">Felhasználónév (Login)</label>
+                <input id="login-user" type="text" class="belepes-szovegdoboz">
+                
+                <label class="urlap-cimke">Jelszó (Password)</label>
+                <input id="login-pass" type="password" class="belepes-szovegdoboz">
+                
+                <button onclick="bejelentkezesKezdolaprol()" class="zold-belepes-gomb">
+                    Belépés
+                </button>
+                
+                <div class="regisztracio-linkek">
+                    Nincs még fiókod? Kérjük <a href="#" class="kek-link">Regisztrálj</a><br>
+                    <a href="#" class="kek-link">Elfelejtetted a jelszavad?</a>
+                </div>
+                
+                <div class="jelszo-emlekezteto-doboz">
+                    Teszt: <b>KoloMarki / 1234</b><br>
+                    Teszt2: <b>A tatami / A-tatami</b><br>
+                    Teszt3: <b>Balint.Tornai / 1234</b>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="lablec-tarolo">
+        <div class="lablec-also-sav">
+            <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="auth.js"></script>
+    
+    <script>
+        function ellenorizFuggvenyeket() {
+            var bejelentkezesFuggvenyLetezik = typeof bejelentkezesKezdolaprol === "function";
+            if (!bejelentkezesFuggvenyLetezik) {
+                console.error("HIBA: Az auth.js nem töltődött be, a bejelentkezes függvény hiányzik!");
+            }
+            var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
+            if (!felhasznalokTombLetezik) {
+                console.error("HIBA: A data.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
+            }
+        }
+
+        window.onload = function () {
+            console.log("Kezdőlap rendszere betöltve.");
+            ellenorizFuggvenyeket();
+        };
+    </script>
+</body>
+</html>

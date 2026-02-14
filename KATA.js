@@ -157,7 +157,6 @@ function frissitKataPontszam(jatekosIndex, biroIndex, ertek) {
     }
 
     // --- TELJES HOLTVERSENY ELLENŐRZÉSE ---
-    // Megnézzük, hogy az egész csoportban mindenkinek megvan-e már az 5 pontja
     var mindenkiKesz = true;
     for (var m = 0; m < jatekosokLista.length; m++) {
         if (jatekosokLista[m].osszesitett === 0) {
@@ -165,14 +164,12 @@ function frissitKataPontszam(jatekosIndex, biroIndex, ertek) {
         }
     }
 
-    // Ha vége a körnek, ellenőrizzük, van-e abszolút döntetlen!
     if (mindenkiKesz === true) {
         for (var a = 0; a < jatekosokLista.length - 1; a++) {
             for (var b = a + 1; b < jatekosokLista.length; b++) {
                 var ember1 = jatekosokLista[a];
                 var ember2 = jatekosokLista[b];
 
-                // Ha a pont, a min, ÉS a max is teljesen ugyanaz
                 if (ember1.osszesitett === ember2.osszesitett &&
                     ember1.kiesettMin === ember2.kiesettMin &&
                     ember1.kiesettMax === ember2.kiesettMax &&
@@ -180,7 +177,6 @@ function frissitKataPontszam(jatekosIndex, biroIndex, ertek) {
 
                     alert("⚠️ ABSZOLÚT DÖNTETLEN!\n\n" + ember1.nev + " és " + ember2.nev + " pontjai teljesen megegyeznek (Összeg, Min és Max is).\nÚjra kell katázniuk, a pontjaikat töröltük!");
 
-                    // Pontok törlése mindkét embernél
                     ember1.pontszamok = [0, 0, 0, 0, 0];
                     ember1.osszesitett = 0;
                     ember1.kiesettMin = 0;
@@ -219,9 +215,11 @@ function rajzolKata() {
         szerkeszthetoE = true;
     }
 
-    var bevitelOsztaly = szerkeszthetoE ? "score-input border bg-white text-center w-12" : "score-input bg-gray-100 disabled text-center w-12"; 
+    // JAVÍTVA: CSS osztályokat használunk a Tailwind helyett!
+    var bevitelOsztaly = szerkeszthetoE ? "score-input" : "score-input score-disabled"; 
 
-    tartalom.innerHTML += '<h2 class="text-xl font-bold mb-4 border-b pb-2">Kata: ' + kataData.kategoria + '</h2>';
+    // Fejléc
+    tartalom.innerHTML += '<h2 class="kata-focim">Kata: ' + kataData.kategoria + '</h2>';
 
     var megjelenitendoJatekosok = [];
     if (kataData.aktivFordulo === 1) {
@@ -230,7 +228,6 @@ function rajzolKata() {
         megjelenitendoJatekosok = kataData.masodikFordulo; 
     }
 
-    // --- VÉGEREDMÉNY ELLENŐRZÉSE A 2. KÖRBEN ---
     var vegeVanE = false;
     var helyezesekListaja = [];
 
@@ -242,16 +239,13 @@ function rajzolKata() {
             }
         }
 
-        // Ha mindenkinek van végleges pontja, kiszámoljuk a helyezéseket!
         if (mindenkiPontozva === true && megjelenitendoJatekosok.length > 0) {
             vegeVanE = true;
             
-            // Lemásoljuk a játékosokat a rendezéshez
             for (var m = 0; m < megjelenitendoJatekosok.length; m++) {
                 helyezesekListaja.push(megjelenitendoJatekosok[m]);
             }
             
-            // JUNIOR RENDEZÉS Szuper Erős Holtverseny Szabállyal!
             for (var r1 = 0; r1 < helyezesekListaja.length - 1; r1++) {
                 for (var r2 = r1 + 1; r2 < helyezesekListaja.length; r2++) {
                     var csere = false;
@@ -261,11 +255,9 @@ function rajzolKata() {
                     if (jatekos1.osszesitett < jatekos2.osszesitett) {
                         csere = true;
                     } else if (jatekos1.osszesitett === jatekos2.osszesitett) {
-                        // Ha egyenlő a pont, nézzük a MIN-t! (Akinek nagyobb, az nyer)
                         if (jatekos1.kiesettMin < jatekos2.kiesettMin) {
                             csere = true;
                         } else if (jatekos1.kiesettMin === jatekos2.kiesettMin) {
-                            // Ha még a MIN is egyenlő, nézzük a MAX-ot!
                             if (jatekos1.kiesettMax < jatekos2.kiesettMax) {
                                 csere = true;
                             }
@@ -281,21 +273,18 @@ function rajzolKata() {
             }
         }
     }
-    // ------------------------------------------
 
-    var tablaHtml = '<div class="bg-white border rounded shadow">';
+    // JAVÍTVA: Tiszta HTML struktúra, saját CSS osztályokkal
+    var tablaHtml = '<div class="kata-tabla-tarolo">';
 
-    // Kirajzoljuk a játékosokat a képernyőre
     for (var i = 0; i < megjelenitendoJatekosok.length; i++) {
         var jatekos = megjelenitendoJatekosok[i];
         
-        // Név és (Min/Max) kijelzése
         var nevKijelzes = jatekos.nev;
         if (jatekos.osszesitett > 0) {
-            nevKijelzes += " <span class='text-xs text-gray-500 font-normal ml-2'>(Min: " + jatekos.kiesettMin + " | Max: " + jatekos.kiesettMax + ")</span>";
+            nevKijelzes += " <span class='kata-min-max-szoveg'>(Min: " + jatekos.kiesettMin + " | Max: " + jatekos.kiesettMax + ")</span>";
         }
 
-        // Helyezés kiírása, ha vége van a 2. körnek
         if (vegeVanE === true) {
             var hanyadik = 0;
             for (var h = 0; h < helyezesekListaja.length; h++) {
@@ -305,13 +294,13 @@ function rajzolKata() {
             }
             
             if (hanyadik === 1) {
-                nevKijelzes += " <span class='ml-2 text-yellow-500 font-black text-lg'>🏆 1. HELY</span>";
+                nevKijelzes += " <span class='kata-helyezes-arany'>🏆 1. HELY</span>";
             } else if (hanyadik === 2) {
-                nevKijelzes += " <span class='ml-2 text-gray-400 font-black'>🥈 2. HELY</span>";
+                nevKijelzes += " <span class='kata-helyezes-ezust'>🥈 2. HELY</span>";
             } else if (hanyadik === 3) {
-                nevKijelzes += " <span class='ml-2 text-orange-600 font-black'>🥉 3. HELY</span>";
+                nevKijelzes += " <span class='kata-helyezes-bronz'>🥉 3. HELY</span>";
             } else {
-                nevKijelzes += " <span class='ml-2 text-zinc-500 font-bold'>(" + hanyadik + ". hely)</span>";
+                nevKijelzes += " <span class='kata-helyezes-tobb'>(" + hanyadik + ". hely)</span>";
             }
         }
 
@@ -322,7 +311,7 @@ function rajzolKata() {
             
             var letiltottAttr = (szerkeszthetoE === false) ? "disabled" : "";
             
-            var bevitelHtml = '<input type="text" maxlength="2" class="' + bevitelOsztaly + ' mx-1" value="' + pontszamErtek + '" ' + letiltottAttr + ' oninput="formazKataBevitel(this, ' + i + ', ' + j + ')">';
+            var bevitelHtml = '<input type="text" maxlength="2" class="' + bevitelOsztaly + '" value="' + pontszamErtek + '" ' + letiltottAttr + ' oninput="formazKataBevitel(this, ' + i + ', ' + j + ')">';
             bevitelMezokHtml += bevitelHtml;
         }
 
@@ -331,10 +320,11 @@ function rajzolKata() {
             osszesitettPontszam = "-";
         }
 
-        var sorHtml = '<div class="flex items-center border-b p-2">';
-        sorHtml += '<div class="flex-1 font-bold text-sm">' + nevKijelzes + '</div>';
-        sorHtml += bevitelMezokHtml;
-        sorHtml += '<div class="w-16 text-center text-red-600 font-black ml-2 border-l">' + osszesitettPontszam + '</div>';
+        // Tiszta HTML sor generálás
+        var sorHtml = '<div class="kata-sor">';
+        sorHtml += '<div class="kata-versenyzo-neve">' + nevKijelzes + '</div>';
+        sorHtml += '<div class="kata-beviteli-mezok">' + bevitelMezokHtml + '</div>';
+        sorHtml += '<div class="kata-osszesitett">' + osszesitettPontszam + '</div>';
         sorHtml += '</div>';
         
         tablaHtml += sorHtml;
@@ -345,7 +335,7 @@ function rajzolKata() {
 
     // Gomb a 2. kör indításához
     if (aktualisFelhasznalo.szerepkor === 'admin' && kataData.aktivFordulo === 1) {
-        var gombHtml = '<button onclick="befejezElsoKataFordulot()" class="mt-4 bg-zinc-800 text-white w-full py-2 font-bold rounded hover:bg-red-600 transition">TOP 6 Továbbjut (Második kör indítása)</button>';
+        var gombHtml = '<button onclick="befejezElsoKataFordulot()" class="kata-tovabbjut-gomb">TOP 6 Továbbjut (Második kör indítása)</button>';
         tartalom.innerHTML += gombHtml;
     }
 }
@@ -362,7 +352,6 @@ function befejezElsoKataFordulot() {
         elsoForduloMasolat.push(kataAdat.elsoFordulo[i]);
     }
 
-    // RENDEZÉS A HOLTVERSENY SZABÁLYOKKAL (Összeg -> Min -> Max)
     for (var j = 0; j < elsoForduloMasolat.length - 1; j++) {
         for (var k = j + 1; k < elsoForduloMasolat.length; k++) {
             var csere = false;
@@ -399,8 +388,6 @@ function befejezElsoKataFordulot() {
         top6Versenyzok.push(elsoForduloMasolat[m]);
     }
 
-    // --- FORDÍTOTT SORREND ---
-    // A 6. helyezett megy a lista elejére (ő kezd a tatamin)
     var megforditottTop6 = [];
     for (var n = top6Versenyzok.length - 1; n >= 0; n--) {
         megforditottTop6.push(top6Versenyzok[n]);
