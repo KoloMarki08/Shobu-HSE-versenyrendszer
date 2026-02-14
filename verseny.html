@@ -13,15 +13,15 @@
 <body class="oldal-alap-hattere">
 
     <div id="app" class="fo-alkalmazas-tarolo">
-        
+
         <nav class="felso-menusor">
             <div class="menu-tartalom">
                 <div class="logonk">
                     <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
                     <span id="user-badge" class="felhasznalo-jelzo">Betöltés...</span>
                 </div>
-                
-                <div class="menu-gombok">
+
+                <div id="mobil-menu-container" class="menu-gombok">
                     <button onclick="valtFul('kategoriak')" class="menu-gomb-kategoriak">Kategóriák</button>
                     <button id="nav-reg" onclick="valtFul('reg')" class="menu-gomb-nevezes hidden">Nevezés</button>
                     <button onclick="valtFul('bracket')" class="menu-gomb-kumite">Kumite Ágrajz</button>
@@ -34,7 +34,7 @@
         <section id="tab-kategoriak" class="kategoriak-oldal hidden">
             <div class="kategoriak-feher-doboz">
                 <h2 class="doboz-cime">Kategóriák és beosztások</h2>
-                
+
                 <table class="kategoria-tabla">
                     <thead class="kategoria-tabla-fejlec">
                         <tr>
@@ -51,7 +51,7 @@
         <section id="tab-reg" class="nevezes-oldal hidden">
             <div class="nevezes-feher-doboz">
                 <h2 class="doboz-cime">Versenyzők hozzáadása</h2>
-                
+
                 <div class="urlap-racs">
                     <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
                     <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
@@ -63,7 +63,7 @@
                         <option value="Men">Férfi</option>
                         <option value="Women">Női</option>
                     </select>
-                    
+
                     <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()" class="urlap-szamdoboz">
                     <input id="p-weight" type="number" placeholder="Súly (kg)" class="urlap-szamdoboz">
                     <input id="p-height" type="number" placeholder="Magasság (cm)" class="urlap-szamdoboz">
@@ -72,7 +72,7 @@
                         <option value="">Előbb adja meg a kort és a nemet!</option>
                     </select>
                 </div>
-                
+
                 <button onclick="hozzaadVersenyzot()" class="hozzaadas-gomb">HOZZÁADÁS</button>
 
                 <div class="nevezettek-listaja-doboz">
@@ -82,14 +82,14 @@
 
                 <div id="admin-controls" class="admin-gombok hidden">
                     <button onclick="generalKumite()" class="admin-gomb-sorsolas">Kumite Sorsolás</button>
-                    <button onclick="inditKataVerseny()" class="admin-gomb-kata">Kata Indítása</button>
+                    <button onclick="generalKata()" class="admin-gomb-kata">Kata Panel / Generálás</button>
                     <button onclick="toroljMindent()" class="admin-gomb-torles">Teljes Adatbázis Törlése</button>
                 </div>
             </div>
         </section>
 
-        <section id="tab-bracket" class="kumite-agrajz-oldal hidden">
-            <div id="bracket-view" class="agrajz-taroloja bracket-container"></div>
+        <section id="tab-bracket" class="hidden">
+            <div id="bracket-view" class="agrajz-vilagos-tema"></div>
         </section>
 
         <section id="tab-kata" class="kata-eredmenyek-oldal hidden">
@@ -98,13 +98,13 @@
 
         <section id="tab-referee" class="biroi-panel-hatter hidden">
             <div class="biroi-panel-doboz">
-                
+
                 <button onclick="valtFul('bracket')" class="bezaras-gomb">✕</button>
 
                 <div class="idozito-reszleg">
                     <h3 id="match-category-title" class="meccs-kategoria-cime">Kategória</h3>
                     <div id="timer" class="hatalmas-idozito timer-glow">02:00</div>
-                    
+
                     <div class="idozito-gombok">
                         <button onclick="kapcsolIdozitot()" id="btn-timer" class="ido-start-gomb">START</button>
                         <button onclick="nullazMeccsPontszamokat()" class="ido-reset-gomb">RESET</button>
@@ -119,13 +119,13 @@
                         </div>
                         <div class="jatekos-neve" id="ref-aka">A Játékos</div>
                         <div class="jatekos-pontja" id="score-aka">0</div>
-                        
+
                         <div class="pontadas-gombok">
                             <button onclick="pontszamAdas('aka', 1)" class="pont-gomb pont-gomb-kek">WAZARI (1)</button>
                             <button onclick="pontszamAdas('aka', 2)" class="pont-gomb pont-gomb-kek-vilagos">IPPON (2)</button>
                         </div>
                     </div>
-                    
+
                     <div class="piros-jatekos-oldala">
                         <div class="szin-jelzo">
                             <div class="kicsi-piros-negyzet"></div>
@@ -133,7 +133,7 @@
                         </div>
                         <div class="jatekos-neve" id="ref-shiro">B Játékos</div>
                         <div class="jatekos-pontja" id="score-shiro">0</div>
-                        
+
                         <div class="pontadas-gombok">
                             <button onclick="pontszamAdas('shiro', 1)" class="pont-gomb pont-gomb-piros">WAZARI (1)</button>
                             <button onclick="pontszamAdas('shiro', 2)" class="pont-gomb pont-gomb-piros-vilagos">IPPON (2)</button>
@@ -142,13 +142,13 @@
                 </div>
             </div>
         </section>
-        
+
         <footer class="lablec-tarolo">
             <div class="lablec-tartalom">
                 <div class="lablec-bal-oldal">
                     <h3 class="lablec-cime">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></h3>
                     <p class="lablec-leiras">
-                        Professzionális Kyokushin Karate versenykezelő szoftver. 
+                        Professzionális Kyokushin Karate versenykezelő szoftver.
                         Készült a modern és gyors versenybonyolítás támogatására.
                         Készítette: Kolonics Márk
                     </p>
@@ -169,31 +169,27 @@
     <script src="auth.js"></script>
     <script src="kumite.js"></script>
     <script src="kata.js"></script>
-    
+
     <script>
-        // Ez a függvény ellenőrzi, hogy minden szükséges fájl betöltődött-e
         function ellenorizFuggvenyeket() {
-            // Első lépés: ellenőrizzük az auth.js fájlt
             var bejelentkezesFuggvenyLetezik = typeof bejelentkezes === "function" || typeof bejelentkezesKezdolaprol === "function" || typeof ellenorizBejelentkezestVersenyOldalon === "function";
             if (!bejelentkezesFuggvenyLetezik) {
                 console.error("HIBA: Az auth.js nem töltődött be rendesen!");
             }
-            // Második lépés: ellenőrizzük a data.js fájlt
             var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
             if (!felhasznalokTombLetezik) {
                 console.error("HIBA: A data.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
             }
         }
 
-        // Amikor az oldal teljesen betöltődött, futtatjuk az ellenőrzést
         window.onload = function () {
             console.log("Rendszer betöltve.");
             ellenorizFuggvenyeket();
-            // Verseny oldali specifikus belépés ellenőrző futtatása, ha létezik
             if (typeof ellenorizBejelentkezestVersenyOldalon === "function") {
                 ellenorizBejelentkezestVersenyOldalon();
             }
         };
     </script>
 </body>
+
 </html>

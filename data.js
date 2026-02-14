@@ -1,102 +1,26 @@
 // ==========================================
-// 1. ADATBÁZIS: KATEGÓRIÁK ÉS TATAMIK
+// 1. ADATBÁZIS: KATEGÓRIÁK ÉS TATAMIK (MYSQL-BŐL)
 // ==========================================
-const OSSZES_KATEGORIA = [
-    // --- KUMITE (LÁNYOK) ---
-    { nev: "Kumite Girls 8-9 y.o. -25kg", tipus: "KUMITE", nem: "Girls", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 8-9 y.o. -30kg", tipus: "KUMITE", nem: "Girls", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 8-9 y.o. +30kg", tipus: "KUMITE", nem: "Girls", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 10-11 y.o. -30kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 10-11 y.o. -35kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 10-11 y.o. -40kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 10-11 y.o. -45kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 10-11 y.o. +45kg", tipus: "KUMITE", nem: "Girls", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 12-13 y.o. -40kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 12-13 y.o. -45kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 12-13 y.o. -50kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 12-13 y.o. +50kg", tipus: "KUMITE", nem: "Girls", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 14-15 y.o. -50kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 14-15 y.o. -55kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 14-15 y.o. -60kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 14-15 y.o. +60kg", tipus: "KUMITE", nem: "Girls", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Girls 16-17 y.o. -50kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Girls 16-17 y.o. -55kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Girls 16-17 y.o. -60kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Girls 16-17 y.o. -65kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Girls 16-17 y.o. +65kg", tipus: "KUMITE", nem: "Girls", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 18+ y.o. Open", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 18+ y.o. -55kg", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 18+ y.o. -65kg", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 18+ y.o. +65kg", tipus: "KUMITE", nem: "Women", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 35+ y.o. -55kg", tipus: "KUMITE", nem: "Women", minKor: 35, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 35+ y.o. -65kg", tipus: "KUMITE", nem: "Women", minKor: 35, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Women 35+ y.o. +65kg", tipus: "KUMITE", nem: "Women", minKor: 35, maxKor: 99, tatami: "Tatami B - Kumite" },
+var OSSZES_KATEGORIA = [];
 
-    // --- KUMITE (FIÚK) ---
-    { nev: "Kumite Boys 8-9 y.o. -25kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 8-9 y.o. -30kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 8-9 y.o. -35kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 8-9 y.o. +35kg", tipus: "KUMITE", nem: "Boys", minKor: 8, maxKor: 9, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 10-11 y.o. -30kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 10-11 y.o. -35kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 10-11 y.o. -40kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 10-11 y.o. -45kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 10-11 y.o. +45kg", tipus: "KUMITE", nem: "Boys", minKor: 10, maxKor: 11, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 12-13 y.o. -40kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 12-13 y.o. -45kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 12-13 y.o. -50kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 12-13 y.o. -55kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 12-13 y.o. +55kg", tipus: "KUMITE", nem: "Boys", minKor: 12, maxKor: 13, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. -50kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. -55kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. -60kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. -65kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. -70kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. -75kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 14-15 y.o. +75kg", tipus: "KUMITE", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. -55kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. -60kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. -65kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. -70kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. -75kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. -80kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Boys 16-17 y.o. +80kg", tipus: "KUMITE", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 18+ y.o. Open", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 18+ y.o. -60kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 18+ y.o. -70kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 18+ y.o. -80kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 18+ y.o. -90kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 18+ y.o. +90kg", tipus: "KUMITE", nem: "Men", minKor: 18, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 35-44 y.o. -75kg", tipus: "KUMITE", nem: "Men", minKor: 35, maxKor: 44, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 35-44 y.o. -85kg", tipus: "KUMITE", nem: "Men", minKor: 35, maxKor: 44, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 35-44 y.o. +85kg", tipus: "KUMITE", nem: "Men", minKor: 35, maxKor: 44, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 45+ y.o. -75kg", tipus: "KUMITE", nem: "Men", minKor: 45, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 45+ y.o. -85kg", tipus: "KUMITE", nem: "Men", minKor: 45, maxKor: 99, tatami: "Tatami B - Kumite" },
-    { nev: "Kumite Men 45+ y.o. +85kg", tipus: "KUMITE", nem: "Men", minKor: 45, maxKor: 99, tatami: "Tatami B - Kumite" },
-
-    // --- KATA (LÁNYOK) ---
-    { nev: "Kata Girls 8-9 y.o.", tipus: "KATA", nem: "Girls", minKor: 8, maxKor: 9, tatami: "Tatami C - Kata" },
-    { nev: "Kata Girls 10-11 y.o.", tipus: "KATA", nem: "Girls", minKor: 10, maxKor: 11, tatami: "Tatami C - Kata" },
-    { nev: "Kata Girls 12-13 y.o.", tipus: "KATA", nem: "Girls", minKor: 12, maxKor: 13, tatami: "Tatami C - Kata" },
-    { nev: "Kata Girls 14-15 y.o.", tipus: "KATA", nem: "Girls", minKor: 14, maxKor: 15, tatami: "Tatami A - Kata" },
-    { nev: "Kata Girls 16-17 y.o.", tipus: "KATA", nem: "Girls", minKor: 16, maxKor: 17, tatami: "Tatami B - Kata" },
-    { nev: "Kata Women 18-34 y.o.", tipus: "KATA", nem: "Women", minKor: 18, maxKor: 34, tatami: "Tatami B - Kata" },
-    { nev: "Kata Women 35-49 y.o.", tipus: "KATA", nem: "Women", minKor: 35, maxKor: 49, tatami: "Tatami A - Kata" },
-    { nev: "Kata Women 50+ y.o.", tipus: "KATA", nem: "Women", minKor: 50, maxKor: 99, tatami: "Tatami A - Kata" },
-
-    // --- KATA (FIÚK) ---
-    { nev: "Kata Boys 8-9 y.o.", tipus: "KATA", nem: "Boys", minKor: 8, maxKor: 9, tatami: "Tatami C - Kata" },
-    { nev: "Kata Boys 10-11 y.o.", tipus: "KATA", nem: "Boys", minKor: 10, maxKor: 11, tatami: "Tatami C - Kata" },
-    { nev: "Kata Boys 12-13 y.o.", tipus: "KATA", nem: "Boys", minKor: 12, maxKor: 13, tatami: "Tatami C - Kata" },
-    { nev: "Kata Boys 14-15 y.o.", tipus: "KATA", nem: "Boys", minKor: 14, maxKor: 15, tatami: "Tatami A - Kata" },
-    { nev: "Kata Boys 16-17 y.o.", tipus: "KATA", nem: "Boys", minKor: 16, maxKor: 17, tatami: "Tatami B - Kata" },
-    { nev: "Kata Men 18-34 y.o.", tipus: "KATA", nem: "Men", minKor: 18, maxKor: 34, tatami: "Tatami B - Kata" },
-    { nev: "Kata Men 35-49 y.o.", tipus: "KATA", nem: "Men", minKor: 35, maxKor: 49, tatami: "Tatami A - Kata" },
-    { nev: "Kata Men 50+ y.o.", tipus: "KATA", nem: "Men", minKor: 50, maxKor: 99, tatami: "Tatami A - Kata" }
-];
+function letoltKategoriakatABazisbol() {
+    fetch('api.php?akcio=kategoriakLekerdezese', { cache: 'no-store' })
+    .then(function(valasz) {
+        return valasz.json();
+    })
+    .then(function(szerverAdatok) {
+        OSSZES_KATEGORIA = szerverAdatok; 
+        if (typeof rajzolKategoriakTablazatot === "function") {
+            rajzolKategoriakTablazatot();
+        }
+    })
+    .catch(function(hiba) {
+        console.error("Hiba a kategóriák letöltésekor:", hiba);
+    });
+}
 
 // ==========================================
-// 2. FELHASZNÁLÓK (Ezek maradnak teszthez, de a PHP is adhatja majd)
+// 2. FELHASZNÁLÓK (Offline Demóhoz)
 // ==========================================
 const FELHASZNALOK = [
     { felhasznalonev: 'KoloMarki', jelszo: '1234', szerepkor: 'admin', klub: 'admin', nev: 'Admin' },
@@ -107,19 +31,14 @@ const FELHASZNALOK = [
 // ==========================================
 // 3. GLOBÁLIS VÁLTOZÓK
 // ==========================================
-var adatok = { 
-    versenyzok: [], 
-    meccsek: [] 
-};
+var adatok = { versenyzok: [], meccsek: [] };
 var aktualisFelhasznalo = null; 
 
 // ==========================================
-// 4. SEGÉDFÜGGVÉNYEK (PHP/MySQL VERZIÓ!)
+// 4. SEGÉDFÜGGVÉNYEK (PHP/MySQL)
 // ==========================================
-
-// Ez kéri le a nevezetteket a MySQL-ből (Pincér -> Szakács -> Pincér)
 function letoltVersenyzoketABazisbol() {
-    fetch('api.php?akcio=lekerdezes')
+    fetch('api.php?akcio=lekerdezes', { cache: 'no-store' })
     .then(function(valasz) {
         return valasz.json();
     })
@@ -128,25 +47,43 @@ function letoltVersenyzoketABazisbol() {
         rajzolVersenyzokListajat(); 
     })
     .catch(function(hiba) {
-        console.error("Adatbázis hiba (Lehet, hogy nincs bekapcsolva a XAMPP):", hiba);
-        // Ha nincs adatbázis (pl. GitHubon vagyunk), marad az üres tömb
+        console.error("Adatbázis hiba:", hiba);
     });
 }
 
 function toroljMindent() { 
-    var biztos = confirm("Mindent törölsz a MySQL adatbázisból? Ez nem visszavonható!");
+    var biztos = confirm("Mindent törölsz a MySQL adatbázisból ÉS az ágrajzokból? Ez nem visszavonható!");
     if(biztos === true) { 
         fetch('api.php?akcio=torles', { method: 'POST' })
-        .then(function() {
-            location.reload(); 
+        .then(function(valasz) { return valasz.json(); })
+        .then(function(eredmeny) {
+            if (eredmeny.hiba) {
+                alert("HIBA: " + eredmeny.hiba);
+            } else {
+                alert(eredmeny.uzenet); 
+            }
+            befejezTeljesTorlest();
+        })
+        .catch(function(hiba) {
+            console.error("Szerver hiba:", hiba);
+            befejezTeljesTorlest();
         });
     } 
 }
 
-// ==========================================
-// 5. NEVEZÉS LOGIKA
-// ==========================================
+function befejezTeljesTorlest() {
+    localStorage.removeItem('iko_db');
+    localStorage.removeItem('iko_kata_db');
+    letoltVersenyzoketABazisbol();
+    valtFul('kategoriak');
+    document.getElementById('player-list').innerHTML = "";
+    if (document.getElementById('bracket-view')) document.getElementById('bracket-view').innerHTML = "";
+    if (document.getElementById('kata-content')) document.getElementById('kata-content').innerHTML = "";
+}
 
+// ==========================================
+// 5. NEVEZÉS LOGIKA ÉS KÉPERNYŐ RAJZOLÁS
+// ==========================================
 function frissitKategoriaLegordulot() {
     var nemValaszto = document.getElementById("p-gender");
     var korBevitel = document.getElementById("p-age");
@@ -154,15 +91,11 @@ function frissitKategoriaLegordulot() {
 
     var kivalasztottNem = nemValaszto.value;
     var beirtKor = parseInt(korBevitel.value);
-
     kategoriaValaszto.innerHTML = "";
 
-    if (kivalasztottNem === "" || isNaN(beirtKor) === true) {
-        return;
-    }
+    if (kivalasztottNem === "" || isNaN(beirtKor) === true) return;
 
     var szurtKategoriak = [];
-
     for (var i = 0; i < OSSZES_KATEGORIA.length; i++) {
         var aktualisKategoria = OSSZES_KATEGORIA[i];
         var joANem = false;
@@ -171,11 +104,9 @@ function frissitKategoriaLegordulot() {
         if (aktualisKategoria.nem === kivalasztottNem || aktualisKategoria.nem === "Vegyes") {
             joANem = true;
         }
-
         if (beirtKor >= aktualisKategoria.minKor && beirtKor <= aktualisKategoria.maxKor) {
             joAKor = true;
         }
-
         if (joANem === true && joAKor === true) {
             szurtKategoriak.push(aktualisKategoria);
         }
@@ -188,7 +119,6 @@ function frissitKategoriaLegordulot() {
 
     var kumiteCsoport = document.createElement("optgroup");
     kumiteCsoport.label = "KUMITE";
-
     var kataCsoport = document.createElement("optgroup");
     kataCsoport.label = "KATA";
 
@@ -211,7 +141,6 @@ function frissitKategoriaLegordulot() {
 
 function hozzaadVersenyzot() {
     var bejelentkezettEmber = aktualisFelhasznalo;
-
     var vanJoga = false;
     if (bejelentkezettEmber.szerepkor === "admin" || bejelentkezettEmber.szerepkor === "coach") {
         vanJoga = true;
@@ -243,17 +172,13 @@ function hozzaadVersenyzot() {
         tulajdonos: bejelentkezettEmber.felhasznalonev  
     };
 
-    // Küldjük az adatot a MySQL-be (a PHP segítségével)
     fetch('api.php?akcio=ujNevezes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ujVersenyzo)
     })
-    .then(function(valasz) {
-        return valasz.json();
-    })
+    .then(function(valasz) { return valasz.json(); })
     .then(function(eredmeny) {
-        // Ha sikeres a mentés, azonnal kérjük a friss listát
         letoltVersenyzoketABazisbol();
         nevDoboz.value = "";
     })
@@ -263,14 +188,11 @@ function hozzaadVersenyzot() {
     });
 }
 
-// EZT ÁTÍRTUK A SAJÁT OSZTÁLYNEVEIDRE!
 function rajzolVersenyzokListajat() {
     var listaElem = document.getElementById("player-list");
     listaElem.innerHTML = ""; 
 
-    if (aktualisFelhasznalo === null || adatok.versenyzok === undefined) {
-        return;
-    }
+    if (aktualisFelhasznalo === null || adatok.versenyzok === undefined) return;
 
     var miketMutassunk = [];
     var kiVanBent = aktualisFelhasznalo;
@@ -288,18 +210,14 @@ function rajzolVersenyzokListajat() {
 
     for (var j = 0; j < miketMutassunk.length; j++) {
         var mutatasraVaroEmber = miketMutassunk[j];
-        
-        // Letisztult HTML kód a saját CSS-ünkkel!
         var htmlDarab = '<li style="border-bottom: 1px solid #ccc; padding: 5px; display: flex; justify-content: space-between; font-size: 14px;">';
         htmlDarab += '<span><b>' + mutatasraVaroEmber.nev + '</b> (' + mutatasraVaroEmber.klub + ')</span>';
-        htmlDarab += '<span style="color: red; font-weight: bold;">' + mutatasraVaroEmber.kategoria + '</span>';
+        htmlDarab += '<span style="color: #CE1126; font-weight: bold;">' + mutatasraVaroEmber.kategoria + '</span>';
         htmlDarab += '</li>';
-        
         listaElem.innerHTML += htmlDarab;
     }
 }
 
-// ÚJ: Ez rajzolja ki a Kategóriák és Tatamik táblázatot
 function rajzolKategoriakTablazatot() {
     var tablaTorzs = document.getElementById("kategoria-tabla-torzs");
     if (tablaTorzs === null) return; 
@@ -308,18 +226,16 @@ function rajzolKategoriakTablazatot() {
 
     for (var i = 0; i < OSSZES_KATEGORIA.length; i++) {
         var kategoria = OSSZES_KATEGORIA[i];
-        
         var tatamiNeve = kategoria.tatami;
-        if (tatamiNeve === undefined) {
-            tatamiNeve = "Nincs kiosztva";
+        
+        if (tatamiNeve === null || tatamiNeve === undefined || tatamiNeve === "") {
+            tatamiNeve = "<span style='color: #9ca3af; font-style: italic;'>Még nincs beosztva</span>";
         }
 
-        // Tiszta HTML, a CSS fájl .táblázat-sor és .táblázat-szoveg osztályaival!
         var sorHtml = '<tr>';
-        sorHtml += '<td>' + kategoria.nev + '</td>';
-        sorHtml += '<td>' + tatamiNeve + '</td>';
+        sorHtml += '<td class="kategoria-tabla-cella">' + kategoria.nev + '</td>';
+        sorHtml += '<td class="kategoria-tabla-cella">' + tatamiNeve + '</td>';
         sorHtml += '</tr>';
-
         tablaTorzs.innerHTML += sorHtml;
     }
 }

@@ -1,11 +1,9 @@
-/* AUTH.js - Belépés és Két oldalas rendszer kezelése (PHP/MySQL kompatibilis!) */
+/* AUTH.js - Belépés és Két oldalas rendszer kezelése (PHP/MySQL) */
 
-// Ezt a függvényt hívja az index.html a zöld gombbal!
 function bejelentkezesKezdolaprol() {
     var beirtNev = document.getElementById("login-user").value;
     var beirtJelszo = document.getElementById("login-pass").value;
 
-    // 1. LÉPÉS: Megpróbálunk a MySQL-ből belépni az api.php segítségével
     var belepoAdatok = { felhasznalonev: beirtNev, jelszo: beirtJelszo };
 
     fetch('api.php?akcio=belepes', {
@@ -17,7 +15,6 @@ function bejelentkezesKezdolaprol() {
         return valasz.json();
     })
     .then(function(szerverValasz) {
-        // Ha a PHP azt mondja, hogy létezik a felhasználó a MySQL-ben
         if (szerverValasz.sikeres === true) {
             var szoveg = JSON.stringify(szerverValasz.felhasznalo);
             localStorage.setItem("shobu_bejelentkezve", szoveg);
@@ -27,13 +24,8 @@ function bejelentkezesKezdolaprol() {
         }
     })
     .catch(function(hiba) {
-        // 2. LÉPÉS (JUNIOR TRÜKK!): 
-        // Ha hiba van (pl. GitHubon vagyunk, ahol nincs PHP szerver), 
-        // nem fagyunk le, hanem használjuk a régi, beégetett FELHASZNALOK tömböt!
         console.log("Nincs PHP szerver! Vészhelyzeti belépés a teszt adatokkal...");
-
         var talaltFelhasznalo = null;
-
         for (var i = 0; i < FELHASZNALOK.length; i++) {
             var ember = FELHASZNALOK[i];
             if (ember.felhasznalonev === beirtNev && ember.jelszo === beirtJelszo) {
@@ -41,7 +33,6 @@ function bejelentkezesKezdolaprol() {
                 break;
             }
         }
-
         if (talaltFelhasznalo !== null) {
             var szoveg = JSON.stringify(talaltFelhasznalo);
             localStorage.setItem("shobu_bejelentkezve", szoveg);
@@ -52,7 +43,6 @@ function bejelentkezesKezdolaprol() {
     });
 }
 
-// Ezt a függvényt hívjuk meg a verseny.html betöltésekor
 function ellenorizBejelentkezestVersenyOldalon() {
     var mentettEmberSzoveg = localStorage.getItem("shobu_bejelentkezve");
     
@@ -76,18 +66,15 @@ function ellenorizBejelentkezestVersenyOldalon() {
         document.getElementById("p-dojo").disabled = true; 
     }
 
-    // JAVÍTÁS: Itt a sima "rajzolVersenyzokListajat()" helyett rászólunk a data.js-re,
-    // hogy kérje le a MySQL-ből a legfrissebb neveket! (Ami aztán kirajzolja a listát is).
     if (typeof letoltVersenyzoketABazisbol === "function") {
         letoltVersenyzoketABazisbol();
-    } else {
-        rajzolVersenyzokListajat(); // Védelem, ha valamiért nem töltött be a data.js
     }
     
-    // Kirajzoljuk a Tatami táblázatot!
-    rajzolKategoriakTablazatot(); 
+    // EZ A LÉNYEG: Kéri a kategóriákat a MySQL-ből (aztán meg is rajzolja a táblát)
+    if (typeof letoltKategoriakatABazisbol === "function") {
+        letoltKategoriakatABazisbol();
+    } 
 
-    // Alapértelmezetten a Kategóriák fület mutatjuk belépés után
     valtFul('kategoriak');
 }
 
@@ -96,7 +83,6 @@ function kijelentkezesVersenybol() {
     window.location.href = "index.html";
 }
 
-// FÜL VÁLTÁS (Kategóriák, Nevezés, Ágrajz, Kata)
 function valtFul(fulId) {
     var osszesSection = document.querySelectorAll("section");
     for (var i = 0; i < osszesSection.length; i++) {
