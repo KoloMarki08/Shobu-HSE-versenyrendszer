@@ -3,7 +3,6 @@
 function bejelentkezesKezdolaprol() {
     var beirtNev = document.getElementById("login-user").value;
     var beirtJelszo = document.getElementById("login-pass").value;
-
     var belepoAdatok = { felhasznalonev: beirtNev, jelszo: beirtJelszo };
 
     fetch('api.php?akcio=belepes', {
@@ -11,41 +10,43 @@ function bejelentkezesKezdolaprol() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(belepoAdatok)
     })
-    .then(function(valasz) {
-        return valasz.json();
-    })
-    .then(function(szerverValasz) {
-        if (szerverValasz.sikeres === true) {
-            var szoveg = JSON.stringify(szerverValasz.felhasznalo);
-            localStorage.setItem("shobu_bejelentkezve", szoveg);
-            window.location.href = "verseny.html";
-        } else {
-            alert("Hibás felhasználónév vagy jelszó az adatbázisban!");
-        }
-    })
-    .catch(function(hiba) {
-        console.log("Nincs PHP szerver! Vészhelyzeti belépés a teszt adatokkal...");
-        var talaltFelhasznalo = null;
-        for (var i = 0; i < FELHASZNALOK.length; i++) {
-            var ember = FELHASZNALOK[i];
-            if (ember.felhasznalonev === beirtNev && ember.jelszo === beirtJelszo) {
-                talaltFelhasznalo = ember;
-                break;
+        .then(function (valasz) { return valasz.json(); })
+        .then(function (szerverValasz) {
+            if (szerverValasz.sikeres === true) {
+                localStorage.setItem("shobu_bejelentkezve", JSON.stringify(szerverValasz.felhasznalo));
+                window.location.href = "verseny.html?tab=kategoriak";
+            } else {
+                alert("Hibás felhasználónév vagy jelszó az adatbázisban!");
             }
-        }
-        if (talaltFelhasznalo !== null) {
-            var szoveg = JSON.stringify(talaltFelhasznalo);
-            localStorage.setItem("shobu_bejelentkezve", szoveg);
-            window.location.href = "verseny.html";
-        } else {
-            alert("Hibás felhasználónév vagy jelszó!");
-        }
-    });
+        })
+        .catch(function (hiba) {
+            console.log("Nincs PHP szerver! Vészhelyzeti belépés a teszt adatokkal...");
+            var talaltFelhasznalo = null;
+            for (var i = 0; i < FELHASZNALOK.length; i++) {
+                var ember = FELHASZNALOK[i];
+                if (ember.felhasznalonev === beirtNev && ember.jelszo === beirtJelszo) {
+                    talaltFelhasznalo = ember;
+                    break;
+                }
+            }
+            if (talaltFelhasznalo !== null) {
+                localStorage.setItem("shobu_bejelentkezve", JSON.stringify(talaltFelhasznalo));
+                window.location.href = "verseny.html?tab=kategoriak";
+            } else {
+                alert("Hibás felhasználónév vagy jelszó!");
+            }
+        });
+}
+
+// ÚJ: KÖZÖNSÉG PANEL BELÉPTETÉS
+function belepesKozonsegkent(celFul) {
+    var vendeg = { felhasznalonev: 'kozonseg', jelszo: '', szerepkor: 'guest', nev: 'Néző (Közönség)', klub: '-' };
+    localStorage.setItem("shobu_bejelentkezve", JSON.stringify(vendeg));
+    window.location.href = "verseny.html?tab=" + celFul;
 }
 
 function ellenorizBejelentkezestVersenyOldalon() {
     var mentettEmberSzoveg = localStorage.getItem("shobu_bejelentkezve");
-    
     if (mentettEmberSzoveg === null) {
         alert("Előbb be kell jelentkezned!");
         window.location.href = "index.html";
@@ -58,24 +59,28 @@ function ellenorizBejelentkezestVersenyOldalon() {
     if (aktualisFelhasznalo.szerepkor === "admin") {
         document.getElementById("admin-controls").classList.remove("hidden");
         document.getElementById("nav-reg").classList.remove("hidden");
-        document.getElementById("p-dojo").disabled = false;
-        document.getElementById("p-dojo").value = aktualisFelhasznalo.klub;
+        if (document.getElementById("p-dojo")) {
+            document.getElementById("p-dojo").disabled = false;
+            document.getElementById("p-dojo").value = aktualisFelhasznalo.klub;
+        }
     } else if (aktualisFelhasznalo.szerepkor === "coach") {
         document.getElementById("nav-reg").classList.remove("hidden");
-        document.getElementById("p-dojo").value = aktualisFelhasznalo.klub;
-        document.getElementById("p-dojo").disabled = true; 
+        if (document.getElementById("p-dojo")) {
+            document.getElementById("p-dojo").value = aktualisFelhasznalo.klub;
+            document.getElementById("p-dojo").disabled = true;
+        }
+    } else if (aktualisFelhasznalo.szerepkor === "guest") {
+        if (document.getElementById("nav-reg")) document.getElementById("nav-reg").classList.add("hidden");
+        if (document.getElementById("admin-controls")) document.getElementById("admin-controls").classList.add("hidden");
     }
 
-    if (typeof letoltVersenyzoketABazisbol === "function") {
-        letoltVersenyzoketABazisbol();
-    }
-    
-    // EZ A LÉNYEG: Kéri a kategóriákat a MySQL-ből (aztán meg is rajzolja a táblát)
-    if (typeof letoltKategoriakatABazisbol === "function") {
-        letoltKategoriakatABazisbol();
-    } 
+    if (typeof letoltVersenyzoketABazisbol === "function") letoltVersenyzoketABazisbol();
+    if (typeof letoltKategoriakatABazisbol === "function") letoltKategoriakatABazisbol();
 
-    valtFul('kategoriak');
+    // URL PARAMÉTER ALAPJÁN UGRÁS A FÜLRE
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabToOpen = urlParams.get('tab') || 'kategoriak';
+    valtFul(tabToOpen);
 }
 
 function kijelentkezesVersenybol() {
@@ -90,10 +95,9 @@ function valtFul(fulId) {
     }
 
     var aktivSection = document.getElementById("tab-" + fulId);
-    if (aktivSection) {
-        aktivSection.classList.remove("hidden");
-    }
+    if (aktivSection) aktivSection.classList.remove("hidden");
 
     if (fulId === "bracket" && typeof rajzolAgrajz === "function") rajzolAgrajz();
     if (fulId === "kata" && typeof rajzolKata === "function") rajzolKata();
+    if (fulId === "eredmenyek" && typeof mutasdEredmenyeket === "function") mutasdEredmenyeket();
 }

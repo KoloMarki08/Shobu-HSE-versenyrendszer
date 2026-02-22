@@ -21,79 +21,55 @@
     </nav>
 
     <div class="kezdolap-tarolo">
-
         <div class="kezdolap-bal-oldal">
-            <h2 class="szekcio-cim">Archív és Aktív versenyek</h2>
+            <h2 class="szekcio-cim" style="color:white; border-color:#CE1126;">Archív és Aktív versenyek</h2>
 
             <div class="esemeny-kartya">
-                <div class="esemeny-kep-helye"><img src="teszt_2.jpg" alt="VI. Rátót Kupa, 2026.09.30, Vácrátót" title="VI. Rátót Kupa, 2026.09.30, Vácrátót"></div>
-                
+                <div class="esemeny-kep-helye"><img src="teszt_2.jpg" alt="VI. Rátót Kupa" title="VI. Rátót Kupa"></div>
                 <div class="esemeny-adatok">
                     <h3 class="esemeny-cime">VI. Rátót Kupa, 2026.09.30, Vácrátót</h3>
-                    
                     <div class="esemeny-idopont">
-                        <span class="cimke-nyitva">Nevezés nyitva</span>
+                        <span class="cimke-nyitva">ÉLŐ / NYITVA</span>
                         <span class="idopont-szoveg">2026-03-01 - 2026-05-01</span>
                     </div>
-
                     <div class="esemeny-gombok-taroloja">
-                        <button class="esemeny-gomb">Közönség panel</button>
-                        <button class="esemeny-gomb">Szervezői infók</button>
+                        <button onclick="belepesKozonsegkent('kategoriak')" class="esemeny-gomb kozonseg-gomb">Közönség panel</button>
+                        <button onclick="belepesKozonsegkent('eredmenyek')" class="esemeny-gomb eredmeny-gomb">Eredmények</button>
+                        <button onclick="document.getElementById('login-user').focus()" class="esemeny-gomb nevezes-gomb">Nevezés (Login)</button>
                     </div>
                 </div>
             </div>
 
             <div class="esemeny-kartya">
-                <div class="esemeny-kep-helye"><img src="teszt_1.jpg" alt="VII. Rátót Kupa, 2027.10.11, Vácrátót" title="VII. Rátót Kupa, 2027.10.11, Vácrátót"></div>
-                
+                <div class="esemeny-kep-helye"><img src="teszt_1.jpg" alt="VII. Rátót Kupa" title="VII. Rátót Kupa">
+                </div>
                 <div class="esemeny-adatok">
                     <h3 class="esemeny-cime">VII. Rátót Kupa, 2027.10.11, Vácrátót</h3>
-                    
                     <div class="esemeny-idopont">
-                        <span class="cimke-zarva">Nevezés lezárult</span>
+                        <span class="cimke-zarva">LEZÁRULT</span>
                         <span class="idopont-szoveg">2026-01-12 - 2026-01-15</span>
                     </div>
-
                     <div class="esemeny-gombok-taroloja">
-                        <button class="esemeny-gomb">Közönség panel</button>
-                        <button class="esemeny-gomb">Eredmények</button>
+                        <button onclick="belepesKozonsegkent('eredmenyek')" class="esemeny-gomb vegeredmeny-gomb">Végeredmények</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="kezdolap-jobb-oldal">
-            
             <div class="belepes-doboz-tarolo">
-                <div class="belepes-fejlec">
-                    Bejelentkezés
-                </div>
-                
+                <div class="belepes-fejlec">Szervezői / Bírói Belépés</div>
                 <div class="belepes-doboz">
-                    <label class="urlap-cimke">Felhasználónév (Login)</label>
+                    <label class="urlap-cimke">Felhasználónév</label>
                     <input id="login-user" type="text" class="belepes-szovegdoboz">
-                    
-                    <label class="urlap-cimke">Jelszó (Password)</label>
+                    <label class="urlap-cimke">Jelszó</label>
                     <input id="login-pass" type="password" class="belepes-szovegdoboz">
-                    
-                    <button onclick="bejelentkezesKezdolaprol()" class="piros-belepes-gomb">
-                        Belépés a rendszerbe
-                    </button>
-                    
-                    <div class="regisztracio-linkek">
-                        Nincs még fiókod? Kérjük <a href="#" class="kek-link">Regisztrálj</a><br>
-                        <a href="#" class="kek-link">Elfelejtetted a jelszavad?</a>
-                    </div>
-                    
-                    <div class="jelszo-emlekezteto-doboz">
-                        <b>TESZT ADATOK:</b><br><br>
-                        Admin: <b>KoloMarki</b> / 1234<br>
-                        Bíró: <b>A tatami</b> / A-tatami<br>
-                        Edző: <b>Balint.Tornai</b> / 1234
-                    </div>
+                    <button onclick="bejelentkezesKezdolaprol()" class="piros-belepes-gomb">Belépés a
+                        rendszerbe</button>
+                    <div class="jelszo-emlekezteto-doboz"><b>TESZT ADATOK:</b><br><br>Admin: <b>KoloMarki</b> /
+                        1234<br>Bíró: <b>A tatami</b> / A-tatami</div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -102,27 +78,8 @@
             <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
         </div>
     </footer>
-
     <script src="data.js"></script>
     <script src="auth.js"></script>
-
-    <script>
-        function ellenorizFuggvenyeket() {
-            var bejelentkezesFuggvenyLetezik = typeof bejelentkezesKezdolaprol === "function";
-            if (!bejelentkezesFuggvenyLetezik) {
-                console.error("HIBA: Az auth.js nem töltődött be, a bejelentkezes függvény hiányzik!");
-            }
-            var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
-            if (!felhasznalokTombLetezik) {
-                console.error("HIBA: A data.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
-            }
-        }
-
-        window.onload = function () {
-            console.log("Kezdőlap rendszere betöltve.");
-            ellenorizFuggvenyeket();
-        };
-    </script>
 </body>
 
 </html>

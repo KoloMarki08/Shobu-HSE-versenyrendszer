@@ -13,20 +13,20 @@
 <body class="oldal-alap-hattere">
 
     <div id="app" class="fo-alkalmazas-tarolo">
-
         <nav class="felso-menusor">
             <div class="menu-tartalom">
                 <div class="logonk">
                     <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
                     <span id="user-badge" class="felhasznalo-jelzo">Betöltés...</span>
                 </div>
-
                 <div id="mobil-menu-container" class="menu-gombok">
-                    <button onclick="valtFul('kategoriak')" class="menu-gomb-kategoriak">Kategóriák</button>
-                    <button id="nav-reg" onclick="valtFul('reg')" class="menu-gomb-nevezes hidden">Nevezés</button>
-                    <button onclick="valtFul('bracket')" class="menu-gomb-kumite">Kumite Ágrajz</button>
-                    <button onclick="valtFul('kata')" class="menu-gomb-kata">KATA Eredmények</button>
-                    <button onclick="kijelentkezesVersenybol()" class="menu-gomb-kilepes">Kilépés</button>
+                    <button onclick="valtFul('kategoriak')">Kategóriák</button>
+                    <button id="nav-reg" onclick="valtFul('reg')" class="hidden">Nevezés</button>
+                    <button onclick="valtFul('tatami')" style="color:#facc15;">Tatami Nézet</button>
+                    <button onclick="valtFul('eredmenyek')" style="color:#60a5fa;">Végeredmények</button>
+                    <button onclick="valtFul('bracket')">Kumite Ágrajz</button>
+                    <button onclick="valtFul('kata')">KATA Panel</button>
+                    <button onclick="kijelentkezesVersenybol()">Kilépés</button>
                 </div>
             </div>
         </nav>
@@ -34,28 +34,40 @@
         <section id="tab-kategoriak" class="kategoriak-oldal hidden">
             <div class="kategoriak-feher-doboz">
                 <h2 class="doboz-cime">Kategóriák és beosztások</h2>
-
+                <p style="color:#64748b; margin-bottom:15px; font-size:14px;">Kattints a kategória vagy a tatami nevére
+                    a megtekintéshez!</p>
                 <table class="kategoria-tabla">
                     <thead class="kategoria-tabla-fejlec">
                         <tr>
-                            <th class="kategoria-tabla-cella">Kategória neve (Category name)</th>
-                            <th class="kategoria-tabla-cella">Tatami (Mate name)</th>
+                            <th class="kategoria-tabla-cella">Kategória neve</th>
+                            <th class="kategoria-tabla-cella">Tatami</th>
                         </tr>
                     </thead>
-                    <tbody id="kategoria-tabla-torzs" class="kategoria-tabla-torzs">
-                        </tbody>
+                    <tbody id="kategoria-tabla-torzs" class="kategoria-tabla-torzs"></tbody>
                 </table>
+            </div>
+        </section>
+
+        <section id="tab-eredmenyek" class="hidden">
+            <div class="kategoriak-feher-doboz">
+                <h2 class="doboz-cime" style="color:#ca8a04;">🏆 Hivatalos Végeredmények (Top 4)</h2>
+                <div id="eredmenyek-content">Nincs még eredmény.</div>
+            </div>
+        </section>
+
+        <section id="tab-tatami" class="hidden" style="padding: 20px;">
+            <div id="tatami-content"
+                style="display: flex; flex-direction: column; align-items: center; gap: 40px; padding-bottom: 50px;">
+                <p style="color:white; padding:20px;">Válassz egy tatamit a Kategóriák fülön a megtekintéshez!</p>
             </div>
         </section>
 
         <section id="tab-reg" class="nevezes-oldal hidden">
             <div class="nevezes-feher-doboz">
                 <h2 class="doboz-cime">Versenyzők hozzáadása</h2>
-
                 <div class="urlap-racs">
                     <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
                     <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
-
                     <select id="p-gender" onchange="frissitKategoriaLegordulot()" class="urlap-legordulo">
                         <option value="">Nem kiválasztása...</option>
                         <option value="Boys">Fiú</option>
@@ -63,23 +75,19 @@
                         <option value="Men">Férfi</option>
                         <option value="Women">Női</option>
                     </select>
-
-                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()" class="urlap-szamdoboz">
+                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()"
+                        class="urlap-szamdoboz">
                     <input id="p-weight" type="number" placeholder="Súly (kg)" class="urlap-szamdoboz">
                     <input id="p-height" type="number" placeholder="Magasság (cm)" class="urlap-szamdoboz">
-
                     <select id="p-cat" class="urlap-kategoria-valaszto">
                         <option value="">Előbb adja meg a kort és a nemet!</option>
                     </select>
                 </div>
-
                 <button onclick="hozzaadVersenyzot()" class="hozzaadas-gomb">HOZZÁADÁS</button>
-
                 <div class="nevezettek-listaja-doboz">
                     <h3 class="lista-cime">Nevezettek listája</h3>
                     <ul id="player-list" class="lista-elemek"></ul>
                 </div>
-
                 <div id="admin-controls" class="admin-gombok hidden">
                     <button onclick="generalKumite()" class="admin-gomb-sorsolas">Kumite Sorsolás</button>
                     <button onclick="generalKata()" class="admin-gomb-kata">Kata Panel / Generálás</button>
@@ -91,105 +99,57 @@
         <section id="tab-bracket" class="hidden">
             <div id="bracket-view" class="agrajz-vilagos-tema"></div>
         </section>
-
-        <section id="tab-kata" class="kata-eredmenyek-oldal hidden">
+        <section id="tab-kata" class="hidden">
             <div id="kata-content" class="kata-taroloja"></div>
         </section>
 
         <section id="tab-referee" class="biroi-panel-hatter hidden">
             <div class="biroi-panel-doboz">
-
-                <button onclick="valtFul('bracket')" class="bezaras-gomb">✕</button>
-
+                <button onclick="document.getElementById('tab-referee').classList.add('hidden')"
+                    class="bezaras-gomb">✕</button>
                 <div class="idozito-reszleg">
                     <h3 id="match-category-title" class="meccs-kategoria-cime">Kategória</h3>
                     <div id="timer" class="hatalmas-idozito timer-glow">02:00</div>
-
                     <div class="idozito-gombok">
                         <button onclick="kapcsolIdozitot()" id="btn-timer" class="ido-start-gomb">START</button>
                         <button onclick="nullazMeccsPontszamokat()" class="ido-reset-gomb">RESET</button>
                     </div>
                 </div>
-
                 <div class="jatekosok-reszlege">
                     <div class="kek-jatekos-oldala">
                         <div class="szin-jelzo">
-                            <div class="kicsi-kek-negyzet"></div>
-                            <span class="szin-szoveg-kek">AKA</span>
+                            <div class="kicsi-kek-negyzet"></div><span class="szin-szoveg-kek">AKA</span>
                         </div>
                         <div class="jatekos-neve" id="ref-aka">A Játékos</div>
                         <div class="jatekos-pontja" id="score-aka">0</div>
-
                         <div class="pontadas-gombok">
                             <button onclick="pontszamAdas('aka', 1)" class="pont-gomb pont-gomb-kek">WAZARI (1)</button>
-                            <button onclick="pontszamAdas('aka', 2)" class="pont-gomb pont-gomb-kek-vilagos">IPPON (2)</button>
+                            <button onclick="pontszamAdas('aka', 2)" class="pont-gomb pont-gomb-kek-vilagos">IPPON
+                                (2)</button>
                         </div>
                     </div>
-
                     <div class="piros-jatekos-oldala">
                         <div class="szin-jelzo">
-                            <div class="kicsi-piros-negyzet"></div>
-                            <span class="szin-szoveg-piros">SHIRO</span>
+                            <div class="kicsi-piros-negyzet"></div><span class="szin-szoveg-piros">SHIRO</span>
                         </div>
                         <div class="jatekos-neve" id="ref-shiro">B Játékos</div>
                         <div class="jatekos-pontja" id="score-shiro">0</div>
-
                         <div class="pontadas-gombok">
-                            <button onclick="pontszamAdas('shiro', 1)" class="pont-gomb pont-gomb-piros">WAZARI (1)</button>
-                            <button onclick="pontszamAdas('shiro', 2)" class="pont-gomb pont-gomb-piros-vilagos">IPPON (2)</button>
+                            <button onclick="pontszamAdas('shiro', 1)" class="pont-gomb pont-gomb-piros">WAZARI
+                                (1)</button>
+                            <button onclick="pontszamAdas('shiro', 2)" class="pont-gomb pont-gomb-piros-vilagos">IPPON
+                                (2)</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-
-        <footer class="lablec-tarolo">
-            <div class="lablec-tartalom">
-                <div class="lablec-bal-oldal">
-                    <h3 class="lablec-cime">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></h3>
-                    <p class="lablec-leiras">
-                        Professzionális Kyokushin Karate versenykezelő szoftver.
-                        Készült a modern és gyors versenybonyolítás támogatására.
-                        Készítette: Kolonics Márk
-                    </p>
-                </div>
-                <div class="lablec-jobb-oldal">
-                    <a href="#" class="lablec-link">Kapcsolat</a>
-                    <a href="#" class="lablec-link">Adatvédelem</a>
-                    <a href="#" class="lablec-link">Súgó</a>
-                </div>
-            </div>
-            <div class="lablec-also-sav">
-                <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
-            </div>
-        </footer>
     </div>
-
     <script src="data.js"></script>
     <script src="auth.js"></script>
-    <script src="kumite.js"></script>
-    <script src="kata.js"></script>
-
-    <script>
-        function ellenorizFuggvenyeket() {
-            var bejelentkezesFuggvenyLetezik = typeof bejelentkezes === "function" || typeof bejelentkezesKezdolaprol === "function" || typeof ellenorizBejelentkezestVersenyOldalon === "function";
-            if (!bejelentkezesFuggvenyLetezik) {
-                console.error("HIBA: Az auth.js nem töltődött be rendesen!");
-            }
-            var felhasznalokTombLetezik = typeof FELHASZNALOK !== "undefined";
-            if (!felhasznalokTombLetezik) {
-                console.error("HIBA: A data.js nem töltődött be, a FELHASZNALOK tömb hiányzik!");
-            }
-        }
-
-        window.onload = function () {
-            console.log("Rendszer betöltve.");
-            ellenorizFuggvenyeket();
-            if (typeof ellenorizBejelentkezestVersenyOldalon === "function") {
-                ellenorizBejelentkezestVersenyOldalon();
-            }
-        };
-    </script>
+    <script src="KUMITE.js"></script>
+    <script src="KATA.js"></script>
+    <script>window.onload = function () { if (typeof ellenorizBejelentkezestVersenyOldalon === "function") ellenorizBejelentkezestVersenyOldalon(); };</script>
 </body>
 
 </html>
