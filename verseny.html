@@ -108,11 +108,15 @@
                 <button onclick="document.getElementById('tab-referee').classList.add('hidden')"
                     class="bezaras-gomb">✕</button>
                 <div class="idozito-reszleg">
-                    <h3 id="match-category-title" class="meccs-kategoria-cime">Kategória</h3>
+                    <h3 id="match-category-title" class="meccs-kategoria-cime" style="color:white; font-weight:bold;">
+                        Kategória Neve</h3>
                     <div id="timer" class="hatalmas-idozito timer-glow">02:00</div>
                     <div class="idozito-gombok">
                         <button onclick="kapcsolIdozitot()" id="btn-timer" class="ido-start-gomb">START</button>
                         <button onclick="nullazMeccsPontszamokat()" class="ido-reset-gomb">RESET</button>
+                        <button onclick="befejezMeccset()"
+                            style="background-color:#ca8a04; color:white; font-weight:700; padding:0.5rem 1.5rem; border-radius:0.25rem; border:none; cursor:pointer;">MÉRKŐZÉS
+                            LEZÁRÁSA</button>
                     </div>
                 </div>
                 <div class="jatekosok-reszlege">
@@ -121,24 +125,55 @@
                             <div class="kicsi-kek-negyzet"></div><span class="szin-szoveg-kek">AKA</span>
                         </div>
                         <div class="jatekos-neve" id="ref-aka">A Játékos</div>
+
+                        <div
+                            style="font-size:16px; font-weight:bold; color:#d1d5db; margin-bottom:10px; background:#3f3f46; padding:5px; border-radius:5px;">
+                            Chui: <span id="chui-aka" style="color:#facc15;">0</span> | Genten: <span id="genten-aka"
+                                style="color:#ef4444;">0</span>
+                        </div>
+
                         <div class="jatekos-pontja" id="score-aka">0</div>
+
                         <div class="pontadas-gombok">
                             <button onclick="pontszamAdas('aka', 1)" class="pont-gomb pont-gomb-kek">WAZARI (1)</button>
                             <button onclick="pontszamAdas('aka', 2)" class="pont-gomb pont-gomb-kek-vilagos">IPPON
                                 (2)</button>
+                            <button onclick="buntetesAdas('aka', 'chui')"
+                                style="background:#ca8a04; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">CHUI</button>
+                            <button onclick="buntetesAdas('aka', 'genten')"
+                                style="background:#ef4444; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">GENTEN</button>
+                            <button onclick="pontTorles('aka')"
+                                style="grid-column: span 2; background:#3f3f46; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">VISSZAVONÁS
+                                (-1 Pont)</button>
                         </div>
                     </div>
+
                     <div class="piros-jatekos-oldala">
                         <div class="szin-jelzo">
                             <div class="kicsi-piros-negyzet"></div><span class="szin-szoveg-piros">SHIRO</span>
                         </div>
                         <div class="jatekos-neve" id="ref-shiro">B Játékos</div>
+
+                        <div
+                            style="font-size:16px; font-weight:bold; color:#d1d5db; margin-bottom:10px; background:#3f3f46; padding:5px; border-radius:5px;">
+                            Chui: <span id="chui-shiro" style="color:#facc15;">0</span> | Genten: <span
+                                id="genten-shiro" style="color:#ef4444;">0</span>
+                        </div>
+
                         <div class="jatekos-pontja" id="score-shiro">0</div>
+
                         <div class="pontadas-gombok">
                             <button onclick="pontszamAdas('shiro', 1)" class="pont-gomb pont-gomb-piros">WAZARI
                                 (1)</button>
                             <button onclick="pontszamAdas('shiro', 2)" class="pont-gomb pont-gomb-piros-vilagos">IPPON
                                 (2)</button>
+                            <button onclick="buntetesAdas('shiro', 'chui')"
+                                style="background:#ca8a04; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">CHUI</button>
+                            <button onclick="buntetesAdas('shiro', 'genten')"
+                                style="background:#ef4444; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">GENTEN</button>
+                            <button onclick="pontTorles('shiro')"
+                                style="grid-column: span 2; background:#3f3f46; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">VISSZAVONÁS
+                                (-1 Pont)</button>
                         </div>
                     </div>
                 </div>

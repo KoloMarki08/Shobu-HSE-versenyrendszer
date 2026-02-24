@@ -1,6 +1,3 @@
-// ==========================================
-// 1. ADATBÁZIS: KATEGÓRIÁK ÉS TATAMIK
-// ==========================================
 var OSSZES_KATEGORIA = [];
 
 function letoltKategoriakatABazisbol() {
@@ -12,12 +9,6 @@ function letoltKategoriakatABazisbol() {
         })
         .catch(function (hiba) { console.error("Hiba a kategóriák letöltésekor:", hiba); });
 }
-
-const FELHASZNALOK = [
-    { felhasznalonev: 'KoloMarki', jelszo: '1234', szerepkor: 'admin', klub: 'admin', nev: 'Admin' },
-    { felhasznalonev: 'A tatami', jelszo: 'A-tatami', szerepkor: 'judge', klub: '-', nev: 'A_Tatami' },
-    { felhasznalonev: 'Balint.Tornai', jelszo: '1234', szerepkor: 'coach', klub: 'Vácrátóti HSE', nev: 'Tornai Balint' }
-];
 
 var adatok = { versenyzok: [], meccsek: [] };
 var aktualisFelhasznalo = null;
@@ -34,49 +25,65 @@ function toroljMindent() {
     if (biztos === true) {
         fetch('api.php?akcio=torles', { method: 'POST' })
             .then(function (valasz) { return valasz.json(); })
-            .then(function (eredmeny) {
-                if (eredmeny.hiba) alert("HIBA: " + eredmeny.hiba);
-                else alert(eredmeny.uzenet);
-                befejezTeljesTorlest();
-            })
-            .catch(function (hiba) { console.error("Szerver hiba:", hiba); befejezTeljesTorlest(); });
+            .then(function (eredmeny) { alert(eredmeny.uzenet || eredmeny.hiba); befejezTeljesTorlest(); })
+            .catch(function (hiba) { befejezTeljesTorlest(); });
     }
 }
 
 function befejezTeljesTorlest() {
-    localStorage.removeItem('iko_db'); localStorage.removeItem('iko_kata_db'); localStorage.removeItem('iko_kata_status');
     letoltVersenyzoketABazisbol(); valtFul('kategoriak');
     document.getElementById('player-list').innerHTML = "";
     if (document.getElementById('bracket-view')) document.getElementById('bracket-view').innerHTML = "";
     if (document.getElementById('kata-content')) document.getElementById('kata-content').innerHTML = "";
 }
 
+// ÚJ SZŰRŐ: Mivel nincs kor és nem a DB-ben, a név alapján csoportosít!
+// A TÖKÉLETES, AUTOMATIKUSAN SZŰRŐ MOTOR
 function frissitKategoriaLegordulot() {
     var nem = document.getElementById("p-gender").value;
     var kor = parseInt(document.getElementById("p-age").value);
     var valaszto = document.getElementById("p-cat");
     valaszto.innerHTML = "";
 
-    if (!OSSZES_KATEGORIA || OSSZES_KATEGORIA.length === 0) { valaszto.innerHTML = "<option value=''>Kategóriák betöltése folyamatban...</option>"; letoltKategoriakatABazisbol(); return; }
-    if (nem === "" || isNaN(kor)) { valaszto.innerHTML = "<option value=''>Előbb adja meg a kort és a nemet!</option>"; return; }
+    if (!OSSZES_KATEGORIA || OSSZES_KATEGORIA.length === 0) { 
+        valaszto.innerHTML = "<option value=''>Kategóriák betöltése...</option>"; 
+        letoltKategoriakatABazisbol(); 
+        return; 
+    }
 
+    if (nem === "" || isNaN(kor)) { 
+        valaszto.innerHTML = "<option value=''>Előbb adja meg a kort és a nemet!</option>"; 
+        return; 
+    }
+
+    // Leszűrjük a 76 kategóriát csak azokra, amik megfelelnek a kornak és nemnek!
     var szurt = OSSZES_KATEGORIA.filter(function (akt) {
-        var minK = parseInt(akt.minKor || akt.minkor || 0); var maxK = parseInt(akt.maxKor || akt.maxkor || 99);
-        var n = akt.nem || akt.Nem || "";
+        var minK = parseInt(akt.min_kor || 0); 
+        var maxK = parseInt(akt.max_kor || 99);
+        var n = akt.nem || "";
         return (n === nem || n === "Vegyes" || n === "Open") && (kor >= minK && kor <= maxK);
     });
 
-    if (szurt.length === 0) { valaszto.innerHTML = "<option value=''>Nincs találat</option>"; return; }
+    if (szurt.length === 0) { 
+        valaszto.innerHTML = "<option value=''>Nincs megfelelő kategória ehhez a korhoz!</option>"; 
+        return; 
+    }
 
     var kumiteCsoport = document.createElement("optgroup"); kumiteCsoport.label = "KUMITE";
     var kataCsoport = document.createElement("optgroup"); kataCsoport.label = "KATA";
 
     for (var j = 0; j < szurt.length; j++) {
         var ujOpcio = document.createElement("option");
-        var nev = szurt[j].nev || szurt[j].Nev;
+        var nev = szurt[j].nev;
         ujOpcio.value = nev; ujOpcio.innerText = nev;
-        if ((szurt[j].tipus || szurt[j].Tipus) === "KUMITE") kumiteCsoport.appendChild(ujOpcio); else kataCsoport.appendChild(ujOpcio);
+        
+        if (szurt[j].tipus === "KUMITE") {
+            kumiteCsoport.appendChild(ujOpcio);
+        } else {
+            kataCsoport.appendChild(ujOpcio);
+        }
     }
+    
     if (kumiteCsoport.children.length > 0) valaszto.appendChild(kumiteCsoport);
     if (kataCsoport.children.length > 0) valaszto.appendChild(kataCsoport);
 }
@@ -84,27 +91,28 @@ function frissitKategoriaLegordulot() {
 function hozzaadVersenyzot() {
     if (aktualisFelhasznalo.szerepkor !== "admin" && aktualisFelhasznalo.szerepkor !== "coach") { alert("Nincs jogod ehhez!"); return; }
     var nevDoboz = document.getElementById("p-name");
-    var versenyzoNeve = nevDoboz.value.trim();
-    var kivalasztottKategoria = document.getElementById("p-cat").value;
-
-    if (versenyzoNeve === "" || kivalasztottKategoria === "") { alert("Hiányos adatok!"); return; }
+    if (nevDoboz.value.trim() === "" || document.getElementById("p-cat").value === "") { alert("Hiányos adatok!"); return; }
 
     var ujVersenyzo = {
-        nev: versenyzoNeve, klub: document.getElementById("p-dojo").value, kategoria: kivalasztottKategoria,
-        suly: document.getElementById("p-weight").value, kor: document.getElementById("p-age").value, tulajdonos: aktualisFelhasznalo.felhasznalonev
+        nev: nevDoboz.value.trim(),
+        klub: document.getElementById("p-dojo").value, // Ez kerül majd az egyesulet oszlopba
+        kategoria: document.getElementById("p-cat").value
     };
 
     fetch('api.php?akcio=ujNevezes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ujVersenyzo) })
         .then(function (valasz) { return valasz.json(); })
         .then(function () { letoltVersenyzoketABazisbol(); nevDoboz.value = ""; })
-        .catch(function (hiba) { alert("Szerver hiba!"); console.error(hiba); });
+        .catch(function (hiba) { alert("Szerver hiba!"); });
 }
 
 function rajzolVersenyzokListajat() {
     var listaElem = document.getElementById("player-list"); listaElem.innerHTML = "";
     if (aktualisFelhasznalo === null || !adatok.versenyzok) return;
-
-    var miketMutassunk = aktualisFelhasznalo.szerepkor === "admin" ? adatok.versenyzok : adatok.versenyzok.filter(e => e.tulajdonos === aktualisFelhasznalo.felhasznalonev);
+    
+    // Ha admin, mindent lát. Ha edző, csak azt, akinek a klubja megegyezik az edző klubjával!
+    var miketMutassunk = aktualisFelhasznalo.szerepkor === "admin" 
+        ? adatok.versenyzok 
+        : adatok.versenyzok.filter(e => e.klub === aktualisFelhasznalo.klub);
 
     for (var j = 0; j < miketMutassunk.length; j++) {
         var m = miketMutassunk[j];
@@ -112,22 +120,15 @@ function rajzolVersenyzokListajat() {
     }
 }
 
-// ÚJ: KATTINTHATÓ LINKKÉ ALAKÍTOTT KATEGÓRIA/TATAMI TÁBLA
 function rajzolKategoriakTablazatot() {
     var tablaTorzs = document.getElementById("kategoria-tabla-torzs");
     if (!tablaTorzs) return; tablaTorzs.innerHTML = "";
 
     for (var i = 0; i < OSSZES_KATEGORIA.length; i++) {
         var kategoria = OSSZES_KATEGORIA[i];
-        var nev = kategoria.nev || kategoria.Nev;
-        var tipus = kategoria.tipus || kategoria.Tipus;
-
-        var katHtml = '<span style="cursor:pointer; color:#2563eb; font-weight:900; text-decoration:underline;" onclick="megnyitEgyediKategoriat(\'' + nev + '\', \'' + tipus + '\')">' + nev + '</span>';
-        var tatamiHtml = "<span style='color: #9ca3af; font-style: italic;'>Még nincs beosztva</span>";
-
-        if (kategoria.tatami) {
-            tatamiHtml = '<span style="cursor:pointer; color:#CE1126; font-weight:bold; text-decoration:underline;" onclick="mutasdTatamiNezetet(\'' + kategoria.tatami + '\')">' + kategoria.tatami + '</span>';
-        }
+        var tipusStr = kategoria.nev.toLowerCase().includes("kata") ? "KATA" : "KUMITE";
+        var katHtml = '<span style="cursor:pointer; color:#2563eb; font-weight:900; text-decoration:underline;" onclick="megnyitEgyediKategoriat(\'' + kategoria.nev + '\', \'' + tipusStr + '\')">' + kategoria.nev + '</span>';
+        var tatamiHtml = kategoria.tatami ? '<span style="cursor:pointer; color:#CE1126; font-weight:bold; text-decoration:underline;" onclick="mutasdTatamiNezetet(\'' + kategoria.tatami + '\')">' + kategoria.tatami + '</span>' : "<span style='color: #9ca3af; font-style: italic;'>Még nincs beosztva</span>";
         tablaTorzs.innerHTML += '<tr><td class="kategoria-tabla-cella" style="border-bottom:1px solid #e5e7eb;">' + katHtml + '</td><td class="kategoria-tabla-cella" style="border-bottom:1px solid #e5e7eb;">' + tatamiHtml + '</td></tr>';
     }
 }
@@ -143,16 +144,42 @@ function megnyitEgyediKategoriat(nev, tipus) {
     else { if (typeof rajzolKata === "function") rajzolKata(); valtFul('kata'); }
 }
 
-// ÚJ: EREDMÉNY GENERÁLÓ (TOP 4 kiszámítása a memóriából)
+// KÖZPONTI SZINKRONIZÁLÓ FÜGGVÉNYEK (EZ FRISSÍTI A NÉZŐKET!)
+function mentsdAzAllapototMySQLbe() {
+    var mentes = { meccsek: adatok.meccsek, kata: adatok.kata, kataStatus: adatok.kataStatus };
+    fetch('api.php?akcio=allapotMentes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mentes) });
+}
+
+function letoltAllapotABazisbol() {
+    fetch('api.php?akcio=allapotLekerdezese', { cache: 'no-store' })
+        .then(v => v.json()).then(szerver => {
+            if (szerver.meccsek) adatok.meccsek = szerver.meccsek;
+            if (szerver.kata) adatok.kata = szerver.kata;
+            if (szerver.kataStatus) adatok.kataStatus = szerver.kataStatus;
+
+            if (aktualisFelhasznalo && aktualisFelhasznalo.szerepkor === 'guest') {
+                var aktivS = document.querySelector("section:not(.hidden)");
+                if (aktivS) {
+                    if (aktivS.id === 'tab-bracket' && typeof rajzolAgrajz === 'function') rajzolAgrajz();
+                    if (aktivS.id === 'tab-kata' && typeof rajzolKata === 'function') rajzolKata();
+                    if (aktivS.id === 'tab-eredmenyek' && typeof mutasdEredmenyeket === 'function') mutasdEredmenyeket();
+                    if (aktivS.id === 'tab-tatami' && typeof mutasdTatamiNezetet === 'function') {
+                        var c = document.getElementById('tatami-content').querySelector('h2');
+                        if (c) mutasdTatamiNezetet(c.innerText.split(' -')[0]);
+                    }
+                }
+            }
+        });
+}
+
 function mutasdEredmenyeket() {
     var tartalom = document.getElementById('eredmenyek-content'); tartalom.innerHTML = "";
     if (!OSSZES_KATEGORIA || OSSZES_KATEGORIA.length === 0) { tartalom.innerHTML = "<p>Nincs adat.</p>"; return; }
 
     var html = "";
     for (var i = 0; i < OSSZES_KATEGORIA.length; i++) {
-        var kat = OSSZES_KATEGORIA[i];
-        var nev = kat.nev || kat.Nev;
-        var tipus = kat.tipus || kat.Tipus;
+        var nev = OSSZES_KATEGORIA[i].nev;
+        var tipus = nev.toLowerCase().includes("kata") ? "KATA" : "KUMITE";
         var dobogo = { a: "-", e: "-", b1: "-", b2: "-" }; var van = false;
 
         if (tipus !== "KUMITE" && adatok.kata && adatok.kata[nev]) {
@@ -166,7 +193,7 @@ function mutasdEredmenyeket() {
         } else if (tipus === "KUMITE" && adatok.meccsek) {
             var kMeccsek = adatok.meccsek.filter(m => m.kategoria === nev);
             var donto = kMeccsek.find(m => m.nextId === null);
-            if (donto && donto.winner) {
+            if (donto && donto.winner && donto.winner.id) {
                 van = true;
                 dobogo.a = donto.winner.nev + " (" + donto.winner.klub + ")";
                 dobogo.e = (donto.winner.id === donto.aka.id) ? donto.shiro.nev + " (" + donto.shiro.klub + ")" : donto.aka.nev + " (" + donto.aka.klub + ")";

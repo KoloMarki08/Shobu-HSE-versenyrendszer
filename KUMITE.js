@@ -1,15 +1,26 @@
-/* KUMITE.js - Kumite verseny, Tatami Nézet és Okos Sorszámozás */
-
 function generalKumite() {
     if (aktualisFelhasznalo.szerepkor !== 'admin') { alert("Csak admin generálhat ágrajzot!"); return; }
-    var kivalasztottKategoria = document.getElementById('p-cat').value;
-    if (kivalasztottKategoria.includes('Kata')) { alert("Ez Kata kategória!"); return; }
+    
+    var kumiteVersenyzok = adatok.versenyzok.filter(v => !v.kategoria.toLowerCase().includes('kata'));
+    if (kumiteVersenyzok.length === 0) { alert("Nincs Kumite versenyző a rendszerben!"); return; }
 
-    var jatekosok = adatok.versenyzok.filter(v => v.kategoria === kivalasztottKategoria);
-    if (jatekosok.length < 2) { alert("Kevés a versenyző!"); return; }
+    var egyediKategoriak = [...new Set(kumiteVersenyzok.map(v => v.kategoria))];
+    adatok.meccsek = []; 
 
-    if (!adatok.meccsek) adatok.meccsek = [];
-    adatok.meccsek = adatok.meccsek.filter(m => m.kategoria !== kivalasztottKategoria);
+    egyediKategoriak.forEach(katNev => { generalEgyediAgrajz(katNev); });
+
+    ellenorizTovabbjutasokat();
+    
+    // ÚJ MENTÉS!
+    if (typeof mentsdAzAllapototMySQLbe === "function") mentsdAzAllapototMySQLbe();
+
+    alert("Az összes Kumite kategória sikeresen legenerálva!");
+    valtFul('tatami');
+}
+
+function generalEgyediAgrajz(kategoriaNev) {
+    var jatekosok = adatok.versenyzok.filter(v => v.kategoria === kategoriaNev);
+    if (jatekosok.length < 2) return;
 
     var agrajzMerete = Math.pow(2, Math.ceil(Math.log2(jatekosok.length)));
     var maxKor = Math.log2(agrajzMerete);
@@ -23,15 +34,18 @@ function generalKumite() {
     for (var kor = 1; kor <= maxKor; kor++) {
         var korMeccsei = agrajzMerete / Math.pow(2, kor);
         for (var m = 0; m < korMeccsei; m++) {
-            var nextId = (kor < maxKor) ? 'm' + (kor + 1) + '-' + Math.floor(m / 2) + '-' + kivalasztottKategoria : null;
+            var nextId = (kor < maxKor) ? 'm' + (kor + 1) + '-' + Math.floor(m / 2) + '-' + kategoriaNev : null;
             adatok.meccsek.push({
-                id: 'm' + kor + '-' + m + '-' + kivalasztottKategoria, round: kor, kategoria: kivalasztottKategoria,
-                aka: { nev: "", id: null }, shiro: { nev: "", id: null }, winner: null, scoreAka: 0, scoreShiro: 0, nextId: nextId
+                id: 'm' + kor + '-' + m + '-' + kategoriaNev, round: kor, kategoria: kategoriaNev,
+                aka: { nev: "", id: null }, shiro: { nev: "", id: null }, winner: null, 
+                scoreAka: 0, scoreShiro: 0, 
+                wazaariAka: 0, wazaariShiro: 0, chuiAka: 0, chuiShiro: 0, gentenAka: 0, gentenShiro: 0,
+                nextId: nextId
             });
         }
     }
 
-    var elsoKorok = adatok.meccsek.filter(m => m.round === 1 && m.kategoria === kivalasztottKategoria);
+    var elsoKorok = adatok.meccsek.filter(m => m.round === 1 && m.kategoria === kategoriaNev);
     for (var k = 0; k < elsoKorok.length; k++) {
         elsoKorok[k].aka = jatekosok[seed[k * 2] - 1] || { nev: "BYE", id: "BYE" };
         elsoKorok[k].shiro = jatekosok[seed[k * 2 + 1] - 1] || { nev: "BYE", id: "BYE" };
@@ -39,11 +53,6 @@ function generalKumite() {
         if (elsoKorok[k].aka.nev === "BYE" && elsoKorok[k].shiro.nev === "BYE") elsoKorok[k].winner = { nev: "BYE", id: "BYE" };
         else if (elsoKorok[k].aka.nev !== "BYE" && elsoKorok[k].shiro.nev === "BYE") elsoKorok[k].winner = elsoKorok[k].aka;
         else if (elsoKorok[k].shiro.nev !== "BYE" && elsoKorok[k].aka.nev === "BYE") elsoKorok[k].winner = elsoKorok[k].shiro;
-    }
-
-    ellenorizTovabbjutasokat();
-    if (fetch('api.php?akcio=meccsMentes', { method: 'POST', body: JSON.stringify(adatok) }).catch(e => localStorage.setItem('iko_db', JSON.stringify(adatok)))) {
-        rajzolAgrajz(); valtFul('bracket');
     }
 }
 
@@ -71,13 +80,12 @@ function rajzolAgrajz() {
     if (sel && sel.value !== "") rajzolEgyediAgrajz(sel.value, tartalom, 1);
 }
 
-// A TELJES TATAMI NÉZET RAJZOLÁSA (CSAK KUMITE)
 function mutasdTatamiNezetet(tatamiNev) {
     valtFul('tatami');
     var tartalom = document.getElementById('tatami-content');
     tartalom.innerHTML = "<h2 style='color:white; font-size: 2rem; font-weight: 900; background:#CE1126; padding:10px 30px; border-radius:10px; margin-top:20px;'>" + tatamiNev + " - Küzdelmi Sorrend</h2>";
 
-    var tatamiKategoriak = OSSZES_KATEGORIA.filter(k => k.tatami === tatamiNev && k.tipus === 'KUMITE');
+    var tatamiKategoriak = OSSZES_KATEGORIA.filter(k => k.tatami === tatamiNev && !k.nev.toLowerCase().includes('kata'));
     tatamiKategoriak.sort((a, b) => adatok.versenyzok.filter(v => v.kategoria === b.nev).length - adatok.versenyzok.filter(v => v.kategoria === a.nev).length);
 
     var sorszam = 1; var van = false;
@@ -136,33 +144,152 @@ function keszitKartyat(v, o, m, katt) {
     var h = '<div class="versenyzo-kartya player-card ' + (m.winner && m.winner.id === v.id ? 'gyoztes-kartya winner-card ' : '') + katt.replace('onclick', 'class="kattinthat-kartya clickable" onclick') + '" ' + katt + '>';
     h += '<div class="szines-csik color-strip ' + (o === 'shiro' ? 'szines-csik-piros shiro-strip' : 'szines-csik-kek aka-strip') + '"></div>';
     h += '<div class="kartya-belso-tartalom card-content"><div class="kartya-nev card-name">[' + v.id + '] ' + v.nev + '</div><div class="kartya-klub card-details">' + v.klub + '</div></div>';
-    if (m.scoreAka > 0 || m.scoreShiro > 0) h += '<div class="kartya-pontszam">' + (o === 'aka' ? m.scoreAka : m.scoreShiro) + '</div>';
+    
+    if (m.scoreAka > 0 || m.scoreShiro > 0) {
+        var pont = (o === 'aka' ? m.scoreAka : m.scoreShiro);
+        var waz = (o === 'aka' ? m.wazaariAka : m.wazaariShiro);
+        var csillag = (waz >= 2 && pont >= 2) ? '<sup style="font-size: 0.8em; color: #CE1126;">*</sup>' : '';
+        h += '<div class="kartya-pontszam">' + pont + csillag + '</div>';
+    }
     h += '</div>'; return h;
 }
 
 var aktualisMeccs = null; var idozitoInterval = null; var ido = 120;
+
 function nyitBiroiPanelt(id) {
     aktualisMeccs = adatok.meccsek.find(m => m.id === id); if (!aktualisMeccs) return;
-    document.getElementById('ref-aka').innerText = aktualisMeccs.aka.nev; document.getElementById('ref-shiro').innerText = aktualisMeccs.shiro.nev;
-    frissitBiroiFeluletet(); clearInterval(idozitoInterval); idozitoInterval = null; ido = 120; frissitIdozitoFeluletet();
-    document.getElementById('btn-timer').innerText = "START"; document.getElementById('tab-referee').classList.remove('hidden');
+    
+    var cim = document.getElementById('match-category-title');
+    if(cim) cim.innerText = aktualisMeccs.kategoria;
+
+    document.getElementById('ref-aka').innerText = aktualisMeccs.aka.nev; 
+    document.getElementById('ref-shiro').innerText = aktualisMeccs.shiro.nev;
+    
+    if(aktualisMeccs.wazaariAka === undefined) {
+        aktualisMeccs.wazaariAka=0; aktualisMeccs.wazaariShiro=0;
+        aktualisMeccs.chuiAka=0; aktualisMeccs.chuiShiro=0;
+        aktualisMeccs.gentenAka=0; aktualisMeccs.gentenShiro=0;
+    }
+
+    frissitBiroiFeluletet(); 
+    clearInterval(idozitoInterval); idozitoInterval = null; ido = 120; frissitIdozitoFeluletet();
+    document.getElementById('btn-timer').innerText = "START"; 
+    document.getElementById('tab-referee').classList.remove('hidden');
 }
-function pontszamAdas(k, p) {
-    if (k === 'aka') aktualisMeccs.scoreAka = Math.min(aktualisMeccs.scoreAka + p, 2); else aktualisMeccs.scoreShiro = Math.min(aktualisMeccs.scoreShiro + p, 2);
+
+function pontszamAdas(oldal, pont) {
+    if (oldal === 'aka') {
+        if (pont === 1) aktualisMeccs.wazaariAka++;
+        if (pont === 2) aktualisMeccs.wazaariAka = 0; 
+        aktualisMeccs.scoreAka = Math.min(aktualisMeccs.scoreAka + pont, 2);
+    } else {
+        if (pont === 1) aktualisMeccs.wazaariShiro++;
+        if (pont === 2) aktualisMeccs.wazaariShiro = 0;
+        aktualisMeccs.scoreShiro = Math.min(aktualisMeccs.scoreShiro + pont, 2);
+    }
     frissitBiroiFeluletet();
-    if (aktualisMeccs.scoreAka === 2) setTimeout(() => { alert("GYŐZTES: AKA"); befejezMeccset(); }, 100);
-    else if (aktualisMeccs.scoreShiro === 2) setTimeout(() => { alert("GYŐZTES: SHIRO"); befejezMeccset(); }, 100);
 }
-function nullazMeccsPontszamokat() { if (confirm("Biztos nullázod?")) { aktualisMeccs.scoreAka = 0; aktualisMeccs.scoreShiro = 0; frissitBiroiFeluletet(); clearInterval(idozitoInterval); idozitoInterval = null; ido = 120; frissitIdozitoFeluletet(); } }
-function frissitBiroiFeluletet() { document.getElementById('score-aka').innerText = aktualisMeccs.scoreAka; document.getElementById('score-shiro').innerText = aktualisMeccs.scoreShiro; }
+
+function pontTorles(oldal) {
+    if (oldal === 'aka' && aktualisMeccs.scoreAka > 0) {
+        aktualisMeccs.scoreAka--;
+        if(aktualisMeccs.wazaariAka > 0) aktualisMeccs.wazaariAka--;
+    } else if (oldal === 'shiro' && aktualisMeccs.scoreShiro > 0) {
+        aktualisMeccs.scoreShiro--;
+        if(aktualisMeccs.wazaariShiro > 0) aktualisMeccs.wazaariShiro--;
+    }
+    frissitBiroiFeluletet();
+}
+
+function buntetesAdas(oldal, tipus) {
+    if (oldal === 'aka') {
+        if (tipus === 'chui') {
+            if (aktualisMeccs.gentenAka >= 1) { alert("Egy Genten után már csak újabb Genten adható!"); return; }
+            aktualisMeccs.chuiAka++;
+            if (aktualisMeccs.chuiAka >= 3) { aktualisMeccs.chuiAka = 0; aktualisMeccs.gentenAka++; }
+        } else if (tipus === 'genten') {
+            aktualisMeccs.chuiAka = 0; aktualisMeccs.gentenAka++;
+        }
+        if (aktualisMeccs.gentenAka >= 2) { 
+            alert("AKA KIZÁRVA (Hansoku Make)!\nSHIRO nyert!"); 
+            aktualisMeccs.scoreShiro = 2; aktualisMeccs.wazaariShiro = 0; 
+        }
+    } else {
+        if (tipus === 'chui') {
+            if (aktualisMeccs.gentenShiro >= 1) { alert("Egy Genten után már csak újabb Genten adható!"); return; }
+            aktualisMeccs.chuiShiro++;
+            if (aktualisMeccs.chuiShiro >= 3) { aktualisMeccs.chuiShiro = 0; aktualisMeccs.gentenShiro++; }
+        } else if (tipus === 'genten') {
+            aktualisMeccs.chuiShiro = 0; aktualisMeccs.gentenShiro++;
+        }
+        if (aktualisMeccs.gentenShiro >= 2) { 
+            alert("SHIRO KIZÁRVA (Hansoku Make)!\nAKA nyert!"); 
+            aktualisMeccs.scoreAka = 2; aktualisMeccs.wazaariAka = 0; 
+        }
+    }
+    frissitBiroiFeluletet();
+}
+
+function befejezMeccset() {
+    if (aktualisMeccs.scoreAka === aktualisMeccs.scoreShiro) {
+        var megerosites = confirm("Döntetlen az állás! Biztosan le akarod zárni így a meccset?\n(Nyomj OK-t, ha bírói döntéssel - Hantei - dől el!)");
+        if (!megerosites) return;
+        
+        var nyertes = prompt("Írd be a nyertes oldalát: 'aka' vagy 'shiro'");
+        if(nyertes === 'aka') aktualisMeccs.winner = aktualisMeccs.aka;
+        else if(nyertes === 'shiro') aktualisMeccs.winner = aktualisMeccs.shiro;
+        else { alert("Érvénytelen válasz, a meccs nem lett lezárva!"); return; }
+    } else {
+        aktualisMeccs.winner = aktualisMeccs.scoreAka > aktualisMeccs.scoreShiro ? aktualisMeccs.aka : aktualisMeccs.shiro;
+    }
+
+    ellenorizTovabbjutasokat(); 
+    
+    // ÚJ MENTÉS BEKÖTÉSE!
+    if (typeof mentsdAzAllapototMySQLbe === "function") mentsdAzAllapototMySQLbe();
+    
+    // HA EZ EGY DÖNTŐ, ELMENTJÜK A NEVEZÉS TÁBLÁBA A VÉGEREDMÉNYT!
+    if (aktualisMeccs.nextId === null && aktualisMeccs.winner) {
+        var mentesCsomag = {
+            versenyzo_id: aktualisMeccs.winner.id,
+            helyezes: 1,
+            pontszam: Math.max(aktualisMeccs.scoreAka, aktualisMeccs.scoreShiro)
+        };
+        fetch('api.php?akcio=vegeredmenyMentes', { method: 'POST', body: JSON.stringify(mentesCsomag) });
+    }
+
+    var aktivTab = document.querySelector('section:not(.hidden)').id;
+    if(aktivTab === 'tab-tatami') {
+        var tatamiText = document.querySelector('#tatami-content h2').innerText.split(' -')[0];
+        mutasdTatamiNezetet(tatamiText);
+    } else {
+        rajzolAgrajz(); 
+    }
+    document.getElementById('tab-referee').classList.add('hidden');
+}
+
+function frissitBiroiFeluletet() { 
+    document.getElementById('score-aka').innerText = aktualisMeccs.scoreAka; 
+    document.getElementById('score-shiro').innerText = aktualisMeccs.scoreShiro; 
+    if(document.getElementById('chui-aka')) document.getElementById('chui-aka').innerText = aktualisMeccs.chuiAka || 0;
+    if(document.getElementById('genten-aka')) document.getElementById('genten-aka').innerText = aktualisMeccs.gentenAka || 0;
+    if(document.getElementById('chui-shiro')) document.getElementById('chui-shiro').innerText = aktualisMeccs.chuiShiro || 0;
+    if(document.getElementById('genten-shiro')) document.getElementById('genten-shiro').innerText = aktualisMeccs.gentenShiro || 0;
+}
+
+function nullazMeccsPontszamokat() { 
+    if (confirm("Biztos nullázod a pontokat és büntetéseket?")) { 
+        aktualisMeccs.scoreAka = 0; aktualisMeccs.scoreShiro = 0; 
+        aktualisMeccs.wazaariAka=0; aktualisMeccs.wazaariShiro=0;
+        aktualisMeccs.chuiAka=0; aktualisMeccs.chuiShiro=0;
+        aktualisMeccs.gentenAka=0; aktualisMeccs.gentenShiro=0;
+        frissitBiroiFeluletet(); clearInterval(idozitoInterval); idozitoInterval = null; ido = 120; frissitIdozitoFeluletet(); 
+    } 
+}
+
 function kapcsolIdozitot() {
     if (idozitoInterval) { clearInterval(idozitoInterval); idozitoInterval = null; document.getElementById('btn-timer').innerText = "START"; }
     else { document.getElementById('btn-timer').innerText = "STOP"; idozitoInterval = setInterval(() => { ido--; frissitIdozitoFeluletet(); if (ido <= 0) { clearInterval(idozitoInterval); idozitoInterval = null; alert("Idő!"); document.getElementById('btn-timer').innerText = "START"; } }, 1000); }
 }
+
 function frissitIdozitoFeluletet() { document.getElementById('timer').innerText = Math.floor(ido / 60) + ':' + (ido % 60 < 10 ? '0' : '') + ido % 60; }
-function befejezMeccset() {
-    if (aktualisMeccs.scoreAka === aktualisMeccs.scoreShiro) { alert("Döntetlen nem lehet!"); return; }
-    aktualisMeccs.winner = aktualisMeccs.scoreAka > aktualisMeccs.scoreShiro ? aktualisMeccs.aka : aktualisMeccs.shiro;
-    ellenorizTovabbjutasokat(); fetch('api.php?akcio=meccsMentes', { method: 'POST', body: JSON.stringify(adatok) }).catch(e => localStorage.setItem('iko_db', JSON.stringify(adatok)));
-    rajzolAgrajz(); document.getElementById('tab-referee').classList.add('hidden');
-}

@@ -13,6 +13,7 @@ function bejelentkezesKezdolaprol() {
         .then(function (valasz) { return valasz.json(); })
         .then(function (szerverValasz) {
             if (szerverValasz.sikeres === true) {
+                // Itt menti el a böngésző az új, adatbázisból jövő adatokat (pl. klub nevét)
                 localStorage.setItem("shobu_bejelentkezve", JSON.stringify(szerverValasz.felhasznalo));
                 window.location.href = "verseny.html?tab=kategoriak";
             } else {
@@ -20,25 +21,10 @@ function bejelentkezesKezdolaprol() {
             }
         })
         .catch(function (hiba) {
-            console.log("Nincs PHP szerver! Vészhelyzeti belépés a teszt adatokkal...");
-            var talaltFelhasznalo = null;
-            for (var i = 0; i < FELHASZNALOK.length; i++) {
-                var ember = FELHASZNALOK[i];
-                if (ember.felhasznalonev === beirtNev && ember.jelszo === beirtJelszo) {
-                    talaltFelhasznalo = ember;
-                    break;
-                }
-            }
-            if (talaltFelhasznalo !== null) {
-                localStorage.setItem("shobu_bejelentkezve", JSON.stringify(talaltFelhasznalo));
-                window.location.href = "verseny.html?tab=kategoriak";
-            } else {
-                alert("Hibás felhasználónév vagy jelszó!");
-            }
+            console.error("Nincs PHP szerver válasz!", hiba);
         });
 }
 
-// ÚJ: KÖZÖNSÉG PANEL BELÉPTETÉS
 function belepesKozonsegkent(celFul) {
     var vendeg = { felhasznalonev: 'kozonseg', jelszo: '', szerepkor: 'guest', nev: 'Néző (Közönség)', klub: '-' };
     localStorage.setItem("shobu_bejelentkezve", JSON.stringify(vendeg));
@@ -47,27 +33,25 @@ function belepesKozonsegkent(celFul) {
 
 function ellenorizBejelentkezestVersenyOldalon() {
     var mentettEmberSzoveg = localStorage.getItem("shobu_bejelentkezve");
-    if (mentettEmberSzoveg === null) {
-        alert("Előbb be kell jelentkezned!");
-        window.location.href = "index.html";
-        return;
-    }
+    if (mentettEmberSzoveg === null) { window.location.href = "index.html"; return; }
 
     aktualisFelhasznalo = JSON.parse(mentettEmberSzoveg);
     document.getElementById("user-badge").innerText = aktualisFelhasznalo.nev;
 
+    var dojoMezo = document.getElementById("p-dojo");
+
     if (aktualisFelhasznalo.szerepkor === "admin") {
-        document.getElementById("admin-controls").classList.remove("hidden");
-        document.getElementById("nav-reg").classList.remove("hidden");
-        if (document.getElementById("p-dojo")) {
-            document.getElementById("p-dojo").disabled = false;
-            document.getElementById("p-dojo").value = aktualisFelhasznalo.klub;
+        if (document.getElementById("admin-controls")) document.getElementById("admin-controls").classList.remove("hidden");
+        if (document.getElementById("nav-reg")) document.getElementById("nav-reg").classList.remove("hidden");
+        if (dojoMezo) {
+            dojoMezo.disabled = false;
         }
     } else if (aktualisFelhasznalo.szerepkor === "coach") {
-        document.getElementById("nav-reg").classList.remove("hidden");
-        if (document.getElementById("p-dojo")) {
-            document.getElementById("p-dojo").value = aktualisFelhasznalo.klub;
-            document.getElementById("p-dojo").disabled = true;
+        if (document.getElementById("nav-reg")) document.getElementById("nav-reg").classList.remove("hidden");
+        // ITT TÖLTI KI AUTOMATIKUSAN A KLUBOT ÉS TILTJA LE A MEZŐT!
+        if (dojoMezo) {
+            dojoMezo.value = aktualisFelhasznalo.klub;
+            dojoMezo.disabled = true;
         }
     } else if (aktualisFelhasznalo.szerepkor === "guest") {
         if (document.getElementById("nav-reg")) document.getElementById("nav-reg").classList.add("hidden");
@@ -77,10 +61,13 @@ function ellenorizBejelentkezestVersenyOldalon() {
     if (typeof letoltVersenyzoketABazisbol === "function") letoltVersenyzoketABazisbol();
     if (typeof letoltKategoriakatABazisbol === "function") letoltKategoriakatABazisbol();
 
-    // URL PARAMÉTER ALAPJÁN UGRÁS A FÜLRE
+    if (typeof letoltAllapotABazisbol === "function") {
+        letoltAllapotABazisbol();
+        if (aktualisFelhasznalo.szerepkor === "guest") { setInterval(letoltAllapotABazisbol, 5000); }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
-    const tabToOpen = urlParams.get('tab') || 'kategoriak';
-    valtFul(tabToOpen);
+    valtFul(urlParams.get('tab') || 'kategoriak');
 }
 
 function kijelentkezesVersenybol() {
@@ -90,10 +77,7 @@ function kijelentkezesVersenybol() {
 
 function valtFul(fulId) {
     var osszesSection = document.querySelectorAll("section");
-    for (var i = 0; i < osszesSection.length; i++) {
-        osszesSection[i].classList.add("hidden");
-    }
-
+    for (var i = 0; i < osszesSection.length; i++) osszesSection[i].classList.add("hidden");
     var aktivSection = document.getElementById("tab-" + fulId);
     if (aktivSection) aktivSection.classList.remove("hidden");
 
