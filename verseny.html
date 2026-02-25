@@ -16,7 +16,10 @@
         <nav class="felso-menusor">
             <div class="menu-tartalom">
                 <div class="logonk">
-                    <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
+                    <span class="logo-szoveg">SHOBU HSE
+                        <span class="piros-kiemeles">Versenyrendszer</span>
+                    </span>
+
                     <span id="user-badge" class="felhasznalo-jelzo">Betöltés...</span>
                 </div>
                 <div id="mobil-menu-container" class="menu-gombok">
@@ -24,8 +27,10 @@
                     <button id="nav-reg" onclick="valtFul('reg')" class="hidden">Nevezés</button>
                     <button onclick="valtFul('tatami')" style="color:#facc15;">Tatami Nézet</button>
                     <button onclick="valtFul('eredmenyek')" style="color:#60a5fa;">Végeredmények</button>
-                    <button onclick="valtFul('bracket')">Kumite Ágrajz</button>
-                    <button onclick="valtFul('kata')">KATA Panel</button>
+
+                    <button id="nav-bracket" onclick="valtFul('bracket')">Kumite Ágrajz</button>
+                    <button id="nav-kata" onclick="valtFul('kata')">KATA Panel</button>
+
                     <button onclick="kijelentkezesVersenybol()">Kilépés</button>
                 </div>
             </div>
@@ -65,6 +70,14 @@
         <section id="tab-reg" class="nevezes-oldal hidden">
             <div class="nevezes-feher-doboz">
                 <h2 class="doboz-cime">Versenyzők hozzáadása</h2>
+
+                <div style="margin-bottom: 20px; text-align: left;">
+                    <label style="color:#1f2937; font-weight:bold; display:block; margin-bottom: 8px;">Melyik versenyre
+                        nevezel?</label>
+                    <select id="p-verseny" onchange="letoltVersenyzoketABazisbol()" class="urlap-legordulo"
+                        style="width: 100%; max-width: 400px; border: 2px solid #cbd5e1; background-color: #f8fafc; color: #1e293b; font-weight: bold; padding: 10px; border-radius: 6px;"></select>
+                </div>
+
                 <div class="urlap-racs">
                     <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
                     <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
@@ -114,6 +127,8 @@
                     <div class="idozito-gombok">
                         <button onclick="kapcsolIdozitot()" id="btn-timer" class="ido-start-gomb">START</button>
                         <button onclick="nullazMeccsPontszamokat()" class="ido-reset-gomb">RESET</button>
+                        <button onclick="inditsdHosszabbitast()"
+                            style="background-color:#3b82f6; color:white; font-weight:700; padding:0.5rem 1.5rem; border-radius:0.25rem; border:none; cursor:pointer;">HOSSZABBÍTÁS</button>
                         <button onclick="befejezMeccset()"
                             style="background-color:#ca8a04; color:white; font-weight:700; padding:0.5rem 1.5rem; border-radius:0.25rem; border:none; cursor:pointer;">MÉRKŐZÉS
                             LEZÁRÁSA</button>

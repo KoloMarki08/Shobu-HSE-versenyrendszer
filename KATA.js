@@ -3,35 +3,50 @@
 /* ========================================================================= */
 
 function generalKata() {
-    if (aktualisFelhasznalo.szerepkor !== 'admin') { alert("Csak admin generálhatja le a listát!"); return; }
+    if (aktualisFelhasznalo.szerepkor !== 'admin') { alert("Csak admin generálhatja le a listákat!"); return; }
 
-    var katNev = document.getElementById('p-cat').value;
-    if (katNev === "") { alert("Kérlek válassz ki egy kategóriát!"); return; }
-    if (katNev.includes('Kumite')) { alert("Ez Kumite kategória!"); return; }
+    // 1. Megkeressük az összes Kata versenyzőt a rendszerben
+    var kataVersenyzok = adatok.versenyzok.filter(v => v.kategoria.toLowerCase().includes('kata'));
+    if (kataVersenyzok.length === 0) { alert("Nincs Kata versenyző a rendszerben!"); return; }
 
-    var jatekosok = adatok.versenyzok.filter(v => v.kategoria === katNev);
-    if (jatekosok.length === 0) { alert("Nincs versenyző ebben a kategóriában!"); return; }
+    // 2. Kigyűjtjük az egyedi Kata kategóriák neveit
+    var egyediKategoriak = [...new Set(kataVersenyzok.map(v => v.kategoria))];
 
-    if (!adatok.kata) adatok.kata = {}; if (!adatok.kataStatus) adatok.kataStatus = {};
+    if (!adatok.kata) adatok.kata = {}; 
+    if (!adatok.kataStatus) adatok.kataStatus = {};
     
-    // TISZTÍTÁS (Ezzel akadályozzuk meg a korábbi hibát, hogy a 8 éves lányok máshova is átmenjenek)
-    var frissitettLista = [];
-    jatekosok.forEach(sqlEmber => {
-        var regi = (adatok.kata[katNev] || []).find(item => String(item.versenyzo.id) === String(sqlEmber.id));
-        if (regi) {
-            regi.versenyzo.nev = sqlEmber.nev; regi.versenyzo.klub = sqlEmber.klub;
-            frissitettLista.push(regi);
-        } else {
-            frissitettLista.push({ versenyzo: sqlEmber, pontok: ["", "", "", "", ""], osszpont: 0, minPont1: 0, maxPont1: 0, pontokDonto: ["", "", "", "", ""], osszpontDonto: 0, minPontDonto: 0, maxPontDonto: 0 });
-        }
+    // 3. Végigmegyünk az összes Kata kategórián, és mindegyiket legeneráljuk!
+    egyediKategoriak.forEach(katNev => {
+        var jatekosok = adatok.versenyzok.filter(v => v.kategoria === katNev);
+        var frissitettLista = [];
+        
+        jatekosok.forEach(sqlEmber => {
+            var regi = (adatok.kata[katNev] || []).find(item => String(item.versenyzo.id) === String(sqlEmber.id));
+            if (regi) {
+                // Ha már benne volt, csak frissítjük a nevét/klubját (hogy ne vesszenek el a beírt pontok)
+                regi.versenyzo.nev = sqlEmber.nev; regi.versenyzo.klub = sqlEmber.klub;
+                frissitettLista.push(regi);
+            } else {
+                // Ha új versenyző, létrehozzuk neki a tiszta, üres pontozólapot
+                frissitettLista.push({ 
+                    versenyzo: sqlEmber, 
+                    pontok: ["", "", "", "", ""], osszpont: 0, minPont1: 0, maxPont1: 0, 
+                    pontokDonto: ["", "", "", "", ""], osszpontDonto: 0, minPontDonto: 0, maxPontDonto: 0 
+                });
+            }
+        });
+
+        adatok.kata[katNev] = frissitettLista;
+        if(!adatok.kataStatus[katNev]) adatok.kataStatus[katNev] = 'selejtezo';
     });
 
-    adatok.kata[katNev] = frissitettLista;
-    if(!adatok.kataStatus[katNev]) adatok.kataStatus[katNev] = 'selejtezo';
-
-    mentsdAzAllapototMySQLbe();
-    alert("A " + katNev + " Kata panel generálva!");
-    rajzolKata(); valtFul('kata');
+    // 4. Azonnali mentés a szerverre
+    if (typeof mentsdAzAllapototMySQLbe === "function") mentsdAzAllapototMySQLbe();
+    
+    alert("Az összes (" + egyediKategoriak.length + " db) Kata kategória panelje sikeresen legenerálva!");
+    
+    valtFul('kata');
+    if (typeof rajzolKata === 'function') rajzolKata();
 }
 
 function wkfSorbarendezes(a, b, isDonto) {
