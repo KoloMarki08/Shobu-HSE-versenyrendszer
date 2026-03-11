@@ -1,0 +1,144 @@
+-- 1. BIZTONSÁGI TÖRLÉS ÉS NULLÁZÁS (Hogy teljesen tiszta legyen a rendszer)
+SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM `nevezes`;
+DELETE FROM `kategoria_tatami`;
+DELETE FROM `versenyzo`;
+DELETE FROM `kategoria`;
+DELETE FROM `tatami`;
+DELETE FROM `verseny`;
+
+ALTER TABLE `nevezes` AUTO_INCREMENT = 1;
+ALTER TABLE `versenyzo` AUTO_INCREMENT = 1;
+ALTER TABLE `kategoria` AUTO_INCREMENT = 1;
+ALTER TABLE `tatami` AUTO_INCREMENT = 1;
+ALTER TABLE `verseny` AUTO_INCREMENT = 1;
+
+-- Biztosítjuk, hogy a tatami sorszám szöveges legyen!
+ALTER TABLE `tatami` MODIFY `sorszam` VARCHAR(50);
+
+-- 2. ALAPADATOK: Verseny és Tatamik
+INSERT INTO `verseny` (`verseny_id`, `nev`, `datum`) VALUES (1, 'Shobu HSE Országos Bajnokság 2026', '2026-05-20');
+
+INSERT INTO `tatami` (`tatami_id`, `sorszam`) VALUES
+(1, 'Tatami A'),
+(2, 'Tatami B'),
+(3, 'Tatami C');
+
+-- 3. A 76 HIVATALOS KATEGÓRIA
+INSERT INTO `kategoria` (`kategoria_id`, `megnevezes`, `tipus`, `nem`, `min_kor`, `max_kor`) VALUES
+(1, 'Kata Girls 8-9 y.o.', 'KATA', 'Girls', 8, 9), (2, 'Kata Boys 8-9 y.o.', 'KATA', 'Boys', 8, 9),
+(3, 'Kata Girls 10-11 y.o.', 'KATA', 'Girls', 10, 11), (4, 'Kata Boys 10-11 y.o.', 'KATA', 'Boys', 10, 11),
+(5, 'Kata Girls 12-13 y.o.', 'KATA', 'Girls', 12, 13), (6, 'Kata Boys 12-13 y.o.', 'KATA', 'Boys', 12, 13),
+(7, 'Kata Girls 14-15 y.o.', 'KATA', 'Girls', 14, 15), (8, 'Kata Boys 14-15 y.o.', 'KATA', 'Boys', 14, 15),
+(9, 'Kata Girls 16-17 y.o.', 'KATA', 'Girls', 16, 17), (10, 'Kata Boys 16-17 y.o.', 'KATA', 'Boys', 16, 17),
+(11, 'Kata Women 18-34 y.o.', 'KATA', 'Women', 18, 34), (12, 'Kata Men 18-34 y.o.', 'KATA', 'Men', 18, 34),
+(13, 'Kata Women 35-49 y.o.', 'KATA', 'Women', 35, 49), (14, 'Kata Men 35-49 y.o.', 'KATA', 'Men', 35, 49),
+(15, 'Kata Women 50+ y.o.', 'KATA', 'Women', 50, 99), (16, 'Kata Men 50+ y.o.', 'KATA', 'Men', 50, 99),
+(17, 'Kumite Girls 8-9 y.o. -25kg', 'KUMITE', 'Girls', 8, 9), (18, 'Kumite Girls 8-9 y.o. -30kg', 'KUMITE', 'Girls', 8, 9),
+(19, 'Kumite Girls 8-9 y.o. +30kg', 'KUMITE', 'Girls', 8, 9), (20, 'Kumite Boys 8-9 y.o. -25kg', 'KUMITE', 'Boys', 8, 9),
+(21, 'Kumite Boys 8-9 y.o. -30kg', 'KUMITE', 'Boys', 8, 9), (22, 'Kumite Boys 8-9 y.o. -35kg', 'KUMITE', 'Boys', 8, 9),
+(23, 'Kumite Boys 8-9 y.o. +35kg', 'KUMITE', 'Boys', 8, 9), (24, 'Kumite Girls 10-11 y.o. -30kg', 'KUMITE', 'Girls', 10, 11),
+(25, 'Kumite Girls 10-11 y.o. -35kg', 'KUMITE', 'Girls', 10, 11), (26, 'Kumite Girls 10-11 y.o. -40kg', 'KUMITE', 'Girls', 10, 11),
+(27, 'Kumite Girls 10-11 y.o. -45kg', 'KUMITE', 'Girls', 10, 11), (28, 'Kumite Girls 10-11 y.o. +45kg', 'KUMITE', 'Girls', 10, 11),
+(29, 'Kumite Boys 10-11 y.o. -30kg', 'KUMITE', 'Boys', 10, 11), (30, 'Kumite Boys 10-11 y.o. -35kg', 'KUMITE', 'Boys', 10, 11),
+(31, 'Kumite Boys 10-11 y.o. -40kg', 'KUMITE', 'Boys', 10, 11), (32, 'Kumite Boys 10-11 y.o. -45kg', 'KUMITE', 'Boys', 10, 11),
+(33, 'Kumite Boys 10-11 y.o. +45kg', 'KUMITE', 'Boys', 10, 11), (34, 'Kumite Girls 12-13 y.o. -40kg', 'KUMITE', 'Girls', 12, 13),
+(35, 'Kumite Girls 12-13 y.o. -45kg', 'KUMITE', 'Girls', 12, 13), (36, 'Kumite Girls 12-13 y.o. -50kg', 'KUMITE', 'Girls', 12, 13),
+(37, 'Kumite Girls 12-13 y.o. +50kg', 'KUMITE', 'Girls', 12, 13), (38, 'Kumite Boys 12-13 y.o. -40kg', 'KUMITE', 'Boys', 12, 13),
+(39, 'Kumite Boys 12-13 y.o. -45kg', 'KUMITE', 'Boys', 12, 13), (40, 'Kumite Boys 12-13 y.o. -50kg', 'KUMITE', 'Boys', 12, 13),
+(41, 'Kumite Boys 12-13 y.o. -55kg', 'KUMITE', 'Boys', 12, 13), (42, 'Kumite Boys 12-13 y.o. +55kg', 'KUMITE', 'Boys', 12, 13),
+(43, 'Kumite Girls 14-15 y.o. -50kg', 'KUMITE', 'Girls', 14, 15), (44, 'Kumite Girls 14-15 y.o. -55kg', 'KUMITE', 'Girls', 14, 15),
+(45, 'Kumite Girls 14-15 y.o. -60kg', 'KUMITE', 'Girls', 14, 15), (46, 'Kumite Girls 14-15 y.o. +60kg', 'KUMITE', 'Girls', 14, 15),
+(47, 'Kumite Boys 14-15 y.o. -50kg', 'KUMITE', 'Boys', 14, 15), (48, 'Kumite Boys 14-15 y.o. -55kg', 'KUMITE', 'Boys', 14, 15),
+(49, 'Kumite Boys 14-15 y.o. -60kg', 'KUMITE', 'Boys', 14, 15), (50, 'Kumite Boys 14-15 y.o. -65kg', 'KUMITE', 'Boys', 14, 15),
+(51, 'Kumite Boys 14-15 y.o. -70kg', 'KUMITE', 'Boys', 14, 15), (52, 'Kumite Boys 14-15 y.o. -75kg', 'KUMITE', 'Boys', 14, 15),
+(53, 'Kumite Boys 14-15 y.o. +75kg', 'KUMITE', 'Boys', 14, 15), (54, 'Kumite Girls 16-17 y.o. -50kg', 'KUMITE', 'Girls', 16, 17),
+(55, 'Kumite Girls 16-17 y.o. -55kg', 'KUMITE', 'Girls', 16, 17), (56, 'Kumite Girls 16-17 y.o. -60kg', 'KUMITE', 'Girls', 16, 17),
+(57, 'Kumite Girls 16-17 y.o. -65kg', 'KUMITE', 'Girls', 16, 17), (58, 'Kumite Girls 16-17 y.o. +65kg', 'KUMITE', 'Girls', 16, 17),
+(59, 'Kumite Boys 16-17 y.o. -55kg', 'KUMITE', 'Boys', 16, 17), (60, 'Kumite Boys 16-17 y.o. -60kg', 'KUMITE', 'Boys', 16, 17),
+(61, 'Kumite Boys 16-17 y.o. -65kg', 'KUMITE', 'Boys', 16, 17), (62, 'Kumite Boys 16-17 y.o. -70kg', 'KUMITE', 'Boys', 16, 17),
+(63, 'Kumite Boys 16-17 y.o. -75kg', 'KUMITE', 'Boys', 16, 17), (64, 'Kumite Boys 16-17 y.o. -80kg', 'KUMITE', 'Boys', 16, 17),
+(65, 'Kumite Boys 16-17 y.o. +80kg', 'KUMITE', 'Boys', 16, 17), (66, 'Kumite Women 18+ y.o. Open', 'KUMITE', 'Women', 18, 99),
+(67, 'Kumite Men 18+ y.o. Open', 'KUMITE', 'Men', 18, 99), (68, 'Kumite Women 35+ y.o. -55kg', 'KUMITE', 'Women', 35, 99),
+(69, 'Kumite Women 35+ y.o. -65kg', 'KUMITE', 'Women', 35, 99), (70, 'Kumite Women 35+ y.o. +65kg', 'KUMITE', 'Women', 35, 99),
+(71, 'Kumite Men 35-44 y.o. -75kg', 'KUMITE', 'Men', 35, 44), (72, 'Kumite Men 35-44 y.o. -85kg', 'KUMITE', 'Men', 35, 44),
+(73, 'Kumite Men 35-44 y.o. +85kg', 'KUMITE', 'Men', 35, 44), (74, 'Kumite Men 45+ y.o. -75kg', 'KUMITE', 'Men', 45, 99),
+(75, 'Kumite Men 45+ y.o. -85kg', 'KUMITE', 'Men', 45, 99), (76, 'Kumite Men 45+ y.o. +85kg', 'KUMITE', 'Men', 45, 99);
+
+-- 4. TATAMI BEOSZTÁS (A, B, C kőkemény logikája)
+INSERT INTO `kategoria_tatami` (`kategoria_id`, `tatami_id`) VALUES
+(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), 
+(17, 1), (18, 1), (19, 1), (20, 1), (21, 1), (22, 1), (23, 1), 
+(24, 1), (25, 1), (26, 1), (27, 1), (28, 1), (29, 1), (30, 1), (31, 1), (32, 1), (33, 1), 
+(9, 2), (10, 2), (11, 2), (12, 2), 
+(54, 2), (55, 2), (56, 2), (57, 2), (58, 2), (59, 2), (60, 2), (61, 2), (62, 2), (63, 2), (64, 2), (65, 2), 
+(66, 2), (67, 2), 
+(7, 3), (8, 3), (13, 3), (14, 3), (15, 3), (16, 3), 
+(34, 3), (35, 3), (36, 3), (37, 3), (38, 3), (39, 3), (40, 3), (41, 3), (42, 3), 
+(43, 3), (44, 3), (45, 3), (46, 3), (47, 3), (48, 3), (49, 3), (50, 3), (51, 3), (52, 3), (53, 3), 
+(68, 3), (69, 3), (70, 3), (71, 3), (72, 3), (73, 3), (74, 3), (75, 3), (76, 3);
+
+-- 5. ADATGENERÁLÓ CIKLUS MIND A 76 KATEGÓRIÁRA (Varázslat)
+DELIMITER $$
+CREATE PROCEDURE BemutatoAdatGenerator()
+BEGIN
+    DECLARE i INT DEFAULT 1;
+    DECLARE v_id INT DEFAULT 1;
+
+    WHILE i <= 76 DO
+        -- Alapból minden kategóriába 3 főt teszünk (így mindenhol lesz ágrajz/meccs, de a gép nem robban fel a hossztól)
+        INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Alpha'), 'Vácrátóti HSE');
+        SET v_id = LAST_INSERT_ID();
+        INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+        INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Beta'), 'Budo SE');
+        SET v_id = LAST_INSERT_ID();
+        INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+        INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Gamma'), 'Tatami SE');
+        SET v_id = LAST_INSERT_ID();
+        INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+        -- Ha 21-es kategória (8-9 fiú kumite), rakjunk bele még 2 embert, hogy KÖRMÉRKŐZÉS legyen (5 fő):
+        IF i = 21 THEN
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Delta'), 'Honbu Dojo');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Epsilon'), 'Vácrátóti HSE');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+        END IF;
+
+        -- Ha 67-es kategória (18+ Férfi Open), rakjunk bele még 5 embert, hogy EGYENES KIESÉS legyen (8 fő):
+        IF i = 67 THEN
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Delta'), 'Honbu Dojo');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Epsilon'), 'Vácrátóti HSE');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Zeta'), 'Budo SE');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Eta'), 'Tatami SE');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+
+            INSERT INTO versenyzo (nev, egyesulet) VALUES (CONCAT('Kat_', i, ' Versenyző Theta'), 'Honbu Dojo');
+            SET v_id = LAST_INSERT_ID();
+            INSERT INTO nevezes (versenyzo_id, kategoria_id, verseny_id, helyezes, pontszam) VALUES (v_id, i, 1, 0, 0);
+        END IF;
+
+        SET i = i + 1;
+    END WHILE;
+END$$
+DELIMITER ;
+
+CALL BemutatoAdatGenerator();
+DROP PROCEDURE BemutatoAdatGenerator;
+
+SET FOREIGN_KEY_CHECKS = 1;

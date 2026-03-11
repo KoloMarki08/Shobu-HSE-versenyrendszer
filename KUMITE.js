@@ -163,8 +163,8 @@ function ellenorizTovabbjutasokat() {
 }
 
 function rajzolAgrajz() {
-    var tartalom = document.getElementById('bracket-view'); 
-    if(!tartalom) return;
+    var tartalom = document.getElementById('bracket-view');
+    if (!tartalom) return;
     tartalom.innerHTML = "";
     var sel = document.getElementById('p-cat');
     if (sel && sel.value !== "") {
@@ -179,7 +179,7 @@ function rajzolAgrajz() {
 function mutasdTatamiNezetet(tatamiNev, doNotSwitchTab) {
     if (!doNotSwitchTab && typeof valtFul === "function") valtFul('tatami');
     var tartalom = document.getElementById('tatami-content');
-    if(!tartalom) return;
+    if (!tartalom) return;
     tartalom.innerHTML = "<h2 style='color:white; font-size: 2rem; font-weight: 900; background:#CE1126; padding:10px 30px; border-radius:10px; margin-top:20px;'>" + tatamiNev + " - Küzdelmi Sorrend</h2>";
 
     var tatamiKategoriak = OSSZES_KATEGORIA.filter(k => k.tatami === tatamiNev && !k.nev.toLowerCase().includes('kata'));
@@ -191,7 +191,7 @@ function mutasdTatamiNezetet(tatamiNev, doNotSwitchTab) {
 
     var sorszamTerkepe = generalTatamiSorszamTerkepe(tatamiNev);
     var van = false;
-    
+
     tatamiKategoriak.forEach(kat => {
         if (adatok.meccsek && adatok.meccsek.some(m => m.kategoria === kat.nev)) {
             van = true;
@@ -298,12 +298,12 @@ var aktualisMeccs = null; var idozitoInterval = null; var ido = 120;
 // JAVÍTVA: A motor most már kőkeményen számol
 function getMeccsIdo(kategoriaNev, isHosszabbitas, isElodontoVagyDonto) {
     var n = kategoriaNev.toLowerCase();
-    
+
     // Ha Hosszabbítás (Encho-Sen) van, akkor mindig mindenki 2 percet (120s) kap
     if (isHosszabbitas) {
         if (n.includes('8-9')) return 60;
         if (n.includes('10-11') || n.includes('12-13') || n.includes('35-44') || n.includes('45+') || n.includes('35+')) return 90;
-        return 120; 
+        return 120;
     }
 
     // ALAPIDŐ (0. menet) beállítása:
@@ -311,19 +311,20 @@ function getMeccsIdo(kategoriaNev, isHosszabbitas, isElodontoVagyDonto) {
     if (n.includes('10-11') || n.includes('12-13')) return 90;
     if (n.includes('14-15') || n.includes('16-17')) return 120;
     if (n.includes('35-44') || n.includes('45+') || n.includes('35+')) return 90;
-    
+
     // Felnőtt (18-34) logika megerősítve további kulcsszavakkal!
     var isFelnott = (n.includes('18-34') || n.includes('felnott') || n.includes('felnőtt') || n.includes('senior') || n.includes('szenior') || n.includes('adult'));
     if (isFelnott) {
         if (isElodontoVagyDonto) return 180; // A Te rajzod szerint itt 3 percről indul!
         return 120; // Selejtezőben 2 percről!
     }
-    
+
     return 120;
 }
 
 function nyitBiroiPanelt(id) {
-    aktualisMeccs = adatok.meccsek.find(m => m.id === id); if (!aktualisMeccs) return;
+    aktualisMeccs = adatok.meccsek.find(m => m.id === id);
+    if (!aktualisMeccs) return;
 
     if (aktualisMeccs.wazaariAka === undefined) {
         aktualisMeccs.wazaariAka = 0; aktualisMeccs.wazaariShiro = 0;
@@ -333,12 +334,11 @@ function nyitBiroiPanelt(id) {
         aktualisMeccs.hosszabbitasok = 0;
     }
 
-    // Kiszámoljuk, hogy a meccs Elődöntő vagy Döntő-e
     var isElodontoVagyDonto = false;
-    var cimKiegeszites = ""; // ÚJ: Vizuális megerősítés a Bírónak!
+    var cimKiegeszites = "";
     if (!aktualisMeccs.isRoundRobin) {
         if (aktualisMeccs.nextId === null) {
-            isElodontoVagyDonto = true; 
+            isElodontoVagyDonto = true;
             cimKiegeszites = " (🏆 DÖNTŐ)";
         } else {
             var nextMatch = adatok.meccsek.find(x => x.id === aktualisMeccs.nextId);
@@ -349,36 +349,44 @@ function nyitBiroiPanelt(id) {
         }
     }
 
-    var cim = document.getElementById('match-category-title'); 
-    if (cim) cim.innerText = aktualisMeccs.kategoria + cimKiegeszites; // ODAÍRJA A CÍMBE!
-    document.getElementById('ref-aka').innerText = aktualisMeccs.aka.nev; 
-    document.getElementById('ref-shiro').innerText = aktualisMeccs.shiro.nev;
+    // Adatok betöltése
+    document.getElementById('match-title').innerText = aktualisMeccs.kategoria + cimKiegeszites;
+    document.getElementById('aka-name').innerText = aktualisMeccs.aka.nev;
+    document.getElementById('shiro-name').innerText = aktualisMeccs.shiro.nev;
 
     frissitBiroiFeluletet();
-    clearInterval(idozitoInterval); idozitoInterval = null; 
-    
-    // Az idő betöltése az okos rendszerből
+
+    clearInterval(idozitoInterval);
+    idozitoInterval = null;
     ido = getMeccsIdo(aktualisMeccs.kategoria, aktualisMeccs.hosszabbitasok > 0, isElodontoVagyDonto);
     frissitIdozitoFeluletet();
-    
-    document.getElementById('btn-timer').innerText = "START"; document.getElementById('tab-referee').classList.remove('hidden');
+
+    document.getElementById('btn-timer').innerText = "START";
+
+    // MEGJELENÍTÉS ÉS GÖRDÍTÉS FIXÁLÁSA
+    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('tab-referee').classList.remove('hidden');
+
+    // Azonnali felugrás a tetejére és a görgetés letiltása a háttérben
+    window.scrollTo(0, 0);
+    document.body.style.overflow = "hidden";
 }
 
 function inditsdHosszabbitast() {
     if (!aktualisMeccs) return;
-    
+
     var isElodontoVagyDonto = false;
     if (!aktualisMeccs.isRoundRobin) {
         if (aktualisMeccs.nextId === null) isElodontoVagyDonto = true;
-        else { 
-            var nextMatch = adatok.meccsek.find(x => x.id === aktualisMeccs.nextId); 
+        else {
+            var nextMatch = adatok.meccsek.find(x => x.id === aktualisMeccs.nextId);
             if (nextMatch && nextMatch.nextId === null) isElodontoVagyDonto = true;
         }
     }
 
     var n = aktualisMeccs.kategoria.toLowerCase();
     var isFelnott = (n.includes('18-34') || n.includes('felnott') || n.includes('felnőtt') || n.includes('senior') || n.includes('szenior') || n.includes('adult'));
-    
+
     var maxHosszabbitas = 1;
     if (isFelnott && isElodontoVagyDonto) {
         maxHosszabbitas = 3; // 18-34 Elődöntő/Döntő: 3 db hosszabbítás
@@ -398,10 +406,10 @@ function inditsdHosszabbitast() {
         aktualisMeccs.scoreAka = 0; aktualisMeccs.scoreShiro = 0;
         aktualisMeccs.wazaariAka = 0; aktualisMeccs.wazaariShiro = 0;
         aktualisMeccs.ipponAka = 0; aktualisMeccs.ipponShiro = 0;
-        
+
         frissitBiroiFeluletet();
-        
-        ido = getMeccsIdo(aktualisMeccs.kategoria, true, isElodontoVagyDonto); 
+
+        ido = getMeccsIdo(aktualisMeccs.kategoria, true, isElodontoVagyDonto);
         clearInterval(idozitoInterval); idozitoInterval = null;
         document.getElementById('btn-timer').innerText = "START";
         frissitIdozitoFeluletet();
@@ -511,16 +519,25 @@ function befejezMeccset() {
         }
     }
 
+    // JAVÍTÁS: Görgetés visszaállítása és fülváltás
+    document.body.style.overflow = "auto"; 
     document.getElementById('tab-referee').classList.add('hidden');
+    document.getElementById('tab-tatami').classList.remove('hidden');
 }
 
 function frissitBiroiFeluletet() {
-    document.getElementById('score-aka').innerText = aktualisMeccs.scoreAka;
-    document.getElementById('score-shiro').innerText = aktualisMeccs.scoreShiro;
-    if (document.getElementById('chui-aka')) document.getElementById('chui-aka').innerText = aktualisMeccs.chuiAka || 0;
-    if (document.getElementById('genten-aka')) document.getElementById('genten-aka').innerText = aktualisMeccs.gentenAka || 0;
-    if (document.getElementById('chui-shiro')) document.getElementById('chui-shiro').innerText = aktualisMeccs.chuiShiro || 0;
-    if (document.getElementById('genten-shiro')) document.getElementById('genten-shiro').innerText = aktualisMeccs.gentenShiro || 0;
+    // JAVÍTVA: A verseny.html-ben lévő ID-khoz igazítva
+    if (document.getElementById('aka-score'))
+        document.getElementById('aka-score').innerText = aktualisMeccs.scoreAka;
+
+    if (document.getElementById('shiro-score'))
+        document.getElementById('shiro-score').innerText = aktualisMeccs.scoreShiro;
+
+    var akaPen = document.getElementById('aka-penalties');
+    if (akaPen) akaPen.innerHTML = "Chui: " + (aktualisMeccs.chuiAka || 0) + " | Genten: " + (aktualisMeccs.gentenAka || 0);
+
+    var shiroPen = document.getElementById('shiro-penalties');
+    if (shiroPen) shiroPen.innerHTML = "Chui: " + (aktualisMeccs.chuiShiro || 0) + " | Genten: " + (aktualisMeccs.gentenShiro || 0);
 }
 
 function nullazMeccsPontszamokat() {
@@ -531,18 +548,33 @@ function nullazMeccsPontszamokat() {
         aktualisMeccs.chuiAka = 0; aktualisMeccs.chuiShiro = 0;
         aktualisMeccs.gentenAka = 0; aktualisMeccs.gentenShiro = 0;
         delete aktualisMeccs.kizartOldal; delete aktualisMeccs.kizartId;
-        aktualisMeccs.hosszabbitasok = 0; 
-        frissitBiroiFeluletet(); clearInterval(idozitoInterval); idozitoInterval = null; 
-        
+        aktualisMeccs.hosszabbitasok = 0;
+        frissitBiroiFeluletet(); clearInterval(idozitoInterval); idozitoInterval = null;
+
         var isElodontoVagyDonto = false;
         if (!aktualisMeccs.isRoundRobin) {
             if (aktualisMeccs.nextId === null) isElodontoVagyDonto = true;
-            else { var nextMatch = adatok.meccsek.find(x => x.id === aktualisMeccs.nextId); if (nextMatch && nextMatch.nextId === null) isElodontoVagyDonto = true; }
+            else {
+                var nextMatch = adatok.meccsek.find(x => x.id === aktualisMeccs.nextId); if (nextMatch && nextMatch.nextId === null) isElodontoVagyDonto = true;
+            }
         }
         ido = getMeccsIdo(aktualisMeccs.kategoria, false, isElodontoVagyDonto);
         frissitIdozitoFeluletet();
     }
 }
 
-function kapcsolIdozitot() { if (idozitoInterval) { clearInterval(idozitoInterval); idozitoInterval = null; document.getElementById('btn-timer').innerText = "START"; } else { document.getElementById('btn-timer').innerText = "STOP"; idozitoInterval = setInterval(() => { ido--; frissitIdozitoFeluletet(); if (ido <= 0) { clearInterval(idozitoInterval); idozitoInterval = null; alert("Idő!"); document.getElementById('btn-timer').innerText = "START"; } }, 1000); } }
-function frissitIdozitoFeluletet() { document.getElementById('timer').innerText = Math.floor(ido / 60) + ':' + (ido % 60 < 10 ? '0' : '') + ido % 60; }
+function kapcsolIdozitot() {
+    if (idozitoInterval) {
+        clearInterval(idozitoInterval); idozitoInterval = null; document.getElementById('btn-timer').innerText = "START";
+    }
+    else {
+        document.getElementById('btn-timer').innerText = "STOP";
+        idozitoInterval = setInterval(() => {
+            ido--; frissitIdozitoFeluletet();
+            if (ido <= 0) { clearInterval(idozitoInterval); idozitoInterval = null; alert("Idő!"); document.getElementById('btn-timer').innerText = "START"; }
+        }, 1000);
+    }
+}
+function frissitIdozitoFeluletet() {
+    document.getElementById('timer').innerText = Math.floor(ido / 60) + ':' + (ido % 60 < 10 ? '0' : '') + ido % 60;
+}

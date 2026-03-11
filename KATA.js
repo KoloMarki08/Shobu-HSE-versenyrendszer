@@ -12,14 +12,14 @@ function generalKata() {
     // 2. Kigyűjtjük az egyedi Kata kategóriák neveit
     var egyediKategoriak = [...new Set(kataVersenyzok.map(v => v.kategoria))];
 
-    if (!adatok.kata) adatok.kata = {}; 
+    if (!adatok.kata) adatok.kata = {};
     if (!adatok.kataStatus) adatok.kataStatus = {};
-    
+
     // 3. Végigmegyünk az összes Kata kategórián, és mindegyiket legeneráljuk!
     egyediKategoriak.forEach(katNev => {
         var jatekosok = adatok.versenyzok.filter(v => v.kategoria === katNev);
         var frissitettLista = [];
-        
+
         jatekosok.forEach(sqlEmber => {
             var regi = (adatok.kata[katNev] || []).find(item => String(item.versenyzo.id) === String(sqlEmber.id));
             if (regi) {
@@ -28,23 +28,23 @@ function generalKata() {
                 frissitettLista.push(regi);
             } else {
                 // Ha új versenyző, létrehozzuk neki a tiszta, üres pontozólapot
-                frissitettLista.push({ 
-                    versenyzo: sqlEmber, 
-                    pontok: ["", "", "", "", ""], osszpont: 0, minPont1: 0, maxPont1: 0, 
-                    pontokDonto: ["", "", "", "", ""], osszpontDonto: 0, minPontDonto: 0, maxPontDonto: 0 
+                frissitettLista.push({
+                    versenyzo: sqlEmber,
+                    pontok: ["", "", "", "", ""], osszpont: 0, minPont1: 0, maxPont1: 0,
+                    pontokDonto: ["", "", "", "", ""], osszpontDonto: 0, minPontDonto: 0, maxPontDonto: 0
                 });
             }
         });
 
         adatok.kata[katNev] = frissitettLista;
-        if(!adatok.kataStatus[katNev]) adatok.kataStatus[katNev] = 'selejtezo';
+        if (!adatok.kataStatus[katNev]) adatok.kataStatus[katNev] = 'selejtezo';
     });
 
     // 4. Azonnali mentés a szerverre
     if (typeof mentsdAzAllapototMySQLbe === "function") mentsdAzAllapototMySQLbe();
-    
+
     alert("Az összes (" + egyediKategoriak.length + " db) Kata kategória panelje sikeresen legenerálva!");
-    
+
     valtFul('kata');
     if (typeof rajzolKata === 'function') rajzolKata();
 }
@@ -53,7 +53,7 @@ function wkfSorbarendezes(a, b, isDonto) {
     var osszA = isDonto ? (a.osszpontDonto || 0) : (a.osszpont || 0); var osszB = isDonto ? (b.osszpontDonto || 0) : (b.osszpont || 0);
     var minA = isDonto ? (a.minPontDonto || 0) : (a.minPont1 || 0); var minB = isDonto ? (b.minPontDonto || 0) : (b.minPont1 || 0);
     var maxA = isDonto ? (a.maxPontDonto || 0) : (a.maxPont1 || 0); var maxB = isDonto ? (b.maxPontDonto || 0) : (b.maxPont1 || 0);
-    if (osszB !== osszA) return osszB - osszA; if (minB !== minA) return minB - minA; if (maxB !== maxA) return maxB - maxA; return 0; 
+    if (osszB !== osszA) return osszB - osszA; if (minB !== minA) return minB - minA; if (maxB !== maxA) return maxB - maxA; return 0;
 }
 
 function sorbarendezSelejtezo() {
@@ -61,9 +61,9 @@ function sorbarendezSelejtezo() {
     var lista = adatok.kata[kategoria]; lista.sort((a, b) => wkfSorbarendezes(a, b, false));
     var voltDontetlen = false;
     for (var i = 1; i < lista.length; i++) {
-        if (lista[i].osszpont > 0 && wkfSorbarendezes(lista[i-1], lista[i], false) === 0) {
+        if (lista[i].osszpont > 0 && wkfSorbarendezes(lista[i - 1], lista[i], false) === 0) {
             alert("⚠️ TÖKÉLETES DÖNTETLEN!\n\nÚj Katát kell bemutatniuk! A pontjaikat a rendszer törli.");
-            lista[i-1].pontok = ["", "", "", "", ""]; lista[i-1].osszpont = 0; lista[i-1].minPont1 = 0; lista[i-1].maxPont1 = 0;
+            lista[i - 1].pontok = ["", "", "", "", ""]; lista[i - 1].osszpont = 0; lista[i - 1].minPont1 = 0; lista[i - 1].maxPont1 = 0;
             lista[i].pontok = ["", "", "", "", ""]; lista[i].osszpont = 0; lista[i].minPont1 = 0; lista[i].maxPont1 = 0; voltDontetlen = true;
         }
     }
@@ -78,24 +78,37 @@ function generalDonto() {
 }
 
 function sorbarendezDonto() {
-    var kategoria = document.getElementById('p-cat').value; if (!adatok.kata || !adatok.kata[kategoria]) return;
+    var kategoria = document.getElementById('p-cat').value; 
+    if (!adatok.kata || !adatok.kata[kategoria]) return;
+    
     adatok.kataStatus[kategoria] = 'donto_rendezve';
-    var top6 = adatok.kata[kategoria].slice(0, 6); top6.sort((a, b) => wkfSorbarendezes(a, b, true));
+    var top6 = adatok.kata[kategoria].slice(0, 6); 
+    top6.sort((a, b) => wkfSorbarendezes(a, b, true));
+
     var voltDontetlen = false;
     for (var i = 1; i < top6.length; i++) {
-        if (top6[i].osszpontDonto > 0 && wkfSorbarendezes(top6[i-1], top6[i], true) === 0) {
+        if (top6[i].osszpontDonto > 0 && wkfSorbarendezes(top6[i - 1], top6[i], true) === 0) {
             alert("🏆 DÖNTETLEN A DÖNTŐBEN!\n\nÚj Katát kell bemutatniuk!");
-            top6[i-1].pontokDonto = ["", "", "", "", ""]; top6[i-1].osszpontDonto = 0; top6[i-1].minPontDonto = 0; top6[i-1].maxPontDonto = 0;
-            top6[i].pontokDonto = ["", "", "", "", ""]; top6[i].osszpontDonto = 0; top6[i].minPontDonto = 0; top6[i].maxPontDonto = 0; voltDontetlen = true;
+            top6[i - 1].pontokDonto = ["", "", "", "", ""]; top6[i - 1].osszpontDonto = 0; 
+            top6[i].pontokDonto = ["", "", "", "", ""]; top6[i].osszpontDonto = 0; 
+            voltDontetlen = true;
         }
     }
     if (voltDontetlen) top6.sort((a, b) => wkfSorbarendezes(a, b, true));
+
+    // ÚJ: A TOP 3 beküldése a hivatalos végeredmények közé az adatbázisba
+    if (top6[0]) fetch('api.php?akcio=vegeredmenyMentes', { method: 'POST', body: JSON.stringify({ versenyzo_id: top6[0].versenyzo.id, helyezes: 1, pontszam: top6[0].osszpontDonto }) });
+    if (top6[1]) fetch('api.php?akcio=vegeredmenyMentes', { method: 'POST', body: JSON.stringify({ versenyzo_id: top6[1].versenyzo.id, helyezes: 2, pontszam: top6[1].osszpontDonto }) });
+    if (top6[2]) fetch('api.php?akcio=vegeredmenyMentes', { method: 'POST', body: JSON.stringify({ versenyzo_id: top6[2].versenyzo.id, helyezes: 3, pontszam: top6[2].osszpontDonto }) });
+
     for (var k = 0; k < 6; k++) adatok.kata[kategoria][k] = top6[k];
-    mentsdAzAllapototMySQLbe(); rajzolKata();
+    
+    if (typeof mentsdAzAllapototMySQLbe === "function") mentsdAzAllapototMySQLbe(); 
+    rajzolKata();
 }
 
 function rajzolKata() {
-    var kategoria = document.getElementById('p-cat').value; var tartalom = document.getElementById('kata-content'); 
+    var kategoria = document.getElementById('p-cat').value; var tartalom = document.getElementById('kata-content');
     if (!tartalom || !adatok.kata || !adatok.kata[kategoria]) return;
 
     var eredetiLista = adatok.kata[kategoria]; for (var k = 0; k < eredetiLista.length; k++) eredetiLista[k].helyezes1 = k + 1;
@@ -114,20 +127,20 @@ function rajzolKata() {
     html += '<h3 style="background-color: #f3f4f6; color: #1a1a1a; padding: 12px; margin: 0; text-transform: uppercase; font-weight: 900;">1. Forduló (Selejtező)</h3>';
     html += '<div class="kata-sor" style="background-color: #1a1a1a; color: white; font-weight: bold;"><div class="kata-versenyzo-neve" style="flex-grow: 1; min-width: 200px;">Hely. | Versenyző Neve</div><div class="kata-beviteli-mezok" style="justify-content: center; gap: 5px;"><span style="width: 3rem; text-align:center;">B1</span><span style="width: 3rem; text-align:center;">B2</span><span style="width: 3rem; text-align:center;">B3</span><span style="width: 3rem; text-align:center;">B4</span><span style="width: 3rem; text-align:center;">B5</span></div><div style="width: 60px; text-align: right; font-weight: 900; color: #CE1126;">ÖSSZ</div></div>';
 
-    var readonlyAttr = szerkeszthetE ? "" : "disabled"; 
+    var readonlyAttr = szerkeszthetE ? "" : "disabled";
 
     for (var i = 0; i < eredetiLista.length; i++) {
         var adat = eredetiLista[i]; var v = adat.versenyzo; var hely = adat.helyezes1;
         var sorStilus = "border-bottom: 1px solid #e5e7eb;"; var nevStilus = "";
         if (hely <= 6 && adat.osszpont > 0) { sorStilus += " background-color: #f8fafc;"; nevStilus = "font-weight: bold; color: #1a1a1a;"; }
-        if (hely === 6 && eredetiLista.length > 6) sorStilus += " border-bottom: 3px dashed #1a1a1a;"; 
+        if (hely === 6 && eredetiLista.length > 6) sorStilus += " border-bottom: 3px dashed #1a1a1a;";
 
         html += '<div class="kata-sor" style="' + sorStilus + '"><div class="kata-versenyzo-neve" style="flex-grow: 1; min-width: 200px; ' + nevStilus + '">' + hely + '. [' + v.id + '] ' + v.nev + ' <span style="font-size: 0.8em; color: #94a3b8;">(' + v.klub + ')</span></div><div class="kata-beviteli-mezok">';
         for (var b = 0; b < 5; b++) {
             var ertek = adat.pontok[b] || "";
             html += '<input type="number" step="0.1" min="5.0" max="8.5" class="score-input score-input-1" value="' + ertek + '" ' + readonlyAttr + ' oninput="okosKataPontBeiras(this, \'' + kategoria + '\', \'' + v.id + '\', ' + b + ', 1)" onblur="veglegesitMezot(this, \'' + kategoria + '\', \'' + v.id + '\', ' + b + ', 1)">';
         }
-        var tieHtml = (adat.osszpont > 0 && i > 0 && wkfSorbarendezes(eredetiLista[i-1], adat, false) === 0) ? '<span style="font-size: 10px; color: #CE1126; display: block; line-height: 1;">ÚJ KATA!</span>' : "";
+        var tieHtml = (adat.osszpont > 0 && i > 0 && wkfSorbarendezes(eredetiLista[i - 1], adat, false) === 0) ? '<span style="font-size: 10px; color: #CE1126; display: block; line-height: 1;">ÚJ KATA!</span>' : "";
         html += '</div><div style="width: 60px; text-align: right; font-weight: 900; font-size: 1.2rem; color: #1a1a1a;">' + tieHtml + '<span id="osszpont-1-' + v.id + '">' + adat.osszpont.toFixed(1) + '</span></div></div>';
     }
     html += '</div>';
@@ -141,7 +154,7 @@ function rajzolKata() {
         html += '<h3 style="margin: 0; color: white; text-transform: uppercase; font-weight: 900; letter-spacing: 0.05em;">🥋 2. Forduló (Döntő - Top 6)</h3>';
         if (szerkeszthetE && adatok.kataStatus[kategoria] !== 'donto_rendezve') html += '<button onclick="sorbarendezDonto()" style="background: #CE1126; color: white; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; border: 1px solid #fff;">✅ Végeredmény Sorbarendezése</button>';
         html += '</div>';
-        
+
         html += '<div class="kata-sor" style="background-color: #f3f4f6; font-weight: bold; border-bottom: 1px solid #d1d5db;"><div class="kata-versenyzo-neve" style="flex-grow: 1; min-width: 200px; color: #1a1a1a;">Helyezés | Versenyző Neve</div><div class="kata-beviteli-mezok" style="justify-content: center; gap: 5px; color: #1a1a1a;"><span style="width: 3rem; text-align:center;">B1</span><span style="width: 3rem; text-align:center;">B2</span><span style="width: 3rem; text-align:center;">B3</span><span style="width: 3rem; text-align:center;">B4</span><span style="width: 3rem; text-align:center;">B5</span></div><div style="width: 60px; text-align: right; font-weight: 900; color: #CE1126;">DÖNTŐ</div></div>';
 
         for (var m = 0; m < dontoMegjelenites.length; m++) {
@@ -149,18 +162,18 @@ function rajzolKata() {
             var sorStilusDonto = "border-bottom: 1px solid #e5e7eb;"; var nevStilusDonto = ""; var helyDontoSzoveg = "Döntős";
 
             if (adatok.kataStatus[kategoria] === 'donto_rendezve') {
-                var helyDonto = m + 1; helyDontoSzoveg = helyDonto + ".";
-                if (helyDonto === 1) { nevStilusDonto = "color: #CE1126; font-weight: 900;"; sorStilusDonto += " background-color: #fef2f2;"; sorStilusDonto += " border-bottom: 3px solid #CE1126;"; } 
-                else if (helyDonto === 2) { nevStilusDonto = "color: #1a1a1a; font-weight: 900;"; sorStilusDonto += " background-color: #f8fafc;"; } 
-                else if (helyDonto === 3) { nevStilusDonto = "color: #3f3f46; font-weight: 900;"; sorStilusDonto += " background-color: #f4f4f5;"; } 
-            } else if (m === dontoMegjelenites.length - 1) sorStilusDonto += " border-bottom: 3px solid #CE1126;"; 
+                var helyDonto = m + 1; var helyDontoSzoveg = helyDonto + ".";
+                if (helyDonto === 1) { nevStilusDonto = "color: #CE1126; font-weight: 900;"; sorStilusDonto += " background-color: #fef2f2;"; sorStilusDonto += " border-bottom: 3px solid #CE1126;"; }
+                else if (helyDonto === 2) { nevStilusDonto = "color: #1a1a1a; font-weight: 900;"; sorStilusDonto += " background-color: #f8fafc;"; }
+                else if (helyDonto === 3) { nevStilusDonto = "color: #3f3f46; font-weight: 900;"; sorStilusDonto += " background-color: #f4f4f5;"; }
+            } else if (m === dontoMegjelenites.length - 1) sorStilusDonto += " border-bottom: 3px solid #CE1126;";
 
             html += '<div class="kata-sor" style="' + sorStilusDonto + '"><div class="kata-versenyzo-neve" style="flex-grow: 1; min-width: 200px; ' + nevStilusDonto + '">' + helyDontoSzoveg + ' [' + vDonto.id + '] ' + vDonto.nev + ' <span style="font-size: 0.8em; color: #94a3b8;">(1. kör: ' + adatDonto.helyezes1 + '.)</span></div><div class="kata-beviteli-mezok">';
             for (var bd = 0; bd < 5; bd++) {
                 var ertekDonto = adatDonto.pontokDonto[bd] || "";
                 html += '<input type="number" step="0.1" min="5.0" max="8.5" class="score-input score-input-2" value="' + ertekDonto + '" ' + readonlyAttr + ' oninput="okosKataPontBeiras(this, \'' + kategoria + '\', \'' + vDonto.id + '\', ' + bd + ', 2)" onblur="veglegesitMezot(this, \'' + kategoria + '\', \'' + vDonto.id + '\', ' + bd + ', 2)">';
             }
-            var tieDontoHtml = (adatok.kataStatus[kategoria] === 'donto_rendezve' && adatDonto.osszpontDonto > 0 && m > 0 && wkfSorbarendezes(dontoMegjelenites[m-1], adatDonto, true) === 0) ? '<span style="font-size: 10px; color: #CE1126; display: block; line-height: 1;">ÚJ KATA!</span>' : "";
+            var tieDontoHtml = (adatok.kataStatus[kategoria] === 'donto_rendezve' && adatDonto.osszpontDonto > 0 && m > 0 && wkfSorbarendezes(dontoMegjelenites[m - 1], adatDonto, true) === 0) ? '<span style="font-size: 10px; color: #CE1126; display: block; line-height: 1;">ÚJ KATA!</span>' : "";
             html += '</div><div style="width: 60px; text-align: right; font-weight: 900; font-size: 1.2rem; color: #1a1a1a;">' + tieDontoHtml + '<span id="osszpont-2-' + vDonto.id + '">' + adatDonto.osszpontDonto.toFixed(1) + '</span></div></div>';
         }
         html += '</div>';
@@ -178,7 +191,7 @@ function okosKataPontBeiras(mezo, kategoria, versenyzoId, biroIndex, fordulo) {
         var valosIndex = adatok.kata[kategoria].findIndex(item => String(item.versenyzo.id) === String(versenyzoId));
         if (valosIndex === -1) return;
         if (fordulo === 1) adatok.kata[kategoria][valosIndex].pontok[biroIndex] = veglegesPont.toFixed(1); else adatok.kata[kategoria][valosIndex].pontokDonto[biroIndex] = veglegesPont.toFixed(1);
-        
+
         var osszesMezo = Array.from(document.querySelectorAll('.score-input-' + fordulo)); var index = osszesMezo.indexOf(mezo);
         if (index > -1 && index < osszesMezo.length - 1) { osszesMezo[index + 1].focus(); setTimeout(() => osszesMezo[index + 1].select(), 10); } else { mezo.blur(); }
         szamolKataEredmeny(kategoria, valosIndex, fordulo);
@@ -189,7 +202,7 @@ function veglegesitMezot(mezo, kategoria, versenyzoId, biroIndex, fordulo) {
     if (mezo.value !== "") {
         var veglegesPont = parseFloat(mezo.value); var valosIndex = adatok.kata[kategoria].findIndex(item => String(item.versenyzo.id) === String(versenyzoId));
         if (valosIndex === -1) return;
-        if (isNaN(veglegesPont)) { mezo.value = ""; if (fordulo === 1) adatok.kata[kategoria][valosIndex].pontok[biroIndex] = ""; else adatok.kata[kategoria][valosIndex].pontokDonto[biroIndex] = ""; } 
+        if (isNaN(veglegesPont)) { mezo.value = ""; if (fordulo === 1) adatok.kata[kategoria][valosIndex].pontok[biroIndex] = ""; else adatok.kata[kategoria][valosIndex].pontokDonto[biroIndex] = ""; }
         else {
             if (veglegesPont < 5.0) veglegesPont = 5.0; if (veglegesPont > 8.5) veglegesPont = 8.5; mezo.value = veglegesPont.toFixed(1);
             if (fordulo === 1) adatok.kata[kategoria][valosIndex].pontok[biroIndex] = veglegesPont.toFixed(1); else adatok.kata[kategoria][valosIndex].pontokDonto[biroIndex] = veglegesPont.toFixed(1);
@@ -202,12 +215,12 @@ function szamolKataEredmeny(kategoria, valosIndex, fordulo) {
     var pontok = (fordulo === 1) ? adatok.kata[kategoria][valosIndex].pontok : adatok.kata[kategoria][valosIndex].pontokDonto;
     var szamok = []; for (var i = 0; i < pontok.length; i++) { if (pontok[i] !== "") szamok.push(parseFloat(pontok[i])); }
     var osszeg = 0, minP = 0, maxP = 0;
-    if (szamok.length === 5) { szamok.sort((a, b) => a - b); minP = szamok[0]; maxP = szamok[4]; osszeg = szamok[1] + szamok[2] + szamok[3]; } 
+    if (szamok.length === 5) { szamok.sort((a, b) => a - b); minP = szamok[0]; maxP = szamok[4]; osszeg = szamok[1] + szamok[2] + szamok[3]; }
     else { for (var j = 0; j < szamok.length; j++) { osszeg += szamok[j]; } }
 
-    if (fordulo === 1) { adatok.kata[kategoria][valosIndex].osszpont = osszeg; adatok.kata[kategoria][valosIndex].minPont1 = minP; adatok.kata[kategoria][valosIndex].maxPont1 = maxP; } 
+    if (fordulo === 1) { adatok.kata[kategoria][valosIndex].osszpont = osszeg; adatok.kata[kategoria][valosIndex].minPont1 = minP; adatok.kata[kategoria][valosIndex].maxPont1 = maxP; }
     else { adatok.kata[kategoria][valosIndex].osszpontDonto = osszeg; adatok.kata[kategoria][valosIndex].minPontDonto = minP; adatok.kata[kategoria][valosIndex].maxPontDonto = maxP; }
-    
+
     mentsdAzAllapototMySQLbe(); // AZONNALI MENTÉS A SZERVERRE!
     var pontElem = document.getElementById('osszpont-' + fordulo + '-' + adatok.kata[kategoria][valosIndex].versenyzo.id);
     if (pontElem) pontElem.innerText = osszeg.toFixed(1);

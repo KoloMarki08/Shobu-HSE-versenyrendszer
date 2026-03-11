@@ -16,21 +16,16 @@
         <nav class="felso-menusor">
             <div class="menu-tartalom">
                 <div class="logonk">
-                    <span class="logo-szoveg">SHOBU HSE
-                        <span class="piros-kiemeles">Versenyrendszer</span>
-                    </span>
-
+                    <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
                     <span id="user-badge" class="felhasznalo-jelzo">Betöltés...</span>
                 </div>
-                <div id="mobil-menu-container" class="menu-gombok">
+                <div class="menu-gombok">
                     <button onclick="valtFul('kategoriak')">Kategóriák</button>
                     <button id="nav-reg" onclick="valtFul('reg')" class="hidden">Nevezés</button>
                     <button onclick="valtFul('tatami')" style="color:#facc15;">Tatami Nézet</button>
                     <button onclick="valtFul('eredmenyek')" style="color:#60a5fa;">Végeredmények</button>
-
-                    <button id="nav-bracket" onclick="valtFul('bracket')">Kumite Ágrajz</button>
-                    <button id="nav-kata" onclick="valtFul('kata')">KATA Panel</button>
-
+                    <button id="nav-admin" onclick="valtFul('admin')" class="hidden"
+                        style="color:#ef4444; font-weight:bold;">ADMIN PANEL</button>
                     <button onclick="kijelentkezesVersenybol()">Kilépés</button>
                 </div>
             </div>
@@ -39,50 +34,27 @@
         <section id="tab-kategoriak" class="kategoriak-oldal hidden">
             <div class="kategoriak-feher-doboz">
                 <h2 class="doboz-cime">Kategóriák és beosztások</h2>
-                <p style="color:#64748b; margin-bottom:15px; font-size:14px;">Kattints a kategória vagy a tatami nevére
-                    a megtekintéshez!</p>
                 <table class="kategoria-tabla">
-                    <thead class="kategoria-tabla-fejlec">
+                    <thead>
                         <tr>
                             <th class="kategoria-tabla-cella">Kategória neve</th>
                             <th class="kategoria-tabla-cella">Tatami</th>
                         </tr>
                     </thead>
-                    <tbody id="kategoria-tabla-torzs" class="kategoria-tabla-torzs"></tbody>
+                    <tbody id="kategoria-tabla-torzs"></tbody>
                 </table>
-            </div>
-        </section>
-
-        <section id="tab-eredmenyek" class="hidden">
-            <div class="kategoriak-feher-doboz">
-                <h2 class="doboz-cime" style="color:#ca8a04;">🏆 Hivatalos Végeredmények (Top 4)</h2>
-                <div id="eredmenyek-content">Nincs még eredmény.</div>
-            </div>
-        </section>
-
-        <section id="tab-tatami" class="hidden" style="padding: 20px;">
-            <div id="tatami-content"
-                style="display: flex; flex-direction: column; align-items: center; gap: 40px; padding-bottom: 50px;">
-                <p style="color:white; padding:20px;">Válassz egy tatamit a Kategóriák fülön a megtekintéshez!</p>
             </div>
         </section>
 
         <section id="tab-reg" class="nevezes-oldal hidden">
             <div class="nevezes-feher-doboz">
-                <h2 class="doboz-cime">Versenyzők hozzáadása</h2>
-
-                <div style="margin-bottom: 20px; text-align: left;">
-                    <label style="color:#1f2937; font-weight:bold; display:block; margin-bottom: 8px;">Melyik versenyre
-                        nevezel?</label>
-                    <select id="p-verseny" onchange="letoltVersenyzoketABazisbol()" class="urlap-legordulo"
-                        style="width: 100%; max-width: 400px; border: 2px solid #cbd5e1; background-color: #f8fafc; color: #1e293b; font-weight: bold; padding: 10px; border-radius: 6px;"></select>
-                </div>
-
+                <h2 class="doboz-cime">Nevezés</h2>
+                <select id="p-verseny" onchange="letoltVersenyzoketABazisbol()" class="urlap-legordulo mb-4"></select>
                 <div class="urlap-racs">
                     <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
                     <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
                     <select id="p-gender" onchange="frissitKategoriaLegordulot()" class="urlap-legordulo">
-                        <option value="">Nem kiválasztása...</option>
+                        <option value="">Nem...</option>
                         <option value="Boys">Fiú</option>
                         <option value="Girls">Lány</option>
                         <option value="Men">Férfi</option>
@@ -91,115 +63,164 @@
                     <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()"
                         class="urlap-szamdoboz">
                     <input id="p-weight" type="number" placeholder="Súly (kg)" class="urlap-szamdoboz">
-                    <input id="p-height" type="number" placeholder="Magasság (cm)" class="urlap-szamdoboz">
-                    <select id="p-cat" class="urlap-kategoria-valaszto">
-                        <option value="">Előbb adja meg a kort és a nemet!</option>
-                    </select>
+                    <select id="p-cat" class="urlap-kategoria-valaszto"></select>
                 </div>
                 <button onclick="hozzaadVersenyzot()" class="hozzaadas-gomb">HOZZÁADÁS</button>
-                <div class="nevezettek-listaja-doboz">
-                    <h3 class="lista-cime">Nevezettek listája</h3>
-                    <ul id="player-list" class="lista-elemek"></ul>
-                </div>
-                <div id="admin-controls" class="admin-gombok hidden">
+                <ul id="player-list" class="lista-elemek mt-4"></ul>
+                <div id="admin-controls" class="admin-gombok hidden mt-6">
                     <button onclick="generalKumite()" class="admin-gomb-sorsolas">Kumite Sorsolás</button>
-                    <button onclick="generalKata()" class="admin-gomb-kata">Kata Panel / Generálás</button>
-                    <button onclick="toroljMindent()" class="admin-gomb-torles">Teljes Adatbázis Törlése</button>
+                    <button onclick="generalKata()" class="admin-gomb-kata">Kata Panel Generálás</button>
                 </div>
+            </div>
+        </section>
+
+        <section id="tab-tatami" class="hidden" style="padding: 20px;">
+            <div id="tatami-content" class="flex flex-col items-center gap-10 w-full text-center">
+                <p style="color:white; padding:20px;">Válassz egy tatamit a Kategóriák fülön!</p>
+            </div>
+        </section>
+
+        <section id="tab-eredmenyek" class="hidden">
+            <div class="kategoriak-feher-doboz flex flex-col items-center text-center">
+                <h2 class="doboz-cime" style="color:#ca8a04;">🏆 Hivatalos Végeredmények (Top 4)</h2>
+                <div id="eredmenyek-content" class="w-full flex flex-col items-center">Nincs még eredmény.</div>
             </div>
         </section>
 
         <section id="tab-bracket" class="hidden">
-            <div id="bracket-view" class="agrajz-vilagos-tema"></div>
-        </section>
-        <section id="tab-kata" class="hidden">
-            <div id="kata-content" class="kata-taroloja"></div>
+            <div id="bracket-view"></div>
         </section>
 
-        <section id="tab-referee" class="biroi-panel-hatter hidden">
-            <div class="biroi-panel-doboz">
-                <button onclick="document.getElementById('tab-referee').classList.add('hidden')"
-                    class="bezaras-gomb">✕</button>
-                <div class="idozito-reszleg">
-                    <h3 id="match-category-title" class="meccs-kategoria-cime" style="color:white; font-weight:bold;">
-                        Kategória Neve</h3>
-                    <div id="timer" class="hatalmas-idozito timer-glow">02:00</div>
-                    <div class="idozito-gombok">
-                        <button onclick="kapcsolIdozitot()" id="btn-timer" class="ido-start-gomb">START</button>
-                        <button onclick="nullazMeccsPontszamokat()" class="ido-reset-gomb">RESET</button>
-                        <button onclick="inditsdHosszabbitast()"
-                            style="background-color:#3b82f6; color:white; font-weight:700; padding:0.5rem 1.5rem; border-radius:0.25rem; border:none; cursor:pointer;">HOSSZABBÍTÁS</button>
-                        <button onclick="befejezMeccset()"
-                            style="background-color:#ca8a04; color:white; font-weight:700; padding:0.5rem 1.5rem; border-radius:0.25rem; border:none; cursor:pointer;">MÉRKŐZÉS
-                            LEZÁRÁSA</button>
+        <section id="tab-kata" class="hidden">
+            <div id="kata-content"></div>
+        </section>
+
+        <section id="tab-referee" class="hidden"
+            style="position: fixed; inset: 0; background: #0f172a; z-index: 9999; overflow-y: auto; color: white; font-family: sans-serif;">
+            <div
+                style="max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; min-height: 100vh;">
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 20px;">
+                    <button
+                        onclick="document.body.style.overflow='auto'; document.getElementById('tab-referee').classList.add('hidden'); document.getElementById('tab-tatami').classList.remove('hidden');"
+                        style="background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none;">←
+                        Vissza
+                    </button>
+                    <h2 id="match-title"
+                        style="font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 900; margin: 0; text-align: center; flex-grow: 1;">
+                        Mérkőzés
+                    </h2>
+                </div>
+
+                <div
+                    style="text-align: center; margin-bottom: 30px; background: #1e293b; padding: 20px; border-radius: 15px; border: 1px solid #334155;">
+                    <div id="timer"
+                        style="font-size: clamp(4rem, 15vw, 8rem); font-weight: 900; font-family: monospace; line-height: 1; margin-bottom: 15px;">
+                        02:00</div>
+                    <div style="display: flex; justify-content: center; gap: 15px;">
+                        <button onclick="kapcsolIdozitot()" id="btn-timer"
+                            style="background: #10b981; color: white; padding: 15px 40px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none;">START</button>
+                        <button onclick="nullazMeccsPontszamokat()"
+                            style="background: #64748b; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none;">RESET</button>
                     </div>
                 </div>
-                <div class="jatekosok-reszlege">
-                    <div class="kek-jatekos-oldala">
-                        <div class="szin-jelzo">
-                            <div class="kicsi-kek-negyzet"></div><span class="szin-szoveg-kek">AKA</span>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; flex-grow: 1;">
+
+                    <div
+                        style="background: #1e3a8a; border: 4px solid #3b82f6; padding: 25px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                        <h3 id="aka-name" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">AKA</h3>
+                        <div id="aka-score" style="font-size: 8rem; font-weight: 900; line-height: 1; margin: 20px 0;">0
                         </div>
-                        <div class="jatekos-neve" id="ref-aka">A Játékos</div>
-
-                        <div
-                            style="font-size:16px; font-weight:bold; color:#d1d5db; margin-bottom:10px; background:#3f3f46; padding:5px; border-radius:5px;">
-                            Chui: <span id="chui-aka" style="color:#facc15;">0</span> | Genten: <span id="genten-aka"
-                                style="color:#ef4444;">0</span>
-                        </div>
-
-                        <div class="jatekos-pontja" id="score-aka">0</div>
-
-                        <div class="pontadas-gombok">
-                            <button onclick="pontszamAdas('aka', 1)" class="pont-gomb pont-gomb-kek">WAZARI (1)</button>
-                            <button onclick="pontszamAdas('aka', 2)" class="pont-gomb pont-gomb-kek-vilagos">IPPON
-                                (2)</button>
+                        <div id="aka-penalties"
+                            style="font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+                            Chui: 0 | Genten: 0</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button onclick="pontszamAdas('aka', 1)"
+                                style="background: #3b82f6; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">WAZA-ARI
+                                (+1)</button>
+                            <button onclick="pontszamAdas('aka', 2)"
+                                style="background: #2563eb; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">IPPON
+                                (+2)</button>
                             <button onclick="buntetesAdas('aka', 'chui')"
-                                style="background:#ca8a04; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">CHUI</button>
+                                style="background: #ca8a04; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">CHUI</button>
                             <button onclick="buntetesAdas('aka', 'genten')"
-                                style="background:#ef4444; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">GENTEN</button>
-                            <button onclick="pontTorles('aka')"
-                                style="grid-column: span 2; background:#3f3f46; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">VISSZAVONÁS
-                                (-1 Pont)</button>
+                                style="background: #dc2626; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">GENTEN</button>
                         </div>
                     </div>
 
-                    <div class="piros-jatekos-oldala">
-                        <div class="szin-jelzo">
-                            <div class="kicsi-piros-negyzet"></div><span class="szin-szoveg-piros">SHIRO</span>
-                        </div>
-                        <div class="jatekos-neve" id="ref-shiro">B Játékos</div>
-
-                        <div
-                            style="font-size:16px; font-weight:bold; color:#d1d5db; margin-bottom:10px; background:#3f3f46; padding:5px; border-radius:5px;">
-                            Chui: <span id="chui-shiro" style="color:#facc15;">0</span> | Genten: <span
-                                id="genten-shiro" style="color:#ef4444;">0</span>
-                        </div>
-
-                        <div class="jatekos-pontja" id="score-shiro">0</div>
-
-                        <div class="pontadas-gombok">
-                            <button onclick="pontszamAdas('shiro', 1)" class="pont-gomb pont-gomb-piros">WAZARI
-                                (1)</button>
-                            <button onclick="pontszamAdas('shiro', 2)" class="pont-gomb pont-gomb-piros-vilagos">IPPON
-                                (2)</button>
+                    <div
+                        style="background: #881337; border: 4px solid #e11d48; padding: 25px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                        <h3 id="shiro-name" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">SHIRO</h3>
+                        <div id="shiro-score"
+                            style="font-size: 8rem; font-weight: 900; line-height: 1; margin: 20px 0;">0</div>
+                        <div id="shiro-penalties"
+                            style="font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+                            Chui: 0 | Genten: 0</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button onclick="pontszamAdas('shiro', 1)"
+                                style="background: #f43f5e; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">WAZA-ARI
+                                (+1)</button>
+                            <button onclick="pontszamAdas('shiro', 2)"
+                                style="background: #e11d48; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">IPPON
+                                (+2)</button>
                             <button onclick="buntetesAdas('shiro', 'chui')"
-                                style="background:#ca8a04; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">CHUI</button>
+                                style="background: #ca8a04; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">CHUI</button>
                             <button onclick="buntetesAdas('shiro', 'genten')"
-                                style="background:#ef4444; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">GENTEN</button>
-                            <button onclick="pontTorles('shiro')"
-                                style="grid-column: span 2; background:#3f3f46; padding:0.5rem; font-weight:bold; border-radius:4px; border:none; color:white; cursor:pointer;">VISSZAVONÁS
-                                (-1 Pont)</button>
+                                style="background: #dc2626; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">GENTEN</button>
                         </div>
                     </div>
+                </div>
+
+                <div
+                    style="margin-top: 30px; padding: 20px 0; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+                    <button onclick="inditsdHosszabbitast()"
+                        style="background: #3b82f6; color: white; padding: 20px 40px; border-radius: 12px; font-weight: bold; font-size: 1.2rem; border: none; cursor: pointer;">HOSSZABBÍTÁS
+                        (Encho-Sen)</button>
+                    <button onclick="befejezMeccset()"
+                        style="background: white; color: #0f172a; padding: 20px 60px; border-radius: 12px; font-weight: 900; font-size: 1.3rem; border: none; cursor: pointer;">MÉRKŐZÉS
+                        LEZÁRÁSA</button>
                 </div>
             </div>
         </section>
+
+        <section id="tab-admin" class="hidden p-6 text-left">
+            <div class="nevezes-feher-doboz">
+                <h2 class="doboz-cime" style="color:#1e293b;">Versenykezelő Központ</h2>
+                <div class="bg-slate-50 p-6 border border-slate-200 rounded-lg mb-10">
+                    <h3 class="font-bold mb-4 text-slate-700">🆕 Új verseny létrehozása</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input id="new-v-name" type="text" placeholder="Verseny neve" class="urlap-szovegdoboz">
+                        <input id="new-v-date" type="date" class="urlap-szovegdoboz">
+                    </div>
+                    <button onclick="mentUjVersenyt()" class="hozzaadas-gomb mt-4"
+                        style="background:#10b981; color:white;">LÉTREHOZÁS</button>
+                </div>
+                <div class="mb-10">
+                    <h3 class="text-lg font-bold mb-4">📜 Archív versenyek törlése</h3>
+                    <div id="admin-verseny-lista"></div>
+                </div>
+                <hr class="my-8">
+                <button onclick="toroljMindent()" class="admin-gomb-torles"
+                    style="background:#dc2626; color:white; width:100%;">🔥 TELJES ADATBÁZIS TÖRLÉSE</button>
+            </div>
+        </section>
+
     </div>
+
     <script src="data.js"></script>
     <script src="auth.js"></script>
-    <script src="KUMITE.js"></script>
-    <script src="KATA.js"></script>
-    <script>window.onload = function () { if (typeof ellenorizBejelentkezestVersenyOldalon === "function") ellenorizBejelentkezestVersenyOldalon(); };</script>
+    <script src="kumite.js"></script>
+    <script src="kata.js"></script>
+    <script>
+        window.onload = function () {
+            if (typeof ellenorizBejelentkezestVersenyOldalon === "function") {
+                ellenorizBejelentkezestVersenyOldalon();
+            }
+        };
+    </script>
 </body>
 
 </html>
