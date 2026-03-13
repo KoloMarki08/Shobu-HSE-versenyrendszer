@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHOBU HSE Versenyrendszer</title>
+    <title>TATAMI MASTER Versenyrendszer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="stilus.css">
     <link rel="icon" href="logo.jpg">
@@ -16,7 +16,7 @@
         <nav class="felso-menusor">
             <div class="menu-tartalom">
                 <div class="logonk">
-                    <span class="logo-szoveg">SHOBU HSE <span class="piros-kiemeles">Versenyrendszer</span></span>
+                    <span class="logo-szoveg">TATAMI MASTER <span class="piros-kiemeles">Versenyrendszer</span></span>
                     <span id="user-badge" class="felhasznalo-jelzo">Betöltés...</span>
                 </div>
                 <div class="menu-gombok">
@@ -115,6 +115,12 @@
 
                 <div
                     style="text-align: center; margin-bottom: 30px; background: #1e293b; padding: 20px; border-radius: 15px; border: 1px solid #334155;">
+
+                    <div id="current-match-number"
+                        style="color: #facc15; font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; margin-bottom: 10px;">
+                        MECCS #...
+                    </div>
+
                     <div id="timer"
                         style="font-size: clamp(4rem, 15vw, 8rem); font-weight: 900; font-family: monospace; line-height: 1; margin-bottom: 15px;">
                         02:00</div>
@@ -126,12 +132,23 @@
                     </div>
                 </div>
 
+                <div id="next-category-warning"
+                    style="display: none; background: #facc15; color: #0f172a; padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 1.2rem; border: 2px solid #ca8a04;">
+                    ⚠️ FIGYELEM! A következő mérkőzés új kategóriában lesz: <span id="next-category-name"></span>
+                </div>
+
                 <div
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; flex-grow: 1;">
 
                     <div
                         style="background: #1e3a8a; border: 4px solid #3b82f6; padding: 25px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
                         <h3 id="aka-name" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">AKA</h3>
+
+                        <div
+                            style="color: #93c5fd; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 5px;">
+                            Felkészül: <span id="next-aka-name">-</span>
+                        </div>
+
                         <div id="aka-score" style="font-size: 8rem; font-weight: 900; line-height: 1; margin: 20px 0;">0
                         </div>
                         <div id="aka-penalties"
@@ -154,6 +171,12 @@
                     <div
                         style="background: #881337; border: 4px solid #e11d48; padding: 25px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
                         <h3 id="shiro-name" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">SHIRO</h3>
+
+                        <div
+                            style="color: #fda4af; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 5px;">
+                            Felkészül: <span id="next-shiro-name">-</span>
+                        </div>
+
                         <div id="shiro-score"
                             style="font-size: 8rem; font-weight: 900; line-height: 1; margin: 20px 0;">0</div>
                         <div id="shiro-penalties"

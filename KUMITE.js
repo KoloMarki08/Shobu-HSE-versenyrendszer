@@ -349,25 +349,90 @@ function nyitBiroiPanelt(id) {
         }
     }
 
-    // Adatok betöltése
     document.getElementById('match-title').innerText = aktualisMeccs.kategoria + cimKiegeszites;
     document.getElementById('aka-name').innerText = aktualisMeccs.aka.nev;
     document.getElementById('shiro-name').innerText = aktualisMeccs.shiro.nev;
+
+    // --- SORSZÁM, FELKÉSZÜL ÉS KATEGÓRIAVÁLTÁS KISZÁMÍTÁSA ---
+    var katObj = OSSZES_KATEGORIA.find(k => k.nev === aktualisMeccs.kategoria);
+    var aktTatami = katObj ? katObj.tatami : null;
+    var kovetkezoMeccs = null;
+
+    if (aktTatami) {
+        var sorszamTerkepe = generalTatamiSorszamTerkepe(aktTatami);
+
+        // -------------------------------------------------------------
+        // ÚJ: AZ AKTUÁLIS MECCS SORSZÁMÁNAK KIÍRÁSA KÖZÉPRE
+        // -------------------------------------------------------------
+        var aktSorszamSzoveg = sorszamTerkepe[aktualisMeccs.id] ? "MECCS #" + sorszamTerkepe[aktualisMeccs.id] : "KÖR " + aktualisMeccs.round;
+        var currentMatchNumElem = document.getElementById('current-match-number');
+        if (currentMatchNumElem) currentMatchNumElem.innerText = aktSorszamSzoveg;
+        // -------------------------------------------------------------
+
+        var tatamiMeccsek = [];
+        var tatamiKategoriak = OSSZES_KATEGORIA.filter(k => k.tatami === aktTatami && !k.nev.toLowerCase().includes('kata'));
+
+        tatamiKategoriak.forEach(kat => {
+            if (adatok.meccsek) {
+                var katMeccsei = adatok.meccsek.filter(m =>
+                    m.kategoria === kat.nev &&
+                    m.winner === null &&
+                    m.id !== aktualisMeccs.id &&
+                    m.aka && m.aka.nev !== "BYE" && m.aka.id !== null &&
+                    m.shiro && m.shiro.nev !== "BYE" && m.shiro.id !== null
+                );
+                tatamiMeccsek = tatamiMeccsek.concat(katMeccsei);
+            }
+        });
+
+        tatamiMeccsek.sort((a, b) => {
+            var sA = sorszamTerkepe[a.id] || 999999;
+            var sB = sorszamTerkepe[b.id] || 999999;
+            return sA - sB;
+        });
+
+        if (tatamiMeccsek.length > 0) kovetkezoMeccs = tatamiMeccsek[0];
+    } else {
+        // Ha valamiért nincs tatamihoz rendelve, akkor se legyen üres
+        var currentMatchNumElem = document.getElementById('current-match-number');
+        if (currentMatchNumElem) currentMatchNumElem.innerText = "KÖR " + aktualisMeccs.round;
+    }
+
+    var nextAkaElem = document.getElementById('next-aka-name');
+    var nextShiroElem = document.getElementById('next-shiro-name');
+    var warningElem = document.getElementById('next-category-warning');
+    var nextCatNameElem = document.getElementById('next-category-name');
+
+    if (kovetkezoMeccs) {
+        if (nextAkaElem) nextAkaElem.innerText = kovetkezoMeccs.aka.nev;
+        if (nextShiroElem) nextShiroElem.innerText = kovetkezoMeccs.shiro.nev;
+
+        if (kovetkezoMeccs.kategoria !== aktualisMeccs.kategoria) {
+            if (warningElem) warningElem.style.display = "block";
+            if (nextCatNameElem) nextCatNameElem.innerText = kovetkezoMeccs.kategoria;
+        } else {
+            if (warningElem) warningElem.style.display = "none";
+        }
+    } else {
+        if (nextAkaElem) nextAkaElem.innerText = "- Nincs több -";
+        if (nextShiroElem) nextShiroElem.innerText = "- Nincs több -";
+        if (warningElem) warningElem.style.display = "none";
+    }
 
     frissitBiroiFeluletet();
 
     clearInterval(idozitoInterval);
     idozitoInterval = null;
+
     ido = getMeccsIdo(aktualisMeccs.kategoria, aktualisMeccs.hosszabbitasok > 0, isElodontoVagyDonto);
     frissitIdozitoFeluletet();
 
-    document.getElementById('btn-timer').innerText = "START";
+    var btn = document.getElementById('btn-timer');
+    if (btn) btn.innerText = "START";
 
-    // MEGJELENÍTÉS ÉS GÖRDÍTÉS FIXÁLÁSA
     document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
     document.getElementById('tab-referee').classList.remove('hidden');
 
-    // Azonnali felugrás a tetejére és a görgetés letiltása a háttérben
     window.scrollTo(0, 0);
     document.body.style.overflow = "hidden";
 }
@@ -511,18 +576,48 @@ function befejezMeccset() {
     }
 
     rajzolAgrajz();
-    var c = document.getElementById('tatami-content');
-    if (c) {
-        var h2 = c.querySelector('h2');
-        if (h2 && h2.innerText.includes(' - ')) {
-            mutasdTatamiNezetet(h2.innerText.split(' -')[0], true);
-        }
+
+    // --- UGRÁS A KÖVETKEZŐRE ---
+    var katObj = OSSZES_KATEGORIA.find(k => k.nev === aktualisMeccs.kategoria);
+    var aktTatami = katObj ? katObj.tatami : null;
+    var kovetkezoMeccsId = null;
+
+    if (aktTatami) {
+        mutasdTatamiNezetet(aktTatami, true);
+        var sorszamTerkepe = generalTatamiSorszamTerkepe(aktTatami);
+        var tatamiMeccsek = [];
+        var tatamiKategoriak = OSSZES_KATEGORIA.filter(k => k.tatami === aktTatami && !k.nev.toLowerCase().includes('kata'));
+
+        tatamiKategoriak.forEach(kat => {
+            if (adatok.meccsek) {
+                var katMeccsei = adatok.meccsek.filter(m =>
+                    m.kategoria === kat.nev &&
+                    m.winner === null &&
+                    m.id !== aktualisMeccs.id &&
+                    m.aka && m.aka.nev !== "BYE" && m.aka.id !== null &&
+                    m.shiro && m.shiro.nev !== "BYE" && m.shiro.id !== null
+                );
+                tatamiMeccsek = tatamiMeccsek.concat(katMeccsei);
+            }
+        });
+
+        tatamiMeccsek.sort((a, b) => {
+            var sA = sorszamTerkepe[a.id] || 999999;
+            var sB = sorszamTerkepe[b.id] || 999999;
+            return sA - sB;
+        });
+
+        if (tatamiMeccsek.length > 0) kovetkezoMeccsId = tatamiMeccsek[0].id;
     }
 
-    // JAVÍTÁS: Görgetés visszaállítása és fülváltás
-    document.body.style.overflow = "auto"; 
-    document.getElementById('tab-referee').classList.add('hidden');
-    document.getElementById('tab-tatami').classList.remove('hidden');
+    if (kovetkezoMeccsId) {
+        // Nincs alert, azonnal nyitja a következőt
+        nyitBiroiPanelt(kovetkezoMeccsId);
+    } else {
+        document.body.style.overflow = "auto";
+        document.getElementById('tab-referee').classList.add('hidden');
+        document.getElementById('tab-tatami').classList.remove('hidden');
+    }
 }
 
 function frissitBiroiFeluletet() {
