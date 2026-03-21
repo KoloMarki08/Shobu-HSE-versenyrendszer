@@ -25,12 +25,15 @@
             <h2 class="szekcio-cim" style="color:white; border-color:#CE1126;">Versenyek és Nevezés</h2>
 
             <div class="esemeny-kartya">
-                <div class="esemeny-kep-helye"><img src="teszt_2.jpg" alt="VI. Rátót Kupa" title="VI. Rátót Kupa"></div>
+                <div class="esemeny-kep-helye">
+                    <img src="teszt_1.jpg" alt="VII. Rátót Kupa" title="VII. Rátót Kupa">
+                </div>
                 <div class="esemeny-adatok">
-                    <h3 class="esemeny-cime">VI. Rátót Kupa, 2023.09.30, Vácrátót</h3>
+                    <h3 class="esemeny-cime">VII. Rátót Kupa, 2025.10.11, Vácrátót</h3>
                     <div class="esemeny-idopont">
                         <span class="cimke-nyitva">ÉLŐ / NYITVA</span>
-                        <span class="idopont-szoveg">2023-06-17 - 2023-09-30</span>
+                        <span class="idopont-szoveg">2025-08-17 -<br>2025-09-30</span>
+                        <div><span class="rendezo-szoveg">Rendező Dojo és Vezetője:<b> Vácrátóti HSE - Tornai Bálint</b></span></div>
                     </div>
                     <div class="esemeny-gombok-taroloja">
                         <button onclick="belepesKozonsegkent('kategoriak')" class="esemeny-gomb kozonseg-gomb">Közönség
@@ -51,7 +54,12 @@
                     <label class="urlap-cimke">Felhasználónév</label>
                     <input id="login-user" type="text" class="belepes-szovegdoboz">
                     <label class="urlap-cimke">Jelszó</label>
-                    <input id="login-pass" type="password" class="belepes-szovegdoboz"><button class="JeszomegjelenitoGomb" onclick="jelszomegjelenito()">👀</button>
+                    <div class="jelszo-tarolo">
+                        <input id="login-pass" type="password" class="belepes-szovegdoboz">
+                        <button class="JeszomegjelenitoGomb" onclick="jelszomegjelenito()">
+                            <img id="eye-icon" src="eye-slash-fill.svg"></img>
+                        </button>
+                    </div>
                     <button onclick="bejelentkezesKezdolaprol()" class="piros-belepes-gomb">Belépés a
                         rendszerbe</button>
                     <div class="jelszo-emlekezteto-doboz"><b>TESZT ADATOK:</b><br><br>Admin: <b>KoloMarki</b> /
@@ -64,13 +72,14 @@
     <footer class="lablec-tarolo">
         <div class="lablec-also-sav">
             <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
-            <p>A rendszer még nem teljesen fejlett, de folyamatosan fejlesztés alatt van. Készítette: 
-                <a href="https://www.instagram.com/kolomarki/" target="_blank">Kolonics Márk</a></p>
+            <p>A rendszer még nem teljesen fejlett, de folyamatosan fejlesztés alatt van. Készítette:
+                <a href="https://www.instagram.com/kolomarki/" target="_blank">Kolonics Márk</a>
+            </p>
         </div>
     </footer>
     <script src="data.js"></script>
     <script src="auth.js"></script>
-    <script src="jelszosgenyo.js"></script>
+    <script src="jelszomegjelenito.js"></script>
 </body>
 
 </html>

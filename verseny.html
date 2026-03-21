@@ -125,10 +125,13 @@
                         style="font-size: clamp(4rem, 15vw, 8rem); font-weight: 900; font-family: monospace; line-height: 1; margin-bottom: 15px;">
                         02:00</div>
                     <div style="display: flex; justify-content: center; gap: 15px;">
+                        <button onclick="visszavonasAkcio()"><img src="undo.png" alt="Undo" class="UndoRedoKep"></button>
                         <button onclick="kapcsolIdozitot()" id="btn-timer"
                             style="background: #10b981; color: white; padding: 15px 40px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none;">START</button>
                         <button onclick="nullazMeccsPontszamokat()"
                             style="background: #64748b; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none;">RESET</button>
+
+                        <button onclick="ujraAkcio()"><img src="redo.png" alt="Undo" class="UndoRedoKep"></button>
                     </div>
                 </div>
 

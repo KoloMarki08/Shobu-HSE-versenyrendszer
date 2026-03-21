@@ -3,6 +3,11 @@
 /* ========================================================================= */
 /* 1. KÖZÖS STÍLUSOK                                                         */
 /* ========================================================================= */
+
+body{
+    color: black;
+}
+
 .oldal-alap-hattere {
     font-family: 'Roboto', sans-serif;
     background-color: #52525b;
@@ -235,6 +240,7 @@
     border-radius: 4px;
     font-weight: bold;
     font-size: 0.8rem;
+    text-align:center;
 }
 
 .cimke-zarva {
@@ -249,6 +255,13 @@
 .idopont-szoveg {
     color: #64748b;
     font-size: 0.9rem;
+    font-weight: bold;
+    width: 100px;
+}
+
+.rendezo-szoveg{
+    color: #64748b;
+    font-size: 0.8rem;
     font-weight: bold;
 }
 
@@ -297,23 +310,22 @@
     gap: 15px;
 }
 
-.belepes-szovegdoboz input {
-    padding-right: 40px;
-    box-sizing: border-box;
+.jelszo-tarolo {
+    position: relative;
+    width: 100%;
 }
 
 .JeszomegjelenitoGomb {
     position: absolute;
     right: 10px;
-    /* Távolság a jobb széltől */
     top: 50%;
-    /* Függőlegesen középre húzzuk... */
     transform: translateY(-50%);
-    /* ...és pontosan középre igazítjuk */
     background: none;
     border: none;
     cursor: pointer;
     font-size: 16px;
+    padding: 0;
+    line-height: 1;
 }
 
 .urlap-cimke {
@@ -326,6 +338,8 @@
 /* --- BEJELENTKEZÉS DOBOZ LÁTHATÓSÁGA --- */
 .belepes-szovegdoboz {
     padding: 10px;
+    padding-right: 40px;
+    /* Hely a gombnak */
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     font-size: 1rem;
@@ -333,6 +347,8 @@
     /* Fehér háttér az űrlapnak */
     color: #000000 !important;
     /* Fekete betűk, hogy látszódjon amit gépelsz */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .belepes-szovegdoboz:focus {
@@ -654,28 +670,6 @@
     border-color: transparent;
 }
 
-/* Read-only nézőknek */
-
-@media (max-width: 640px) {
-    .kata-sor {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .kata-versenyzo-neve {
-        width: 100%;
-    }
-
-    .kata-beviteli-mezok {
-        flex-grow: 1;
-        justify-content: space-between;
-    }
-
-    .score-input {
-        width: 2.5rem;
-    }
-}
-
 /* LÁBLÉC */
 .lablec-tarolo {
     background-color: #18181b;
@@ -746,8 +740,10 @@
 .idozito-gombok {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 1rem;
     margin-top: 1rem;
+    flex-wrap: wrap;
 }
 
 .ido-start-gomb {
@@ -768,6 +764,14 @@
     padding: 0.5rem 1.5rem;
     border-radius: 0.25rem;
     border: none;
+    cursor: pointer;
+}
+
+/* UNDO REDO KÉP OSZTÁLY */
+.UndoRedoKep {
+    height: 50px;
+    width: 50px;
+    border-radius: 10px;
     cursor: pointer;
 }
 
@@ -908,4 +912,109 @@
     border-color: #3b82f6;
     background-color: #3b82f6;
     color: #ffffff;
+}
+
+/* ========================================================================= */
+/* 2. MOBILBARÁT NÉZET (Kifejezetten nézők és szülők mobiltelefonjához)       */
+/* ========================================================================= */
+@media (max-width: 768px) {
+
+    /* Kezdőlap elemei */
+    .menu-tartalom {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .logonk {
+        font-size: 1.2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .menu-gombok {
+        justify-content: center;
+    }
+
+    .kezdolap-tarolo {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    /* Plakát és rendezvény adatai mobilon (Egymás alá kerülnek) */
+    .esemeny-kartya {
+        flex-direction: column;
+    }
+
+    .esemeny-kep-helye {
+        width: 100%;
+        height: auto;
+        min-height: 200px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .esemeny-adatok {
+        padding: 1rem;
+    }
+
+    .esemeny-cime {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .esemeny-idopont {
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .esemeny-gombok-taroloja {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .esemeny-gomb {
+        width: 100%;
+        text-align: center;
+        padding: 12px;
+    }
+
+    /* Belépés panel mobilon */
+    .belepes-doboz {
+        padding: 1.5rem;
+    }
+
+    /* Táblázatok (A Kategóriák és Eredmények fül) görgethetővé tétele mobilon */
+    .kategoriak-feher-doboz,
+    .nevezes-feher-doboz {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .kategoria-tabla {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        /* Nem tördeli szét a szöveget, szép marad */
+    }
+
+    .kata-sor {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .kata-versenyzo-neve {
+        width: 100%;
+    }
+
+    .kata-beviteli-mezok {
+        flex-grow: 1;
+        justify-content: space-between;
+    }
+
+    .score-input {
+        width: 2.5rem;
+    }
 }

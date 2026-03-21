@@ -2,6 +2,67 @@
 /* KUMITE.js - Okos Sorsolás (Egyenes kiesés ÉS Körmerkőzés + Bírói Panel)   */
 /* ========================================================================= */
 
+// --- ÚJ: VISSZAVONÁS MEMÓRIA LOGIKA ---
+var meccsHistoria = [];
+var aktualisHistoriaIndex = -1;
+var aktMeccsHistoriaId = null;
+
+function mentsAllapot(elotte) {
+    if (!aktualisMeccs) return;
+
+    // Ha ez egy teljesen új meccs a panelen, nullázzuk az Időgépet
+    if (aktMeccsHistoriaId !== aktualisMeccs.id) {
+        meccsHistoria = [];
+        aktualisHistoriaIndex = -1;
+        aktMeccsHistoriaId = aktualisMeccs.id;
+        
+        // Mentjük a legelső (kattintás előtti, érintetlen) állapotot 0. lépésként
+        meccsHistoria.push(JSON.parse(JSON.stringify(elotte)));
+        aktualisHistoriaIndex = 0;
+    }
+
+    // Ha volt visszavonás (UNDO), és utána újra módosítunk valamit, levágjuk az alternatív "jövőt"
+    if (aktualisHistoriaIndex < meccsHistoria.length - 1) {
+        meccsHistoria = meccsHistoria.slice(0, aktualisHistoriaIndex + 1);
+    }
+
+    // Hozzáadjuk a frissített (kattintás utáni) állapotot a történelemhez
+    meccsHistoria.push(JSON.parse(JSON.stringify(aktualisMeccs)));
+    aktualisHistoriaIndex++;
+}
+
+function visszavonasAkcio() {
+    if (aktualisHistoriaIndex > 0) {
+        aktualisHistoriaIndex--;
+        var visszavontAllapot = meccsHistoria[aktualisHistoriaIndex];
+        
+        // Visszatöltjük a régi értékeket
+        Object.keys(visszavontAllapot).forEach(key => {
+            aktualisMeccs[key] = visszavontAllapot[key];
+        });
+        frissitBiroiFeluletet();
+    } else {
+        alert("Nincs több visszavonható lépés!");
+    }
+}
+
+function ujraAkcio() {
+    if (aktualisHistoriaIndex < meccsHistoria.length - 1) {
+        aktualisHistoriaIndex++;
+        var ujraAllapot = meccsHistoria[aktualisHistoriaIndex];
+        
+        // Előre lépünk a jövőbe
+        Object.keys(ujraAllapot).forEach(key => {
+            aktualisMeccs[key] = ujraAllapot[key];
+        });
+        frissitBiroiFeluletet();
+    } else {
+        alert("Nincs mit újra végrehajtani!");
+    }
+}
+// --------------------------------------
+
+
 function generalKumite() {
     if (aktualisFelhasznalo.szerepkor !== 'admin') { alert("Csak admin generálhat ágrajzot!"); return; }
     var kumiteVersenyzok = adatok.versenyzok.filter(v => !v.kategoria.toLowerCase().includes('kata'));
@@ -482,6 +543,8 @@ function inditsdHosszabbitast() {
 }
 
 function pontszamAdas(oldal, pont) {
+    var elotte = JSON.parse(JSON.stringify(aktualisMeccs)); // MENTÉS: Mielőtt bármit csinálunk
+
     if (oldal === 'aka') {
         if (pont === 1) aktualisMeccs.wazaariAka = (aktualisMeccs.wazaariAka || 0) + 1;
         if (pont === 2) aktualisMeccs.ipponAka = (aktualisMeccs.ipponAka || 0) + 1;
@@ -491,6 +554,8 @@ function pontszamAdas(oldal, pont) {
         if (pont === 2) aktualisMeccs.ipponShiro = (aktualisMeccs.ipponShiro || 0) + 1;
         aktualisMeccs.scoreShiro = Math.min(aktualisMeccs.scoreShiro + pont, 2);
     }
+
+    mentsAllapot(elotte);
     frissitBiroiFeluletet();
 }
 
@@ -506,6 +571,8 @@ function pontTorles(oldal) {
 }
 
 function buntetesAdas(oldal, tipus) {
+    var elotte = JSON.parse(JSON.stringify(aktualisMeccs)); // MENTÉS: Mielőtt bármit csinálunk
+
     if (oldal === 'aka') {
         if (tipus === 'chui') { aktualisMeccs.chuiAka++; if (aktualisMeccs.chuiAka >= 3) { aktualisMeccs.chuiAka = 0; aktualisMeccs.gentenAka++; } }
         else if (tipus === 'genten') { aktualisMeccs.chuiAka = 0; aktualisMeccs.gentenAka++; }
@@ -523,6 +590,8 @@ function buntetesAdas(oldal, tipus) {
             aktualisMeccs.kizartOldal = 'shiro';
         }
     }
+
+    mentsAllapot(elotte);
     frissitBiroiFeluletet();
 }
 
@@ -637,6 +706,8 @@ function frissitBiroiFeluletet() {
 
 function nullazMeccsPontszamokat() {
     if (confirm("Biztos nullázod a pontokat és büntetéseket?")) {
+        var elotte = JSON.parse(JSON.stringify(aktualisMeccs)); // MENTÉS: Mielőtt bármit csinálunk
+
         aktualisMeccs.scoreAka = 0; aktualisMeccs.scoreShiro = 0;
         aktualisMeccs.wazaariAka = 0; aktualisMeccs.wazaariShiro = 0;
         aktualisMeccs.ipponAka = 0; aktualisMeccs.ipponShiro = 0;
@@ -644,6 +715,9 @@ function nullazMeccsPontszamokat() {
         aktualisMeccs.gentenAka = 0; aktualisMeccs.gentenShiro = 0;
         delete aktualisMeccs.kizartOldal; delete aktualisMeccs.kizartId;
         aktualisMeccs.hosszabbitasok = 0;
+
+        mentsAllapot(elotte)
+        
         frissitBiroiFeluletet(); clearInterval(idozitoInterval); idozitoInterval = null;
 
         var isElodontoVagyDonto = false;
