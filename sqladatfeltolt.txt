@@ -2,7 +2,7 @@
 -- VERSENYZŐK (504 fő)
 -- ====================================================
 INSERT INTO versenyzo (versenyzo_id, nev, egyesulet) VALUES
-(1, 'Kovács Péter [K1]', 'Vácrátóti HSE'),(2, 'Nagy Zsófia [K1]', 'Tatami SE'),(3, 'Szabó Dávid [K1]', 'Budo SE'),(4, 'Tóth Réka [K1]', 'Honbu Dojo'),(5, 'Varga Máté [K1]', 'Karate Akadémia'),(6, 'Kiss Dóra [K1]', 'Sakura SE'),
+(1, 'Kovács Péter [K1]', 'Vácrátóti HSE'),(2, 'Nagy Zsófia [K1]', 'Tatami SE'),(3, 'Szabó Dávid [K1]', 'Budo SE'),(4, 'Tóth Réka [K1]', 'Honbu Dojo'),(5, 'Varga Máté [K1]', 'Karate Akadémia'),
 (7, 'Kovács Péter [K2]', 'Vácrátóti HSE'),(8, 'Nagy Zsófia [K2]', 'Tatami SE'),(9, 'Szabó Dávid [K2]', 'Budo SE'),(10, 'Tóth Réka [K2]', 'Honbu Dojo'),(11, 'Varga Máté [K2]', 'Karate Akadémia'),(12, 'Kiss Dóra [K2]', 'Sakura SE'),
 (13, 'Kovács Péter [K3]', 'Vácrátóti HSE'),(14, 'Nagy Zsófia [K3]', 'Tatami SE'),(15, 'Szabó Dávid [K3]', 'Budo SE'),(16, 'Tóth Réka [K3]', 'Honbu Dojo'),(17, 'Varga Máté [K3]', 'Karate Akadémia'),(18, 'Kiss Dóra [K3]', 'Sakura SE'),
 (19, 'Kovács Péter [K4]', 'Vácrátóti HSE'),(20, 'Nagy Zsófia [K4]', 'Tatami SE'),(21, 'Szabó Dávid [K4]', 'Budo SE'),(22, 'Tóth Réka [K4]', 'Honbu Dojo'),(23, 'Varga Máté [K4]', 'Karate Akadémia'),(24, 'Kiss Dóra [K4]', 'Sakura SE'),
@@ -28,7 +28,7 @@ INSERT INTO versenyzo (versenyzo_id, nev, egyesulet) VALUES
 (139, 'Kovács Péter [K24]', 'Vácrátóti HSE'),(140, 'Nagy Zsófia [K24]', 'Tatami SE'),(141, 'Szabó Dávid [K24]', 'Budo SE'),(142, 'Tóth Réka [K24]', 'Honbu Dojo'),(143, 'Varga Máté [K24]', 'Karate Akadémia'),(144, 'Kiss Dóra [K24]', 'Sakura SE'),
 (145, 'Kovács Péter [K25]', 'Vácrátóti HSE'),(146, 'Nagy Zsófia [K25]', 'Tatami SE'),(147, 'Szabó Dávid [K25]', 'Budo SE'),(148, 'Tóth Réka [K25]', 'Honbu Dojo'),(149, 'Varga Máté [K25]', 'Karate Akadémia'),(150, 'Kiss Dóra [K25]', 'Sakura SE'),
 (151, 'Kovács Péter [K26]', 'Vácrátóti HSE'),(152, 'Nagy Zsófia [K26]', 'Tatami SE'),(153, 'Szabó Dávid [K26]', 'Budo SE'),(154, 'Tóth Réka [K26]', 'Honbu Dojo'),(155, 'Varga Máté [K26]', 'Karate Akadémia'),(156, 'Kiss Dóra [K26]', 'Sakura SE'),
-(157, 'Kovács Péter [K27]', 'Vácrátóti HSE'),(158, 'Nagy Zsófia [K27]', 'Tatami SE'),(159, 'Szabó Dávid [K27]', 'Budo SE'),(160, 'Tóth Réka [K27]', 'Honbu Dojo'),(161, 'Varga Máté [K27]', 'Karate Akadémia'),(162, 'Kiss Dóra [K27]', 'Sakura SE'),
+(157, 'Kovács Péter [K27]', 'Vácrátóti HSE'),(158, 'Nagy Zsófia [K27]', 'Tatami SE'),(159, 'Szabó Dávid [K27]', 'Budo SE'),(160, 'Tóth Réka [K27]', 'Honbu Dojo'),(161, 'Varga Máté [K27]', 'Karate Akadémia'),
 (163, 'Kovács Péter [K28]', 'Vácrátóti HSE'),(164, 'Nagy Zsófia [K28]', 'Tatami SE'),(165, 'Szabó Dávid [K28]', 'Budo SE'),(166, 'Tóth Réka [K28]', 'Honbu Dojo'),(167, 'Varga Máté [K28]', 'Karate Akadémia'),(168, 'Kiss Dóra [K28]', 'Sakura SE'),
 (169, 'Kovács Péter [K29]', 'Vácrátóti HSE'),(170, 'Nagy Zsófia [K29]', 'Tatami SE'),(171, 'Szabó Dávid [K29]', 'Budo SE'),(172, 'Tóth Réka [K29]', 'Honbu Dojo'),(173, 'Varga Máté [K29]', 'Karate Akadémia'),(174, 'Kiss Dóra [K29]', 'Sakura SE'),
 (175, 'Kovács Péter [K30]', 'Vácrátóti HSE'),(176, 'Nagy Zsófia [K30]', 'Tatami SE'),(177, 'Szabó Dávid [K30]', 'Budo SE'),(178, 'Tóth Réka [K30]', 'Honbu Dojo'),(179, 'Varga Máté [K30]', 'Karate Akadémia'),(180, 'Kiss Dóra [K30]', 'Sakura SE'),
@@ -85,13 +85,13 @@ INSERT INTO versenyzo (versenyzo_id, nev, egyesulet) VALUES
 (481, 'Kovács Péter [K81]', 'Vácrátóti HSE'),(482, 'Nagy Zsófia [K81]', 'Tatami SE'),(483, 'Szabó Dávid [K81]', 'Budo SE'),(484, 'Tóth Réka [K81]', 'Honbu Dojo'),(485, 'Varga Máté [K81]', 'Karate Akadémia'),(486, 'Kiss Dóra [K81]', 'Sakura SE'),
 (487, 'Kovács Péter [K82]', 'Vácrátóti HSE'),(488, 'Nagy Zsófia [K82]', 'Tatami SE'),(489, 'Szabó Dávid [K82]', 'Budo SE'),(490, 'Tóth Réka [K82]', 'Honbu Dojo'),(491, 'Varga Máté [K82]', 'Karate Akadémia'),(492, 'Kiss Dóra [K82]', 'Sakura SE'),
 (493, 'Kovács Péter [K83]', 'Vácrátóti HSE'),(494, 'Nagy Zsófia [K83]', 'Tatami SE'),(495, 'Szabó Dávid [K83]', 'Budo SE'),(496, 'Tóth Réka [K83]', 'Honbu Dojo'),(497, 'Varga Máté [K83]', 'Karate Akadémia'),(498, 'Kiss Dóra [K83]', 'Sakura SE'),
-(499, 'Kovács Péter [K84]', 'Vácrátóti HSE'),(500, 'Nagy Zsófia [K84]', 'Tatami SE'),(501, 'Szabó Dávid [K84]', 'Budo SE'),(502, 'Tóth Réka [K84]', 'Honbu Dojo'),(503, 'Varga Máté [K84]', 'Karate Akadémia'),(504, 'Kiss Dóra [K84]', 'Sakura SE');
+(499, 'Kovács Péter [K84]', 'Vácrátóti HSE'),(500, 'Nagy Zsófia [K84]', 'Tatami SE'),(501, 'Szabó Dávid [K84]', 'Budo SE'),(502, 'Tóth Réka [K84]', 'Honbu Dojo'),(503, 'Varga Máté [K84]', 'Karate Akadémia');
 
 -- ====================================================
 -- NEVEZÉSEK (504 fő, beosztva a saját kategóriájába, helyezes es pontszam = 0)
 -- ====================================================
 INSERT INTO nevezes (versenyzo_id, kategoria_id, helyezes, pontszam, verseny_id) VALUES
-(1,1,0,0,1),(2,1,0,0,1),(3,1,0,0,1),(4,1,0,0,1),(5,1,0,0,1),(6,1,0,0,1),
+(1,1,0,0,1),(2,1,0,0,1),(3,1,0,0,1),(4,1,0,0,1),(5,1,0,0,1),
 (7,2,0,0,1),(8,2,0,0,1),(9,2,0,0,1),(10,2,0,0,1),(11,2,0,0,1),(12,2,0,0,1),
 (13,3,0,0,1),(14,3,0,0,1),(15,3,0,0,1),(16,3,0,0,1),(17,3,0,0,1),(18,3,0,0,1),
 (19,4,0,0,1),(20,4,0,0,1),(21,4,0,0,1),(22,4,0,0,1),(23,4,0,0,1),(24,4,0,0,1),
@@ -117,7 +117,7 @@ INSERT INTO nevezes (versenyzo_id, kategoria_id, helyezes, pontszam, verseny_id)
 (139,24,0,0,1),(140,24,0,0,1),(141,24,0,0,1),(142,24,0,0,1),(143,24,0,0,1),(144,24,0,0,1),
 (145,25,0,0,1),(146,25,0,0,1),(147,25,0,0,1),(148,25,0,0,1),(149,25,0,0,1),(150,25,0,0,1),
 (151,26,0,0,1),(152,26,0,0,1),(153,26,0,0,1),(154,26,0,0,1),(155,26,0,0,1),(156,26,0,0,1),
-(157,27,0,0,1),(158,27,0,0,1),(159,27,0,0,1),(160,27,0,0,1),(161,27,0,0,1),(162,27,0,0,1),
+(157,27,0,0,1),(158,27,0,0,1),(159,27,0,0,1),(160,27,0,0,1),(161,27,0,0,1),
 (163,28,0,0,1),(164,28,0,0,1),(165,28,0,0,1),(166,28,0,0,1),(167,28,0,0,1),(168,28,0,0,1),
 (169,29,0,0,1),(170,29,0,0,1),(171,29,0,0,1),(172,29,0,0,1),(173,29,0,0,1),(174,29,0,0,1),
 (175,30,0,0,1),(176,30,0,0,1),(177,30,0,0,1),(178,30,0,0,1),(179,30,0,0,1),(180,30,0,0,1),
@@ -174,4 +174,4 @@ INSERT INTO nevezes (versenyzo_id, kategoria_id, helyezes, pontszam, verseny_id)
 (481,81,0,0,1),(482,81,0,0,1),(483,81,0,0,1),(484,81,0,0,1),(485,81,0,0,1),(486,81,0,0,1),
 (487,82,0,0,1),(488,82,0,0,1),(489,82,0,0,1),(490,82,0,0,1),(491,82,0,0,1),(492,82,0,0,1),
 (493,83,0,0,1),(494,83,0,0,1),(495,83,0,0,1),(496,83,0,0,1),(497,83,0,0,1),(498,83,0,0,1),
-(499,84,0,0,1),(500,84,0,0,1),(501,84,0,0,1),(502,84,0,0,1),(503,84,0,0,1),(504,84,0,0,1);
+(499,84,0,0,1),(500,84,0,0,1),(501,84,0,0,1),(502,84,0,0,1),(503,84,0,0,1);
