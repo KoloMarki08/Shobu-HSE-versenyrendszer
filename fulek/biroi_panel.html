@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TATAMI MASTER Versenyrendszer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="stilus.css">
+    <link rel="icon" href="logo.jpg">
+</head>
+
+<body>
+    <section id="tab-referee" class="hidden"
+        style="position: fixed; inset: 0; background: #0f172a; z-index: 9999; overflow-y: auto; color: white; font-family: sans-serif;">
+        <div
+            style="max-width: 1200px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; min-height: 100vh;">
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 20px;">
+                <button
+                    onclick="document.body.style.overflow='auto'; document.getElementById('tab-referee').classList.add('hidden'); document.getElementById('tab-tatami').classList.remove('hidden');"
+                    style="background: #ef4444; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none;">←
+                    Vissza
+                </button>
+                <h2 id="match-title"
+                    style="font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 900; margin: 0; text-align: center; flex-grow: 1;">
+                    Mérkőzés
+                </h2>
+            </div>
+
+            <div
+                style="text-align: center; margin-bottom: 30px; background: #1e293b; padding: 20px; border-radius: 15px; border: 1px solid #334155;">
+
+                <div id="current-match-number"
+                    style="color: #facc15; font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; margin-bottom: 10px;">
+                    MECCS #...
+                </div>
+
+                <div id="timer"
+                    style="font-size: clamp(4rem, 15vw, 8rem); font-weight: 900; font-family: monospace; line-height: 1; margin-bottom: 15px;">
+                    02:00</div>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button onclick="visszavonasAkcio()"><img src="undo.png" alt="Undo" class="UndoRedoKep"></button>
+                    <button onclick="kapcsolIdozitot()" id="btn-timer"
+                        style="background: #10b981; color: white; padding: 15px 40px; border-radius: 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; border: none;">START</button>
+                    <button onclick="nullazMeccsPontszamokat()"
+                        style="background: #64748b; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none;">RESET</button>
+
+                    <button onclick="ujraAkcio()"><img src="redo.png" alt="Undo" class="UndoRedoKep"></button>
+                </div>
+            </div>
+
+            <div id="next-category-warning"
+                style="display: none; background: #facc15; color: #0f172a; padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: 900; font-size: 1.2rem; border: 2px solid #ca8a04;">
+                ⚠️ FIGYELEM! A következő mérkőzés új kategóriában lesz: <span id="next-category-name"></span>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; flex-grow: 1;">
+
+                <div
+                    style="background: #1e3a8a; border: 4px solid #3b82f6; padding: 25px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h3 id="aka-name" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">AKA</h3>
+
+                    <div
+                        style="color: #93c5fd; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 5px;">
+                        Felkészül: <span id="next-aka-name">-</span>
+                    </div>
+
+                    <div id="aka-score" style="font-size: 8rem; font-weight: 900; line-height: 1; margin: 20px 0;">0
+                    </div>
+                    <div id="aka-penalties"
+                        style="font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+                        Chui: 0 | Genten: 0</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button onclick="pontszamAdas('aka', 1)"
+                            style="background: #3b82f6; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">WAZA-ARI
+                            (+1)</button>
+                        <button onclick="pontszamAdas('aka', 2)"
+                            style="background: #2563eb; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">IPPON
+                            (+2)</button>
+                        <button onclick="buntetesAdas('aka', 'chui')"
+                            style="background: #ca8a04; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">CHUI</button>
+                        <button onclick="buntetesAdas('aka', 'genten')"
+                            style="background: #dc2626; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">GENTEN</button>
+                    </div>
+                </div>
+
+                <div
+                    style="background: #881337; border: 4px solid #e11d48; padding: 25px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h3 id="shiro-name" style="font-size: 1.8rem; font-weight: 900; margin-bottom: 5px;">SHIRO</h3>
+
+                    <div
+                        style="color: #fda4af; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 5px;">
+                        Felkészül: <span id="next-shiro-name">-</span>
+                    </div>
+
+                    <div id="shiro-score" style="font-size: 8rem; font-weight: 900; line-height: 1; margin: 20px 0;">0
+                    </div>
+                    <div id="shiro-penalties"
+                        style="font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+                        Chui: 0 | Genten: 0</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button onclick="pontszamAdas('shiro', 1)"
+                            style="background: #f43f5e; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">WAZA-ARI
+                            (+1)</button>
+                        <button onclick="pontszamAdas('shiro', 2)"
+                            style="background: #e11d48; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">IPPON
+                            (+2)</button>
+                        <button onclick="buntetesAdas('shiro', 'chui')"
+                            style="background: #ca8a04; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">CHUI</button>
+                        <button onclick="buntetesAdas('shiro', 'genten')"
+                            style="background: #dc2626; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">GENTEN</button>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 30px; padding: 20px 0; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+                <button onclick="inditsdHosszabbitast()"
+                    style="background: #3b82f6; color: white; padding: 20px 40px; border-radius: 12px; font-weight: bold; font-size: 1.2rem; border: none; cursor: pointer;">HOSSZABBÍTÁS
+                    (Encho-Sen)</button>
+                <button onclick="befejezMeccset()"
+                    style="background: white; color: #0f172a; padding: 20px 60px; border-radius: 12px; font-weight: 900; font-size: 1.3rem; border: none; cursor: pointer;">MÉRKŐZÉS
+                    LEZÁRÁSA</button>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>

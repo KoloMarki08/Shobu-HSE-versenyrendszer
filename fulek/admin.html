@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TATAMI MASTER Versenyrendszer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="stilus.css">
+    <link rel="icon" href="logo.jpg">
+</head>
+
+<body>
+    <section id="tab-admin" class="hidden p-6 text-left">
+        <div class="nevezes-feher-doboz">
+            <h2 class="doboz-cime" style="color:#1e293b;">Versenykezelő Központ</h2>
+            <div class="bg-slate-50 p-6 border border-slate-200 rounded-lg mb-10">
+                <h3 class="font-bold mb-4 text-slate-700">🔒 Nevezés lezárása / megnyitása</h3>
+                <p class="mb-4 text-sm text-gray-600">Itt tudod lezárni a kiválasztott verseny nevezését. Ha lezártad,
+                    senki nem tud több versenyzőt rögzíteni.</p>
+                <button id="btn-toggle-nevezes" onclick="valtoztatNevezesAllapotot()"
+                    class="bg-gray-500 text-white font-bold py-2 px-4 rounded w-full">Betöltés...</button>
+                <button onclick="valtFul('kiemeles'); rajzolKiemelesTablazatot('kategoria');"
+                    class="bg-blue-600 text-white font-bold py-3 px-4 rounded w-full mt-4 hover:bg-blue-700">
+                    📊 ELŐ-SORSOLÁS (Kiemelések beállítása)
+                </button>
+            </div>
+            <div class="bg-slate-50 p-6 border border-slate-200 rounded-lg mb-10">
+                <h3 class="font-bold mb-4 text-slate-700">🆕 Új verseny létrehozása</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input id="new-v-name" type="text" placeholder="Verseny neve" class="urlap-szovegdoboz">
+                    <input id="new-v-date" type="date" class="urlap-szovegdoboz">
+                </div>
+                <button onclick="mentUjVersenyt()" class="hozzaadas-gomb mt-4"
+                    style="background:#10b981; color:white;">LÉTREHOZÁS</button>
+            </div>
+            <div class="mb-10">
+                <h3 class="text-lg font-bold mb-4">📜 Archív versenyek törlése</h3>
+                <div id="admin-verseny-lista"></div>
+            </div>
+            <hr class="my-8">
+            <button onclick="toroljMindent()" class="admin-gomb-torles"
+                style="background:#dc2626; color:white; width:100%;">🔥 TELJES ADATBÁZIS TÖRLÉSE</button>
+        </div>
+    </section>
+</body>
+
+</html>

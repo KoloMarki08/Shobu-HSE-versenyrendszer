@@ -14,7 +14,7 @@ function bejelentkezesKezdolaprol() {
         .then(function (szerverValasz) {
             if (szerverValasz.sikeres === true) {
                 localStorage.setItem("shobu_bejelentkezve", JSON.stringify(szerverValasz.felhasznalo));
-                window.location.href = "verseny.html?tab=kategoriak";
+                window.location.href = "verseny.php?tab=kategoriak";
             } else {
                 alert("Hibás felhasználónév vagy jelszó az adatbázisban!");
             }
@@ -27,7 +27,7 @@ function bejelentkezesKezdolaprol() {
 function belepesKozonsegkent(celFul) {
     var vendeg = { felhasznalonev: 'kozonseg', jelszo: '', szerepkor: 'guest', nev: 'Néző (Közönség)', klub: '-' };
     localStorage.setItem("shobu_bejelentkezve", JSON.stringify(vendeg));
-    window.location.href = "verseny.html?tab=" + celFul;
+    window.location.href = "verseny.php?tab=" + celFul;
 }
 
 function ellenorizBejelentkezestVersenyOldalon() {

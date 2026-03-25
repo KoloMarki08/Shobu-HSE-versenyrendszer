@@ -24,26 +24,8 @@
         <div class="kezdolap-bal-oldal">
             <h2 class="szekcio-cim" style="color:white; border-color:#CE1126;">Versenyek és Nevezés</h2>
 
-            <div class="esemeny-kartya">
-                <div class="esemeny-kep-helye">
-                    <img src="teszt_1.jpg" alt="VII. Rátót Kupa" title="VII. Rátót Kupa">
-                </div>
-                <div class="esemeny-adatok">
-                    <h3 class="esemeny-cime">VII. Rátót Kupa, 2025.10.11, Vácrátót</h3>
-                    <div class="esemeny-idopont">
-                        <span class="cimke-nyitva">ÉLŐ / NYITVA</span>
-                        <span class="idopont-szoveg">2025-08-17 -<br>2025-09-30</span>
-                        <div><span class="rendezo-szoveg">Rendező Dojo és Vezetője:<b> Vácrátóti HSE - Tornai Bálint</b></span></div>
-                    </div>
-                    <div class="esemeny-gombok-taroloja">
-                        <button onclick="belepesKozonsegkent('kategoriak')" class="esemeny-gomb kozonseg-gomb">Közönség
-                            panel</button>
-                        <button onclick="belepesKozonsegkent('eredmenyek')"
-                            class="esemeny-gomb eredmeny-gomb">Eredmények</button>
-                        <button onclick="document.getElementById('login-user').focus()"
-                            class="esemeny-gomb nevezes-gomb">Nevezés</button>
-                    </div>
-                </div>
+            <div id="verseny-kartyak-taroloja">
+                <p style="color: white; font-style: italic;">Versenyek betöltése folyamatban...</p>
             </div>
         </div>
 
@@ -77,9 +59,67 @@
             </p>
         </div>
     </footer>
+
     <script src="data.js"></script>
     <script src="auth.js"></script>
     <script src="jelszomegjelenito.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('api.php?akcio=versenyekLekerdezese')
+                .then(res => res.json())
+                .then(versenyek => {
+                    var tarolo = document.getElementById('verseny-kartyak-taroloja');
+                    tarolo.innerHTML = "";
+
+                    if (versenyek.length === 0) {
+                        tarolo.innerHTML = "<p style='color:white;'>Jelenleg nincsenek meghirdetett versenyek a rendszerben.</p>";
+                        return;
+                    }
+
+                    versenyek.forEach(v => {
+                        var nyitvaE = String(v.nevezes_lezarva) === "0";
+
+                        // A te eredeti címke dizájnjaid
+                        var cimkeHtml = nyitvaE
+                            ? '<span class="cimke-nyitva">ÉLŐ / NYITVA</span>'
+                            : '<span class="cimke-zarva">LEZÁRVA</span>';
+
+                        // A nevezés gomb elrejtése, ha le van zárva
+                        var nevezesGombHtml = nyitvaE
+                            ? '<button onclick="document.getElementById(\'login-user\').focus()" class="esemeny-gomb nevezes-gomb">Nevezés</button>'
+                            : '';
+
+                        // EZ ITT MILLIMÉTERRE PONTOSAN A TE HTML-ED
+                        var kartya = `
+                            <div class="esemeny-kartya">
+                                <div class="esemeny-kep-helye">
+                                    <img src="teszt_1.jpg" alt="${v.nev}" title="${v.nev}">
+                                </div>
+                                <div class="esemeny-adatok">
+                                    <h3 class="esemeny-cime">${v.nev}, ${v.datum}</h3>
+                                    <div class="esemeny-idopont">
+                                        ${cimkeHtml}
+                                        <span class="idopont-szoveg">${v.datum}</span>
+                                        <div><span class="rendezo-szoveg">Rendező Dojo és Vezetője:<b> Vácrátóti HSE - Tornai Bálint</b></span></div>
+                                    </div>
+                                    <div class="esemeny-gombok-taroloja">
+                                        <button onclick="belepesKozonsegkent('kategoriak')" class="esemeny-gomb kozonseg-gomb">Közönség panel</button>
+                                        <button onclick="belepesKozonsegkent('eredmenyek')" class="esemeny-gomb eredmeny-gomb">Eredmények</button>
+                                        ${nevezesGombHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        tarolo.innerHTML += kartya;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('verseny-kartyak-taroloja').innerHTML = "<p style='color:#ef4444;'>Hiba az adatok betöltésekor! Ellenőrizd a szervert.</p>";
+                });
+        });
+    </script>
 </body>
 
 </html>

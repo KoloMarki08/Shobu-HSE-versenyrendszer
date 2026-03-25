@@ -30,7 +30,7 @@ if ($akcio === 'kategoriakLekerdezese') {
 // 2. VERSENYZŐK LEKÉRDEZÉSE (ADOTT VERSENYHEZ)
 } elseif ($akcio === 'lekerdezes') {
     $v_id = isset($_GET['verseny_id']) ? (int)$_GET['verseny_id'] : 1;
-    $sql = "SELECT v.versenyzo_id as id, v.nev, v.egyesulet as klub, k.megnevezes as kategoria 
+    $sql = "SELECT v.versenyzo_id as id, v.nev, v.egyesulet as klub, k.megnevezes as kategoria, n.kiemelt 
             FROM versenyzo v 
             JOIN nevezes n ON v.versenyzo_id = n.versenyzo_id 
             JOIN kategoria k ON n.kategoria_id = k.kategoria_id
@@ -124,7 +124,7 @@ if ($akcio === 'kategoriakLekerdezese') {
 
 // 9. VERSENYEK LISTÁJÁNAK LEKÉRDEZÉSE
 } elseif ($akcio === 'versenyekLekerdezese') {
-    $eredmeny = $kapcsolat->query("SELECT verseny_id, nev, datum FROM verseny ORDER BY datum DESC");
+    $eredmeny = $kapcsolat->query("SELECT verseny_id, nev, datum, nevezes_lezarva FROM verseny ORDER BY datum DESC");
     $lista = array(); 
     if ($eredmeny) { 
         while($sor = $eredmeny->fetch_assoc()) { $lista[] = $sor; } 
@@ -137,13 +137,11 @@ if ($akcio === 'kategoriakLekerdezese') {
     $verseny_id = isset($adat['verseny_id']) ? (int)$adat['verseny_id'] : 0;
 
     if ($verseny_id > 0) {
-        // Nevezések törlése
         $stmt = $kapcsolat->prepare("DELETE FROM nevezes WHERE verseny_id = ?");
         $stmt->bind_param("i", $verseny_id);
         $stmt->execute();
         $stmt->close();
 
-        // Verseny törlése
         $stmt2 = $kapcsolat->prepare("DELETE FROM verseny WHERE verseny_id = ?");
         $stmt2->bind_param("i", $verseny_id);
         $stmt2->execute();
@@ -170,6 +168,88 @@ if ($akcio === 'kategoriakLekerdezese') {
         }
         $stmt->close();
     }
+
+// 12. NEVEZÉS ÁLLAPOTÁNAK MÓDOSÍTÁSA (Lezárás/Nyitás)
+} elseif ($akcio === 'nevezesAllapotModositas') {
+    $adat = json_decode(file_get_contents('php://input'), true);
+    $v_id = (int)$adat['verseny_id'];
+    $allapot = (int)$adat['allapot'];
+
+    $kapcsolat->query("UPDATE verseny SET nevezes_lezarva = $allapot WHERE verseny_id = $v_id");
+    echo json_encode(["sikeres" => true, "uzenet" => "Nevezés állapota sikeresen módosítva!"]);
+
+// 13. KIEMELÉS MÓDOSÍTÁSA (Elő-sorsolás)
+} elseif ($akcio === 'kiemelesModositas') {
+    $adat = json_decode(file_get_contents('php://input'), true);
+    $v_id = (int)$adat['versenyzo_id'];
+    $kiemelt = (int)$adat['kiemelt']; 
+    
+    $kapcsolat->query("UPDATE nevezes SET kiemelt = $kiemelt WHERE versenyzo_id = $v_id");
+    echo json_encode(["sikeres" => true, "uzenet" => "Kiemelés frissítve!"]);
+
+// 14. ÚJ: KATEGÓRIA / SÚLYCSOPORT MÓDOSÍTÁSA (Elő-sorsolásnál átsorolás)
+} elseif ($akcio === 'kategoriaModositas') {
+    $adat = json_decode(file_get_contents('php://input'), true);
+    $v_id = (int)$adat['versenyzo_id'];
+    $regi_kat_nev = $kapcsolat->real_escape_string($adat['regi_kategoria']);
+    $uj_kat_nev = $kapcsolat->real_escape_string($adat['uj_kategoria']);
+    
+    // Megkeressük a régi és új kategória ID-ját
+    $regiRes = $kapcsolat->query("SELECT kategoria_id FROM kategoria WHERE megnevezes = '$regi_kat_nev'");
+    $ujRes = $kapcsolat->query("SELECT kategoria_id FROM kategoria WHERE megnevezes = '$uj_kat_nev'");
+    
+    if ($regiRes && $ujRes && $regiRes->num_rows > 0 && $ujRes->num_rows > 0) {
+        $regi_kat_id = $regiRes->fetch_assoc()['kategoria_id'];
+        $uj_kat_id = $ujRes->fetch_assoc()['kategoria_id'];
+        
+        // Csak azt a nevezést írjuk át, ami a régi kategóriában volt (hogy a Kata-t ne rontsuk el)
+        $kapcsolat->query("UPDATE nevezes SET kategoria_id = $uj_kat_id WHERE versenyzo_id = $v_id AND kategoria_id = $regi_kat_id");
+        echo json_encode(["sikeres" => true, "uzenet" => "Kategória sikeresen módosítva!"]);
+    } else {
+        echo json_encode(["sikeres" => false, "hiba" => "Nem található a kategória!"]);
+    }
+
+// 15. ÚJ: AUTOMATIKUS SÚLYCSOPORT GENERÁLÁS (Szétvágás)
+} elseif ($akcio === 'automatikusSulycsoportok') {
+    $adat = json_decode(file_get_contents('php://input'), true);
+    
+    foreach ($adat['kategoriak_uj'] as $csoport) {
+        $regi_nev = $kapcsolat->real_escape_string($csoport['regi_nev']);
+        $uj_nev = $kapcsolat->real_escape_string($csoport['uj_nev']);
+        $versenyzok = $csoport['versenyzok']; // ID-k tömbje
+        
+        if (empty($versenyzok)) continue;
+
+        // 1. Lekérjük a régi kategória alapadatait (nem, típus, stb.)
+        $regiRes = $kapcsolat->query("SELECT * FROM kategoria WHERE megnevezes = '$regi_nev'");
+        if (!$regiRes || $regiRes->num_rows === 0) continue;
+        $regiKat = $regiRes->fetch_assoc();
+        $regi_id = $regiKat['kategoria_id'];
+        
+        // 2. Megnézzük, hogy az ÚJ kategória létezik-e már
+        $ujRes = $kapcsolat->query("SELECT kategoria_id FROM kategoria WHERE megnevezes = '$uj_nev'");
+        if ($ujRes && $ujRes->num_rows > 0) {
+            $uj_id = $ujRes->fetch_assoc()['kategoria_id'];
+        } else {
+            // Ha nem létezik, létrehozzuk!
+            $tipus = $regiKat['tipus']; $nem = $regiKat['nem']; $mink = $regiKat['min_kor']; $maxk = $regiKat['max_kor'];
+            $kapcsolat->query("INSERT INTO kategoria (megnevezes, tipus, nem, min_kor, max_kor) VALUES ('$uj_nev', '$tipus', '$nem', $mink, $maxk)");
+            $uj_id = $kapcsolat->insert_id;
+            
+            // Tatami hozzárendelés másolása
+            $tatamiRes = $kapcsolat->query("SELECT tatami_id FROM kategoria_tatami WHERE kategoria_id = $regi_id");
+            if ($tatamiRes && $tatamiRes->num_rows > 0) {
+                $tatami_id = $tatamiRes->fetch_assoc()['tatami_id'];
+                $kapcsolat->query("INSERT INTO kategoria_tatami (kategoria_id, tatami_id) VALUES ($uj_id, $tatami_id)");
+            }
+        }
+        
+        // 3. A kiválasztott versenyzők átdobása az új kategóriába
+        $v_ids = implode(",", array_map('intval', $versenyzok));
+        $kapcsolat->query("UPDATE nevezes SET kategoria_id = $uj_id WHERE versenyzo_id IN ($v_ids) AND kategoria_id = $regi_id");
+    }
+    
+    echo json_encode(["sikeres" => true, "uzenet" => "Súlycsoportok sikeresen optimalizálva és szétvágva!"]);
 
 } else { 
     echo json_encode(["hiba" => "Ismeretlen akció!"]); 

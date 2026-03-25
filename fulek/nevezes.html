@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TATAMI MASTER Versenyrendszer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="stilus.css">
+    <link rel="icon" href="logo.jpg">
+</head>
+
+<body>
+    <section id="tab-reg" class="nevezes-oldal hidden">
+        <div class="nevezes-feher-doboz">
+            <h2 class="doboz-cime">Nevezés</h2>
+            <select id="p-verseny" onchange="letoltVersenyzoketABazisbol(); frissitNevezesFelulete();" class="urlap-legordulo mb-4"></select>
+    
+            <div id="nevezes-urlap-tarolo">
+                <div class="urlap-racs">
+                    <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
+                    <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
+                    <select id="p-gender" onchange="frissitKategoriaLegordulot()" class="urlap-legordulo">
+                        <option value="">Nem...</option>
+                        <option value="Boys">Fiú</option>
+                        <option value="Girls">Lány</option>
+                        <option value="Men">Férfi</option>
+                        <option value="Women">Női</option>
+                    </select>
+                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()" class="urlap-szamdoboz">
+                    <input id="p-weight" type="number" placeholder="Súly (kg)" class="urlap-szamdoboz">
+                    <select id="p-cat" class="urlap-kategoria-valaszto"></select>
+                </div>
+                <button onclick="hozzaadVersenyzot()" class="hozzaadas-gomb">HOZZÁADÁS</button>
+            </div>
+    
+            <div id="nevezes-lezarva-uzenet" class="hidden" style="background: #fee2e2; border-left: 4px solid #ef4444; color: #b91c1c; padding: 15px; margin-bottom: 20px;">
+                <p style="font-weight: bold; margin: 0;">🔒 A nevezés lezárult!</p>
+                <p style="margin: 5px 0 0 0;">Ehhez a versenyhez már nem lehet új versenyzőt rögzíteni.</p>
+            </div>
+    
+            <ul id="player-list" class="lista-elemek mt-4"></ul>
+            
+            <div id="admin-controls" class="admin-gombok hidden mt-6">
+                <button onclick="generalKumite()" class="admin-gomb-sorsolas">Kumite Sorsolás</button>
+                <button onclick="generalKata()" class="admin-gomb-kata">Kata Panel Generálás</button>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>
