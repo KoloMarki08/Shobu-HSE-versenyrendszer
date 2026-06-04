@@ -2,7 +2,6 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Gép: 127.0.0.1
 -- Létrehozás ideje: 2026. Ápr 02. 20:27
 -- Kiszolgáló verziója: 10.4.32-MariaDB
 -- PHP verzió: 8.2.12
@@ -20,6 +19,8 @@ SET time_zone = "+00:00";
 --
 -- Adatbázis: `shobu_system_adatbazis`
 --
+CREATE DATABASE IF NOT EXISTS `shobu_system_adatbazis` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_hungarian_ci;
+USE `shobu_system_adatbazis`;
 
 -- --------------------------------------------------------
 
@@ -105,45 +106,47 @@ INSERT INTO `kategoria` (`kategoria_id`, `megnevezes`, `tipus`, `nem`, `min_kor`
 
 CREATE TABLE `kategoria_tatami` (
   `kategoria_id` int(11) NOT NULL,
-  `tatami_id` int(11) NOT NULL
+  `kategoria_megnevezes` varchar(100) DEFAULT NULL,
+  `tatami_id` int(11) NOT NULL,
+  `tatami_sorszam` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
 -- A tábla adatainak kiíratása `kategoria_tatami`
 --
 
-INSERT INTO `kategoria_tatami` (`kategoria_id`, `tatami_id`) VALUES
-(1, 1),
-(2, 1),
-(3, 1),
-(4, 1),
-(5, 1),
-(6, 1),
-(7, 3),
-(8, 3),
-(9, 2),
-(10, 2),
-(11, 2),
-(12, 2),
-(13, 3),
-(14, 3),
-(15, 3),
-(16, 3),
-(17, 1),
-(18, 1),
-(19, 1),
-(20, 1),
-(21, 3),
-(22, 3),
-(23, 3),
-(24, 3),
-(25, 2),
-(26, 2),
-(27, 2),
-(28, 2),
-(29, 3),
-(30, 3),
-(31, 3);
+INSERT INTO `kategoria_tatami` (`kategoria_id`, `kategoria_megnevezes`, `tatami_id`, `tatami_sorszam`) VALUES
+(1, 'Kata Girls 8-9 y.o.', 1, 'Tatami A'),
+(2, 'Kata Boys 8-9 y.o.', 1, 'Tatami A'),
+(3, 'Kata Girls 10-11 y.o.', 1, 'Tatami A'),
+(4, 'Kata Boys 10-11 y.o.', 1, 'Tatami A'),
+(5, 'Kata Girls 12-13 y.o.', 1, 'Tatami A'),
+(6, 'Kata Boys 12-13 y.o.', 1, 'Tatami A'),
+(7, 'Kata Girls 14-15 y.o.', 3, 'Tatami C'),
+(8, 'Kata Boys 14-15 y.o.', 3, 'Tatami C'),
+(9, 'Kata Girls 16-17 y.o.', 2, 'Tatami B'),
+(10, 'Kata Boys 16-17 y.o.', 2, 'Tatami B'),
+(11, 'Kata Women 18-34 y.o.', 2, 'Tatami B'),
+(12, 'Kata Men 18-34 y.o.', 2, 'Tatami B'),
+(13, 'Kata Women 35-49 y.o.', 3, 'Tatami C'),
+(14, 'Kata Men 35-49 y.o.', 3, 'Tatami C'),
+(15, 'Kata Women 50+ y.o.', 3, 'Tatami C'),
+(16, 'Kata Men 50+ y.o.', 3, 'Tatami C'),
+(17, 'Kumite Girls 8-9 y.o.', 1, 'Tatami A'),
+(18, 'Kumite Boys 8-9 y.o.', 1, 'Tatami A'),
+(19, 'Kumite Girls 10-11 y.o.', 1, 'Tatami A'),
+(20, 'Kumite Boys 10-11 y.o.', 1, 'Tatami A'),
+(21, 'Kumite Girls 12-13 y.o.', 3, 'Tatami C'),
+(22, 'Kumite Boys 12-13 y.o.', 3, 'Tatami C'),
+(23, 'Kumite Girls 14-15 y.o.', 3, 'Tatami C'),
+(24, 'Kumite Boys 14-15 y.o.', 3, 'Tatami C'),
+(25, 'Kumite Girls 16-17 y.o.', 2, 'Tatami B'),
+(26, 'Kumite Boys 16-17 y.o.', 2, 'Tatami B'),
+(27, 'Kumite Women 18+ y.o. Open', 2, 'Tatami B'),
+(28, 'Kumite Men 18+ y.o. Open', 2, 'Tatami B'),
+(29, 'Kumite Women 35+ y.o.', 3, 'Tatami C'),
+(30, 'Kumite Men 35-44 y.o.', 3, 'Tatami C'),
+(31, 'Kumite Men 45+ y.o.', 3, 'Tatami C');
 
 -- --------------------------------------------------------
 
@@ -153,10 +156,13 @@ INSERT INTO `kategoria_tatami` (`kategoria_id`, `tatami_id`) VALUES
 
 CREATE TABLE `nevezes` (
   `versenyzo_id` int(11) NOT NULL,
+  `versenyzo_nev` varchar(100) DEFAULT NULL,
   `kategoria_id` int(11) NOT NULL,
+  `kategoria_megnevezes` varchar(100) DEFAULT NULL,
   `helyezes` int(11) DEFAULT NULL,
   `pontszam` int(11) DEFAULT NULL,
   `verseny_id` int(11) DEFAULT 1,
+  `verseny_nev` varchar(100) DEFAULT NULL,
   `kiemelt` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
@@ -757,7 +763,9 @@ CREATE TABLE `verseny_kategoria` (
 
 CREATE TABLE `verseny_tatami` (
   `verseny_id` int(11) NOT NULL,
-  `tatami_id` int(11) NOT NULL
+  `verseny_nev` varchar(100) DEFAULT NULL,
+  `tatami_id` int(11) NOT NULL,
+  `tatami_sorszam` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_hungarian_ci;
 
 --
@@ -864,6 +872,12 @@ ALTER TABLE `versenyzo`
   MODIFY `versenyzo_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=504;
 
 --
+-- AUTO_INCREMENT a táblához `verseny_allapot`
+--
+ALTER TABLE `verseny_allapot`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- Megkötések a kiírt táblákhoz
 --
 
@@ -871,30 +885,30 @@ ALTER TABLE `versenyzo`
 -- Megkötések a táblához `kategoria_tatami`
 --
 ALTER TABLE `kategoria_tatami`
-  ADD CONSTRAINT `kategoria_tatami_ibfk_1` FOREIGN KEY (`kategoria_id`) REFERENCES `kategoria` (`kategoria_id`),
-  ADD CONSTRAINT `kategoria_tatami_ibfk_2` FOREIGN KEY (`tatami_id`) REFERENCES `tatami` (`tatami_id`);
+  ADD CONSTRAINT `kategoria_tatami_ibfk_1` FOREIGN KEY (`kategoria_id`) REFERENCES `kategoria` (`kategoria_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `kategoria_tatami_ibfk_2` FOREIGN KEY (`tatami_id`) REFERENCES `tatami` (`tatami_id`) ON DELETE CASCADE;
 
 --
 -- Megkötések a táblához `nevezes`
 --
 ALTER TABLE `nevezes`
   ADD CONSTRAINT `fk_verseny_nevezes` FOREIGN KEY (`verseny_id`) REFERENCES `verseny` (`verseny_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `nevezes_ibfk_1` FOREIGN KEY (`versenyzo_id`) REFERENCES `versenyzo` (`versenyzo_id`),
-  ADD CONSTRAINT `nevezes_ibfk_2` FOREIGN KEY (`kategoria_id`) REFERENCES `kategoria` (`kategoria_id`);
+  ADD CONSTRAINT `nevezes_ibfk_1` FOREIGN KEY (`versenyzo_id`) REFERENCES `versenyzo` (`versenyzo_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `nevezes_ibfk_2` FOREIGN KEY (`kategoria_id`) REFERENCES `kategoria` (`kategoria_id`) ON DELETE CASCADE;
 
 --
 -- Megkötések a táblához `verseny_kategoria`
 --
 ALTER TABLE `verseny_kategoria`
-  ADD CONSTRAINT `verseny_kategoria_ibfk_1` FOREIGN KEY (`verseny_id`) REFERENCES `verseny` (`verseny_id`),
-  ADD CONSTRAINT `verseny_kategoria_ibfk_2` FOREIGN KEY (`kategoria_id`) REFERENCES `kategoria` (`kategoria_id`);
+  ADD CONSTRAINT `verseny_kategoria_ibfk_1` FOREIGN KEY (`verseny_id`) REFERENCES `verseny` (`verseny_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `verseny_kategoria_ibfk_2` FOREIGN KEY (`kategoria_id`) REFERENCES `kategoria` (`kategoria_id`) ON DELETE CASCADE;
 
 --
 -- Megkötések a táblához `verseny_tatami`
 --
 ALTER TABLE `verseny_tatami`
-  ADD CONSTRAINT `verseny_tatami_ibfk_1` FOREIGN KEY (`verseny_id`) REFERENCES `verseny` (`verseny_id`),
-  ADD CONSTRAINT `verseny_tatami_ibfk_2` FOREIGN KEY (`tatami_id`) REFERENCES `tatami` (`tatami_id`);
+  ADD CONSTRAINT `verseny_tatami_ibfk_1` FOREIGN KEY (`verseny_id`) REFERENCES `verseny` (`verseny_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `verseny_tatami_ibfk_2` FOREIGN KEY (`tatami_id`) REFERENCES `tatami` (`tatami_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
