@@ -80,19 +80,31 @@ function rajzolVersenyzokListajat() {
     var listaElem = document.getElementById("player-list");
     if (!listaElem) return;
 
-    if (aktualisFelhasznalo === null || !adatok.versenyzok) {
-        listaElem.innerHTML = "";
+    if (!adatok.versenyzok || adatok.versenyzok.length === 0) {
+        listaElem.innerHTML = "<li style='padding: 5px; color: gray;'>Még nincs nevező a versenyen.</li>";
         return;
     }
 
-    var miketMutassunk = aktualisFelhasznalo.szerepkor === "admin"
-        ? adatok.versenyzok
-        : adatok.versenyzok.filter(e => e.klub === aktualisFelhasznalo.klub);
+    var miketMutassunk = adatok.versenyzok;
+
+    if (aktualisFelhasznalo !== null && aktualisFelhasznalo.szerepkor === 'coach') {
+        miketMutassunk = adatok.versenyzok.filter(e => e.klub === aktualisFelhasznalo.klub);
+    }
+
+    if (miketMutassunk.length === 0) {
+        listaElem.innerHTML = "<li style='padding: 5px; color: gray;'>A te klubodból még nincs nevező.</li>";
+        return;
+    }
 
     var htmlGyujto = "";
     for (var j = 0; j < miketMutassunk.length; j++) {
         var m = miketMutassunk[j];
-        htmlGyujto += '<li style="border-bottom: 1px solid #ccc; padding: 5px; display: flex; justify-content: space-between; font-size: 14px;"><span><b>' + m.nev + '</b> (' + m.klub + ')</span><span style="color: #CE1126; font-weight: bold;">' + m.kategoria + '</span></li>';
+        var sulySzoveg = m.kategoria.toLowerCase().includes('kata') ? "" : `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:12px; font-weight:bold; margin-left:10px; color:#1a1a1a;">⚖️ ${m.suly || '0.0'} kg</span>`;
+        
+        htmlGyujto += `<li style="border-bottom: 1px solid #ccc; padding: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+            <span><b>${m.nev}</b> (${m.klub}) ${sulySzoveg}</span>
+            <span style="color: #CE1126; font-weight: bold;">${m.kategoria}</span>
+        </li>`;
     }
     listaElem.innerHTML = htmlGyujto;
 }
@@ -351,7 +363,6 @@ function rajzolKiemelesTablazatot(oszlop) {
     var beallitasokDiv = document.getElementById('kat-beallitasok');
     var tipusSelect = document.getElementById('kat-tipus-select');
 
-    // Csak a Kumite kategóriákat szedjük ki a módosító dropdown-hoz
     var osszesKumiteKat = OSSZES_KATEGORIA.filter(k => k.tipus === 'KUMITE' || (!k.nev.toLowerCase().includes('kata'))).map(k => k.nev).sort();
 
     if (szuroMezo) {
@@ -389,7 +400,6 @@ function rajzolKiemelesTablazatot(oszlop) {
         var katSzin = egyedulVan ? "color: #b91c1c;" : "color: #2563eb;";
         var extraSzoveg = egyedulVan ? " <span style='font-size:12px; color: #dc2626;'>⚠️(1 fő)</span>" : "";
 
-        // ÚJ: Kategória Módosító Legördülő Menü
         var katSelectHtml = `<select onchange="allitKategoriat(${v.id}, '${v.kategoria}', this.value)" style="padding: 2px 5px; border-radius: 4px; border: 1px solid #cbd5e1; background: transparent; font-weight: bold; ${katSzin} cursor: pointer; max-width: 250px;">`;
         osszesKumiteKat.forEach(kNev => {
             var sel = (kNev === v.kategoria) ? "selected" : "";
@@ -397,10 +407,12 @@ function rajzolKiemelesTablazatot(oszlop) {
         });
         katSelectHtml += `</select>`;
 
+        var sulyJelzo = `<span style="color: #eab308; background: #1f2937; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-left: 8px;">⚖️ ${v.suly || '0.0'} kg</span>`;
+
         htmlGyujto += `
             <tr style="border-bottom: 1px solid #e2e8f0; ${sorHatter}">
                 <td class="p-3 text-center"><input type="checkbox" style="width:20px; height:20px; cursor:pointer;" onchange="allitKiemelest(${v.id}, this.checked)" ${isKiemelt}></td>
-                <td class="p-3 font-bold text-gray-800">${v.nev}</td>
+                <td class="p-3 font-bold text-gray-800">${v.nev} ${sulyJelzo}</td>
                 <td class="p-3 text-gray-600">${v.klub}</td>
                 <td class="p-3">${katSelectHtml}${extraSzoveg}</td>
             </tr>`;
@@ -408,17 +420,16 @@ function rajzolKiemelesTablazatot(oszlop) {
     tablaTorzs.innerHTML = htmlGyujto;
 }
 
-// ÚJ: Átdobja a versenyzőt egy másik súlycsoportba
 function allitKategoriat(versenyzoId, regiKategoriaNev, ujKategoriaNev) {
     if (!confirm("Biztosan áthelyezed ezt a versenyzőt a(z) " + ujKategoriaNev + " kategóriába?")) {
-        rajzolKiemelesTablazatot(utolsoRendezes.oszlop); // Visszaállítjuk, ha mégsem
+        rajzolKiemelesTablazatot(utolsoRendezes.oszlop); 
         return;
     }
 
     var vIndex = adatok.versenyzok.findIndex(v => String(v.id) === String(versenyzoId) && v.kategoria === regiKategoriaNev);
     if (vIndex !== -1) adatok.versenyzok[vIndex].kategoria = ujKategoriaNev;
 
-    rajzolKiemelesTablazatot(utolsoRendezes.oszlop); // Azonnal frissíti a piros "1 fő" jelzéseket!
+    rajzolKiemelesTablazatot(utolsoRendezes.oszlop); 
 
     fetch('api.php?akcio=kategoriaModositas', {
         method: 'POST',
@@ -446,21 +457,20 @@ function allitKiemelest(versenyzoId, isChecked) {
 }
 
 // =========================================================================
-// 9. AUTOMATIKUS SÚLYCSOPORT GENERÁTOR (Okos szétvágás)
+// 9. AUTOMATIKUS SÚLYCSOPORT GENERÁTOR (Okos szétvágás 10kg-os sávokra)
 // =========================================================================
 
 function generalSulycsoportokat() {
-    var maxFoHatarInput = document.getElementById('vagas-fo-hatar');
-    var maxFo = maxFoHatarInput ? parseInt(maxFoHatarInput.value) : 8;
+    if (!confirm("Biztosan automatikusan szétvágod a kategóriákat 10kg-os súlycsoportokra (-50kg, -60kg, stb.)?\nA kis létszámú (2 fő vagy alatti) csoportokat a rendszer automatikusan összevonja a legközelebbi súlycsoporttal!")) return;
     
-    if (!confirm("Biztosan automatikusan szétvágod a " + maxFo + " főnél nagyobb kategóriákat a versenyzők súlya alapján?")) return;
-    
-    // Csak a Kumite versenyzők kellenek
-    var kumiteV = adatok.versenyzok.filter(v => !v.kategoria.toLowerCase().includes('kata'));
+    var csakKumiteVersenyzok = adatok.versenyzok.filter(v => {
+        var katNev = v.kategoria.toLowerCase();
+        return !katNev.includes('kata') && !katNev.includes('open');
+    });
+
     var katCsoportok = {};
     
-    // Csoportosítás kategóriák szerint
-    kumiteV.forEach(v => {
+    csakKumiteVersenyzok.forEach(v => {
         if (!katCsoportok[v.kategoria]) katCsoportok[v.kategoria] = [];
         katCsoportok[v.kategoria].push(v);
     });
@@ -469,61 +479,78 @@ function generalSulycsoportokat() {
 
     for (var katNev in katCsoportok) {
         var jatekosok = katCsoportok[katNev];
-        if (jatekosok.length <= maxFo) continue; // Ha kevesen vannak, békén hagyjuk
+        if (jatekosok.length <= 2) continue; 
         
-        // Sorba rendezzük őket súly szerint (növekvő)
-        jatekosok.sort((a, b) => parseFloat(a.suly || 0) - parseFloat(b.suly || 0));
-        
-        // Kiszámoljuk, hányfelé kell vágni a tortát
-        var hanyFele = Math.ceil(jatekosok.length / maxFo);
-        var vagasiSzam = hanyFele - 1;
-        
-        // Megkeressük a legnagyobb súlykülönbségeket (szakadékokat)
-        var gapok = [];
-        for (var i = 0; i < jatekosok.length - 1; i++) {
-            var diff = parseFloat(jatekosok[i+1].suly || 0) - parseFloat(jatekosok[i].suly || 0);
-            gapok.push({ index: i, diff: diff });
-        }
-        
-        // A legnagyobb különbségek mentén vágunk
-        gapok.sort((a, b) => b.diff - a.diff);
-        var kivalasztottVagasok = gapok.slice(0, vagasiSzam).map(g => g.index).sort((a, b) => a - b);
-        
-        var elozoVagas = -1;
-        var elozoVagasMaxSuly = 0;
-        
-        for (var i = 0; i <= kivalasztottVagasok.length; i++) {
-            var isLast = (i === kivalasztottVagasok.length);
-            var vagIndex = isLast ? jatekosok.length - 1 : kivalasztottVagasok[i];
+        var vodrok = {}; 
+        jatekosok.forEach(v => {
+            var suly = parseFloat(v.suly || 0);
+            if (suly === 0) suly = 50; 
             
-            var chunk = jatekosok.slice(elozoVagas + 1, vagIndex + 1);
+            var hatar = Math.ceil(suly / 10) * 10; 
+            if (hatar < 30) hatar = 30; 
             
-            // WKF Hivatalos névadási logika (pl. -35kg, +35kg)
-            var ujNev = katNev;
-            if (!isLast) {
-                var felsoSuly = Math.ceil(parseFloat(jatekosok[vagIndex].suly || 0));
-                ujNev += " -" + felsoSuly + "kg";
-                elozoVagasMaxSuly = felsoSuly;
-            } else {
-                ujNev += " +" + elozoVagasMaxSuly + "kg";
+            if (!vodrok[hatar]) vodrok[hatar] = [];
+            vodrok[hatar].push(v);
+        });
+
+        var vodrokTomb = Object.keys(vodrok).map(k => ({ hatar: parseInt(k), versenyzok: vodrok[k] })).sort((a, b) => a.hatar - b.hatar);
+
+        if (vodrokTomb.length <= 1) continue; 
+
+        var voltOsszevonas = true;
+        while (voltOsszevonas && vodrokTomb.length > 1) {
+            voltOsszevonas = false;
+            for (var i = 0; i < vodrokTomb.length; i++) {
+                if (vodrokTomb[i].versenyzok.length <= 2) {
+                    var celIndex = -1;
+                    if (i === 0) {
+                        celIndex = 1; 
+                    } else if (i === vodrokTomb.length - 1) {
+                        celIndex = i - 1; 
+                    } else {
+                        if (vodrokTomb[i - 1].versenyzok.length <= vodrokTomb[i + 1].versenyzok.length) {
+                            celIndex = i - 1;
+                        } else {
+                            celIndex = i + 1;
+                        }
+                    }
+
+                    vodrokTomb[celIndex].versenyzok = vodrokTomb[celIndex].versenyzok.concat(vodrokTomb[i].versenyzok);
+                    vodrokTomb[celIndex].hatar = Math.max(vodrokTomb[celIndex].hatar, vodrokTomb[i].hatar);
+                    
+                    vodrokTomb.splice(i, 1);
+                    voltOsszevonas = true;
+                    break; 
+                }
             }
+        }
+
+        if (vodrokTomb.length <= 1) continue;
+
+        for (var i = 0; i < vodrokTomb.length; i++) {
+            var ujNev = katNev;
+            var isLast = (i === vodrokTomb.length - 1);
             
+            if (!isLast) {
+                ujNev += " -" + vodrokTomb[i].hatar + "kg";
+            } else {
+                var elozoHatar = vodrokTomb[i - 1].hatar;
+                ujNev += " +" + elozoHatar + "kg";
+            }
+
             payload.kategoriak_uj.push({
                 regi_nev: katNev,
                 uj_nev: ujNev,
-                versenyzok: chunk.map(v => v.id)
+                versenyzok: vodrokTomb[i].versenyzok.map(v => v.id)
             });
-            
-            elozoVagas = vagIndex;
         }
     }
     
     if (payload.kategoriak_uj.length === 0) {
-        alert("Nincs olyan kategória, amiben " + maxFo + "-nál többen lennének, így nem kellett vágni!");
+        alert("Nem volt mit szétvágni (vagy a kevés létszám miatt a rendszer automatikusan egyben hagyta őket)!");
         return;
     }
 
-    // Elküldjük a szervernek, hogy végezze el az átsorolást
     fetch('api.php?akcio=automatikusSulycsoportok', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
@@ -532,8 +559,8 @@ function generalSulycsoportokat() {
     .then(r => r.json())
     .then(d => {
         alert(d.uzenet);
-        letoltVersenyzoketABazisbol(); // Frissíti az Excel táblát
-        letoltKategoriakatABazisbol(); // Frissíti a legördülő menüket az új kategóriákkal!
+        letoltVersenyzoketABazisbol(); 
+        letoltKategoriakatABazisbol(); 
     })
     .catch(e => console.error("Hiba a bontáskor:", e));
 }

@@ -34,7 +34,6 @@ function generalEgyediAgrajz(kategoriaNev) {
     else isKormerkozes = (jatekosok.length <= 5);
 
     if (isKormerkozes) {
-        // --- KÖRMÉRKŐZÉS ---
         for (let i = tobbiek.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [tobbiek[i], tobbiek[j]] = [tobbiek[j], tobbiek[i]];
@@ -67,7 +66,6 @@ function generalEgyediAgrajz(kategoriaNev) {
             jatekosokRR.splice(1, 0, last);
         }
 
-        // AZONOS DOJO SZÉTVÁLASZTÁSA (KÉSŐBBI KÖRBE RAKÁS)
         for (let r = 1; r <= Math.floor(numRounds / 2); r++) {
             let matchesInRound = adatok.meccsek.filter(m => m.kategoria === kategoriaNev && m.round === r);
             let hasSameDojo = matchesInRound.some(m => m.aka && m.shiro && m.aka.klub && m.shiro.klub && m.aka.klub === m.shiro.klub && m.aka.nev !== 'BYE' && m.shiro.nev !== 'BYE');
@@ -83,7 +81,6 @@ function generalEgyediAgrajz(kategoriaNev) {
         }
 
     } else {
-        // --- EGYENES KIESÉS ---
         var agrajzMerete = Math.pow(2, Math.ceil(Math.log2(jatekosok.length)));
         var maxKor = Math.log2(agrajzMerete);
         var M = agrajzMerete / 2;
@@ -148,9 +145,6 @@ function generalEgyediAgrajz(kategoriaNev) {
     }
 }
 
-// =========================================================================
-// 1. DRAG & DROP LOGIKA: JÁTÉKOSOK CSERÉJE (Egyenes Kieséshez)
-// =========================================================================
 var mozgatottKard = null;
 function kartyatMegfog(e, meccsId, oldal) {
     mozgatottKard = { meccsId: meccsId, oldal: oldal };
@@ -180,15 +174,12 @@ function kartyatLeejt(e, celMeccsId, celOldal) {
         if (aktivS && aktivS.id === 'tab-bracket') rajzolAgrajz();
         if (aktivS && aktivS.id === 'tab-tatami') {
             var c = document.getElementById('tatami-content').querySelector('h2');
-            if (c) mutasdTatamiNezetet(c.innerText.split(' -')[0], true);
+            if (c) mutasdTatamiNezetet(c.textContent.split(' -')[0], true);
         }
     }
     mozgatottKard = null;
 }
 
-// =========================================================================
-// 2. DRAG & DROP LOGIKA: MECCSEK CSERÉJE (Körmérkőzéshez)
-// =========================================================================
 var mozgatottMeccsId = null;
 function meccsetMegfog(e, meccsId) {
     mozgatottMeccsId = meccsId;
@@ -217,12 +208,11 @@ function meccsetLeejt(e, celMeccsId) {
         if (aktivS && aktivS.id === 'tab-bracket') rajzolAgrajz();
         if (aktivS && aktivS.id === 'tab-tatami') {
             var c = document.getElementById('tatami-content').querySelector('h2');
-            if (c) mutasdTatamiNezetet(c.innerText.split(' -')[0], true);
+            if (c) mutasdTatamiNezetet(c.textContent.split(' -')[0], true);
         }
     }
     mozgatottMeccsId = null;
 }
-
 
 function generalTatamiSorszamTerkepe(tatamiNev) {
     if (!tatamiNev) return {};
@@ -314,35 +304,109 @@ function rajzolAgrajz() {
     }
 }
 
+// =========================================================================
+// MEGREFORMÁLT TATAMI MENETREND NÉZET (Táblázatos formátum kép alapján)
+// =========================================================================
+
 function mutasdTatamiNezetet(tatamiNev, doNotSwitchTab) {
     if (!doNotSwitchTab && typeof valtFul === "function") valtFul('tatami');
     var tartalom = document.getElementById('tatami-content');
     if (!tartalom) return;
-    tartalom.innerHTML = "<h2 style='color:white; font-size: 2rem; font-weight: 900; background:#CE1126; padding:10px 30px; border-radius:10px; margin-top:20px;'>" + tatamiNev + " - Küzdelmi Sorrend</h2>";
+    tartalom.innerHTML = "";
+
+    // Letisztult Fejléc
+    var fejlecHTML = "<div style='width:100%; max-width:1400px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;'>";
+    fejlecHTML += "<h2 style='color:#1e293b; font-size: 1.8rem; font-weight: 900; margin:0;'>" + tatamiNev + " - Küzdelmi Menetrend</h2>";
+    fejlecHTML += "</div>";
+    tartalom.innerHTML = fejlecHTML;
 
     var tatamiKategoriak = OSSZES_KATEGORIA.filter(k => k.tatami === tatamiNev && !k.nev.toLowerCase().includes('kata'));
-    tatamiKategoriak.sort((a, b) => {
-        var korA = parseInt(a.min_kor || 0); var korB = parseInt(b.min_kor || 0);
-        if (korA !== korB) return korA - korB;
-        return a.nev.localeCompare(b.nev);
-    });
-
+    
     var sorszamTerkepe = generalTatamiSorszamTerkepe(tatamiNev);
-    var van = false;
+    var tatamiMeccsek = [];
 
+    // Összegyűjtjük az összes meccset erről a tatamiról
     tatamiKategoriak.forEach(kat => {
-        if (adatok.meccsek && adatok.meccsek.some(m => m.kategoria === kat.nev)) {
-            van = true;
-            var w = document.createElement('div');
-            w.style = "width:100%; max-width:1400px; background:white; padding:20px; border-radius:10px; box-shadow:0 10px 20px rgba(0,0,0,0.5); margin-bottom: 20px;";
-            w.innerHTML = "<h3 style='color:#1a1a1a; font-weight:900; font-size:1.5rem; border-bottom:2px solid #cbd5e1; padding-bottom:10px; margin-bottom:20px; text-align:center;'>" + kat.nev + "</h3>";
-            var fa = document.createElement('div'); fa.className = "agrajz-vilagos-tema";
-            w.appendChild(fa); tartalom.appendChild(w);
-            rajzolEgyediAgrajz(kat.nev, fa, sorszamTerkepe);
+        if (adatok.meccsek) {
+            // Kihagyjuk a BYE meccseket, hogy tiszta legyen a lista
+            var aktivMeccsek = adatok.meccsek.filter(m => m.kategoria === kat.nev && m.aka.nev !== "BYE" && m.shiro.nev !== "BYE");
+            tatamiMeccsek = tatamiMeccsek.concat(aktivMeccsek);
         }
     });
-    if (!van) tartalom.innerHTML += "<p style='color:white; font-size: 1.2rem;'>Ehhez a tatamihoz még nincsenek legenerálva Kumite ágrajzok!</p>";
+
+    if (tatamiMeccsek.length === 0) {
+        tartalom.innerHTML += "<p style='color:#64748b; font-size: 1.2rem; font-style:italic;'>Ehhez a tatamihoz még nincsenek legenerálva Kumite ágrajzok!</p>";
+        return;
+    }
+
+    // Sorba rakjuk őket a hivatalos meccsszám szerint
+    tatamiMeccsek.sort((a, b) => {
+        var sA = sorszamTerkepe[a.id] || 999999;
+        var sB = sorszamTerkepe[b.id] || 999999;
+        return sA - sB;
+    });
+
+    var szerkE = (aktualisFelhasznalo !== null && (aktualisFelhasznalo.szerepkor === 'admin' || aktualisFelhasznalo.szerepkor === 'judge'));
+
+    // Táblázat felépítése
+    var tableHtml = '<div style="width:100%; max-width:1400px; background:white; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">';
+    tableHtml += '<table style="width:100%; border-collapse: collapse; font-family: sans-serif; text-align: left; background: white;">';
+    
+    tableHtml += '<thead style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;"><tr>';
+    tableHtml += '<th style="padding: 15px; font-weight: bold; color: #0f172a; width: 10%; border-right: 1px solid #e2e8f0;">Fight Number</th>';
+    tableHtml += '<th style="padding: 15px; font-weight: bold; color: #0f172a; width: 35%; border-right: 1px solid #e2e8f0;">Competitor 1 (AKA)</th>';
+    tableHtml += '<th style="padding: 15px; font-weight: bold; color: #0f172a; width: 35%; border-right: 1px solid #e2e8f0;">Competitor 2 (SHIRO)</th>';
+    tableHtml += '<th style="padding: 15px; font-weight: bold; color: #0f172a; width: 20%;">Category name</th>';
+    tableHtml += '</tr></thead><tbody>';
+
+    tatamiMeccsek.forEach(m => {
+        var sorszam = sorszamTerkepe[m.id] || "-";
+        
+        // Zöld "winner" jelzések generálása, ha van nyertes
+        var akaWinnerBadge = (m.winner && m.winner.id === m.aka.id) ? '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px; vertical-align: middle;">winner</span>' : '';
+        var shiroWinnerBadge = (m.winner && m.winner.id === m.shiro.id) ? '<span style="background: #22c55e; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 8px; vertical-align: middle;">winner</span>' : '';
+        
+        // Áthúzás (Vesztesek)
+        var akaVonal = (m.winner && m.winner.id === m.shiro.id) ? 'text-decoration: line-through; color: #94a3b8;' : 'color: #0f172a;';
+        var shiroVonal = (m.winner && m.winner.id === m.aka.id) ? 'text-decoration: line-through; color: #94a3b8;' : 'color: #0f172a;';
+
+        var akaId = m.aka.id !== null ? m.aka.id : '?';
+        var shiroId = m.shiro.id !== null ? m.shiro.id : '?';
+        
+        var akaNev = m.aka.nev ? m.aka.nev : 'Várakozás...';
+        var shiroNev = m.shiro.nev ? m.shiro.nev : 'Várakozás...';
+
+        // Alatta lévő sor (Klub / Súly)
+        var akaAdat = (m.aka.id !== null) ? `<div style="font-size: 13px; color: #64748b; margin-top: 6px;">${m.aka.klub || '-'} / ${m.aka.suly || '0.0'} kg</div>` : '';
+        var shiroAdat = (m.shiro.id !== null) ? `<div style="font-size: 13px; color: #64748b; margin-top: 6px;">${m.shiro.klub || '-'} / ${m.shiro.suly || '0.0'} kg</div>` : '';
+
+        // Drag & Drop és Bírói panel nyitás jogosultság alapján
+        var dragEvents = szerkE ? ` draggable="true" ondragstart="meccsetMegfog(event, '${m.id}')" ondragover="meccsetHuz(event)" ondrop="meccsetLeejt(event, '${m.id}')" style="cursor: grab; border-bottom: 1px solid #e2e8f0; background: #ffffff;" ` : ` style="border-bottom: 1px solid #e2e8f0; background: #ffffff;" `;
+        
+        var aktivE = (m.winner === null && m.aka.id !== null && m.shiro.id !== null && szerkE);
+        var hoverStyle = aktivE ? "cursor: pointer;" : "";
+        var katt = aktivE ? ` onclick="nyitBiroiPanelt('${m.id}')" ` : '';
+
+        // Sor kirajzolása
+        tableHtml += `<tr ${dragEvents} ${katt} onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='#ffffff'">
+            <td style="padding: 15px; color: #475569; font-weight: bold; border-right: 1px solid #e2e8f0; font-size: 16px; ${hoverStyle}">${sorszam}</td>
+            <td style="padding: 15px; border-right: 1px solid #e2e8f0; ${hoverStyle}">
+                <div style="font-weight: 900; font-size: 15px; ${akaVonal}">[ ${akaId} ] ${akaNev} ${akaWinnerBadge}</div>
+                ${akaAdat}
+            </td>
+            <td style="padding: 15px; border-right: 1px solid #e2e8f0; ${hoverStyle}">
+                <div style="font-weight: 900; font-size: 15px; ${shiroVonal}">[ ${shiroId} ] ${shiroNev} ${shiroWinnerBadge}</div>
+                ${shiroAdat}
+            </td>
+            <td style="padding: 15px; color: #475569; font-size: 14px; ${hoverStyle}">${m.kategoria}</td>
+        </tr>`;
+    });
+
+    tableHtml += '</tbody></table></div>';
+    tartalom.innerHTML += tableHtml;
 }
+
+// -------------------------------------------------------------------------
 
 function rajzolEgyediAgrajz(katNev, celDiv, sorszamTerkepe) {
     if (!adatok.meccsek) return;
@@ -378,7 +442,6 @@ function rajzolEgyediAgrajz(katNev, celDiv, sorszamTerkepe) {
             var isByeMatch = (m.aka.nev === "BYE" || m.shiro.nev === "BYE");
             var taroloStyle = (isByeMatch && !szerkE) ? 'display: flex; flex-direction: column; justify-content: center; min-height: 95px;' : '';
 
-            // ÚJ: Meccs húzása Körmérkőzésnél
             var matchDragEvents = szerkE ? ` draggable="true" ondragstart="meccsetMegfog(event, '${m.id}')" ondragover="meccsetHuz(event)" ondrop="meccsetLeejt(event, '${m.id}')" ` : "";
 
             meccsDobozoK += '<div class="meccs-doboza match-wrapper" style="margin-bottom: 10px; cursor: grab;" ' + matchDragEvents + '><div class="kartya-tarolo" style="' + taroloStyle + '">' + szamHtml + keszitKartyat(m.aka, 'aka', m, katt, false) + keszitKartyat(m.shiro, 'shiro', m, katt, false) + '</div></div>';
@@ -416,21 +479,26 @@ function rajzolEgyediAgrajz(katNev, celDiv, sorszamTerkepe) {
 }
 
 function keszitKartyat(v, o, m, katt, szerkE) {
-    // Egyenes kiesésnél a kártyák húzogatása (Körmérkőzésnél false lesz a szerkE)
     var dragEvents = (szerkE && m.round === 1 && !m.isRoundRobin) ? ` draggable="true" ondragstart="kartyatMegfog(event, '${m.id}', '${o}')" ondragover="kartyatHuz(event)" ondrop="kartyatLeejt(event, '${m.id}', '${o}')" ` : "";
 
     if (v !== null && v.nev === "BYE") {
-        if (szerkE) return '<div class="versenyzo-kartya player-card" style="opacity: 0.6; border: 2px dashed #94a3b8; cursor: grab;" ' + dragEvents + '><div class="szines-csik color-strip ' + (o === 'aka' ? 'szines-csik-kek' : 'szines-csik-piros') + '"></div><div class="kartya-belso-tartalom card-content"><div class="kartya-nev card-name" style="color: #64748b !important;">[ÜRES] Húzz ide embert!</div></div></div>';
+        if (szerkE) return '<div class="versenyzo-kartya player-card" style="opacity: 0.6; border: 2px dashed #94a3b8; cursor: grab; padding: 10px; min-height: 85px;" ' + dragEvents + '><div class="szines-csik color-strip ' + (o === 'aka' ? 'szines-csik-kek' : 'szines-csik-piros') + '"></div><div class="kartya-belso-tartalom card-content"><div class="kartya-nev card-name" style="color: #64748b !important;">[ÜRES] Húzz ide embert!</div></div></div>';
         else return '<div class="versenyzo-kartya player-card" style="display:none;"></div>';
     }
 
-    if (v === null || v.id === null || v.nev === "") return '<div class="versenyzo-kartya ures-kartya player-card empty-slot"><div class="szines-csik color-strip ' + (o === 'aka' ? 'szines-csik-kek' : 'szines-csik-piros') + '"></div><div class="varakozas-szoveg">Várakozás...</div></div>';
+    if (v === null || v.id === null || v.nev === "") return '<div class="versenyzo-kartya ures-kartya player-card empty-slot" style="padding: 10px; min-height: 85px;"><div class="szines-csik color-strip ' + (o === 'aka' ? 'szines-csik-kek' : 'szines-csik-piros') + '"></div><div class="varakozas-szoveg">Várakozás...</div></div>';
 
-    var h = '<div class="versenyzo-kartya player-card ' + (m.winner && m.winner.id === v.id ? 'gyoztes-kartya winner-card ' : '') + (dragEvents ? ' cursor-grab' : '') + '" ' + katt + dragEvents + '>';
+    var h = '<div class="versenyzo-kartya player-card ' + (m.winner && m.winner.id === v.id ? 'gyoztes-kartya winner-card ' : '') + (dragEvents ? ' cursor-grab' : '') + '" ' + katt + dragEvents + ' style="padding: 10px; min-height: 85px;">';
     h += '<div class="szines-csik color-strip ' + (o === 'shiro' ? 'szines-csik-piros shiro-strip' : 'szines-csik-kek aka-strip') + '"></div>';
 
-    var kiemeltIkon = (String(v.kiemelt) === "1") ? " ⭐" : "";
-    h += '<div class="kartya-belso-tartalom card-content"><div class="kartya-nev card-name" style="color: black !important;">[' + v.id + '] ' + v.nev + kiemeltIkon + '</div><div class="kartya-klub card-details" style="color: #4b5563 !important;">' + (v.klub || '') + '</div></div>';
+    var kiemeltIkon = "";
+    if (String(v.kiemelt) === "1") {
+        kiemeltIkon = " ⚫";
+    } else if (v.klub && v.klub !== "Nincs" && v.klub !== "-") {
+        kiemeltIkon = " ❌";
+    }
+
+    h += '<div class="kartya-belso-tartalom card-content"><div class="kartya-nev card-name" style="color: black !important; font-weight:bold; font-size: 1.1em;">[' + v.id + '] ' + v.nev + kiemeltIkon + '</div><div class="kartya-klub card-details" style="color: #4b5563 !important;">' + (v.klub || '') + '</div></div>';
 
     if (m.scoreAka > 0 || m.scoreShiro > 0 || m.winner || m.kizartId) {
         var pont = (o === 'aka' ? m.scoreAka : m.scoreShiro);
@@ -440,7 +508,7 @@ function keszitKartyat(v, o, m, katt, szerkE) {
             pont = '0';
             csillag = '<sup style="font-size: 1.2em; color: #CE1126; font-weight: 900;">-</sup>';
         }
-        h += '<div class="kartya-pontszam">' + pont + csillag + '</div>';
+        h += '<div class="kartya-pontszam" style="font-size: 1.5em; font-weight: bold;">' + pont + csillag + '</div>';
     }
     h += '</div>'; return h;
 }

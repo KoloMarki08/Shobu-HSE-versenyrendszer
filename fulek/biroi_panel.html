@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TATAMI MASTER Versenyrendszer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <link rel="stylesheet" href="/stilus.css">
 </head>
 
 <body>
@@ -73,17 +72,27 @@
                     <div id="aka-penalties"
                         style="font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
                         Chui: 0 | Genten: 0</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <button onclick="pontszamAdas('aka', 1)"
-                            style="background: #3b82f6; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">WAZA-ARI
-                            (+1)</button>
-                        <button onclick="pontszamAdas('aka', 2)"
-                            style="background: #2563eb; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">IPPON
-                            (+2)</button>
-                        <button onclick="buntetesAdas('aka', 'chui')"
-                            style="background: #ca8a04; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">CHUI</button>
-                        <button onclick="buntetesAdas('aka', 'genten')"
-                            style="background: #dc2626; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">GENTEN</button>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button onclick="pontszamAdas('aka', 1)"
+                                style="background: #3b82f6; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">W
+                                (Wazari)</button>
+                            <button onclick="pontszamAdas('aka', 2)"
+                                style="background: #2563eb; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">I
+                                (Ippon)</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                            <button onclick="buntetesAdas('aka', 'c')"
+                                style="background: #eab308; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">C1/C2
+                                (Chui)</button>
+                            <button onclick="buntetesAdas('aka', 'g1')"
+                                style="background: #f97316; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">G1
+                                (Genten)</button>
+                            <button onclick="buntetesAdas('aka', 'g2')"
+                                style="background: #dc2626; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">G2
+                                (Hansoku)</button>
+                        </div>
                     </div>
                 </div>
 
@@ -101,17 +110,27 @@
                     <div id="shiro-penalties"
                         style="font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px;">
                         Chui: 0 | Genten: 0</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <button onclick="pontszamAdas('shiro', 1)"
-                            style="background: #f43f5e; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">WAZA-ARI
-                            (+1)</button>
-                        <button onclick="pontszamAdas('shiro', 2)"
-                            style="background: #e11d48; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">IPPON
-                            (+2)</button>
-                        <button onclick="buntetesAdas('shiro', 'chui')"
-                            style="background: #ca8a04; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">CHUI</button>
-                        <button onclick="buntetesAdas('shiro', 'genten')"
-                            style="background: #dc2626; color: white; padding: 15px 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">GENTEN</button>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button onclick="pontszamAdas('shiro', 1)"
+                                style="background: #f43f5e; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">W
+                                (Wazari)</button>
+                            <button onclick="pontszamAdas('shiro', 2)"
+                                style="background: #e11d48; color: white; padding: 20px 10px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer;">I
+                                (Ippon)</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                            <button onclick="buntetesAdas('shiro', 'c')"
+                                style="background: #eab308; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">C1/C2
+                                (Chui)</button>
+                            <button onclick="buntetesAdas('shiro', 'g1')"
+                                style="background: #f97316; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">G1
+                                (Genten)</button>
+                            <button onclick="buntetesAdas('shiro', 'g2')"
+                                style="background: #dc2626; color: white; padding: 15px 5px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">G2
+                                (Hansoku)</button>
+                        </div>
                     </div>
                 </div>
             </div>

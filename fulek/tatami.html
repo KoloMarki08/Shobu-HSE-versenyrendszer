@@ -6,12 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TATAMI MASTER Versenyrendszer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <link rel="stylesheet" href="/stilus.css">
 </head>
 
 <body>
     <section id="tab-tatami" class="hidden" style="padding: 20px;">
+        <div style="display: flex; justify-content: flex-end; max-width: 1400px; margin: 0 auto; margin-bottom: 15px;">
+            <button onclick="window.print()"
+                style="background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; font-size: 1rem;">
+                🖨️ Tatami Menetrend Nyomtatása
+            </button>
+        </div>
         <div id="tatami-content" class="flex flex-col items-center gap-10 w-full text-center">
             <p style="color:white; padding:20px;">Válassz egy tatamit a Kategóriák fülön!</p>
         </div>
