@@ -100,7 +100,7 @@ function rajzolVersenyzokListajat() {
     for (var j = 0; j < miketMutassunk.length; j++) {
         var m = miketMutassunk[j];
         var sulySzoveg = m.kategoria.toLowerCase().includes('kata') ? "" : `<span style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:12px; font-weight:bold; margin-left:10px; color:#1a1a1a;">⚖️ ${m.suly || '0.0'} kg</span>`;
-        
+
         htmlGyujto += `<li style="border-bottom: 1px solid #ccc; padding: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
             <span><b>${m.nev}</b> (${m.klub}) ${sulySzoveg}</span>
             <span style="color: #CE1126; font-weight: bold;">${m.kategoria}</span>
@@ -422,14 +422,14 @@ function rajzolKiemelesTablazatot(oszlop) {
 
 function allitKategoriat(versenyzoId, regiKategoriaNev, ujKategoriaNev) {
     if (!confirm("Biztosan áthelyezed ezt a versenyzőt a(z) " + ujKategoriaNev + " kategóriába?")) {
-        rajzolKiemelesTablazatot(utolsoRendezes.oszlop); 
+        rajzolKiemelesTablazatot(utolsoRendezes.oszlop);
         return;
     }
 
     var vIndex = adatok.versenyzok.findIndex(v => String(v.id) === String(versenyzoId) && v.kategoria === regiKategoriaNev);
     if (vIndex !== -1) adatok.versenyzok[vIndex].kategoria = ujKategoriaNev;
 
-    rajzolKiemelesTablazatot(utolsoRendezes.oszlop); 
+    rajzolKiemelesTablazatot(utolsoRendezes.oszlop);
 
     fetch('api.php?akcio=kategoriaModositas', {
         method: 'POST',
@@ -462,14 +462,14 @@ function allitKiemelest(versenyzoId, isChecked) {
 
 function generalSulycsoportokat() {
     if (!confirm("Biztosan automatikusan szétvágod a kategóriákat 10kg-os súlycsoportokra (-50kg, -60kg, stb.)?\nA kis létszámú (2 fő vagy alatti) csoportokat a rendszer automatikusan összevonja a legközelebbi súlycsoporttal!")) return;
-    
+
     var csakKumiteVersenyzok = adatok.versenyzok.filter(v => {
         var katNev = v.kategoria.toLowerCase();
         return !katNev.includes('kata') && !katNev.includes('open');
     });
 
     var katCsoportok = {};
-    
+
     csakKumiteVersenyzok.forEach(v => {
         if (!katCsoportok[v.kategoria]) katCsoportok[v.kategoria] = [];
         katCsoportok[v.kategoria].push(v);
@@ -479,23 +479,23 @@ function generalSulycsoportokat() {
 
     for (var katNev in katCsoportok) {
         var jatekosok = katCsoportok[katNev];
-        if (jatekosok.length <= 2) continue; 
-        
-        var vodrok = {}; 
+        if (jatekosok.length <= 2) continue;
+
+        var vodrok = {};
         jatekosok.forEach(v => {
             var suly = parseFloat(v.suly || 0);
-            if (suly === 0) suly = 50; 
-            
-            var hatar = Math.ceil(suly / 10) * 10; 
-            if (hatar < 30) hatar = 30; 
-            
+            if (suly === 0) suly = 50;
+
+            var hatar = Math.ceil(suly / 10) * 10;
+            if (hatar < 30) hatar = 30;
+
             if (!vodrok[hatar]) vodrok[hatar] = [];
             vodrok[hatar].push(v);
         });
 
         var vodrokTomb = Object.keys(vodrok).map(k => ({ hatar: parseInt(k), versenyzok: vodrok[k] })).sort((a, b) => a.hatar - b.hatar);
 
-        if (vodrokTomb.length <= 1) continue; 
+        if (vodrokTomb.length <= 1) continue;
 
         var voltOsszevonas = true;
         while (voltOsszevonas && vodrokTomb.length > 1) {
@@ -504,9 +504,9 @@ function generalSulycsoportokat() {
                 if (vodrokTomb[i].versenyzok.length <= 2) {
                     var celIndex = -1;
                     if (i === 0) {
-                        celIndex = 1; 
+                        celIndex = 1;
                     } else if (i === vodrokTomb.length - 1) {
-                        celIndex = i - 1; 
+                        celIndex = i - 1;
                     } else {
                         if (vodrokTomb[i - 1].versenyzok.length <= vodrokTomb[i + 1].versenyzok.length) {
                             celIndex = i - 1;
@@ -517,10 +517,10 @@ function generalSulycsoportokat() {
 
                     vodrokTomb[celIndex].versenyzok = vodrokTomb[celIndex].versenyzok.concat(vodrokTomb[i].versenyzok);
                     vodrokTomb[celIndex].hatar = Math.max(vodrokTomb[celIndex].hatar, vodrokTomb[i].hatar);
-                    
+
                     vodrokTomb.splice(i, 1);
                     voltOsszevonas = true;
-                    break; 
+                    break;
                 }
             }
         }
@@ -530,7 +530,7 @@ function generalSulycsoportokat() {
         for (var i = 0; i < vodrokTomb.length; i++) {
             var ujNev = katNev;
             var isLast = (i === vodrokTomb.length - 1);
-            
+
             if (!isLast) {
                 ujNev += " -" + vodrokTomb[i].hatar + "kg";
             } else {
@@ -545,22 +545,27 @@ function generalSulycsoportokat() {
             });
         }
     }
-    
+
     if (payload.kategoriak_uj.length === 0) {
         alert("Nem volt mit szétvágni (vagy a kevés létszám miatt a rendszer automatikusan egyben hagyta őket)!");
         return;
     }
 
+    var erintettKategoriak = [...new Set(payload.kategoriak_uj.map(k => k.regi_nev))];
+    adatok.meccsek = adatok.meccsek.filter(m => !erintettKategoriak.includes(m.kategoria));
+    if (typeof mentsdAzAllapototMySQLbe === "function") mentsdAzAllapototMySQLbe();
+
     fetch('api.php?akcio=automatikusSulycsoportok', {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(r => r.json())
-    .then(d => {
-        alert(d.uzenet);
-        letoltVersenyzoketABazisbol(); 
-        letoltKategoriakatABazisbol(); 
-    })
-    .catch(e => console.error("Hiba a bontáskor:", e));
+        .then(r => r.json())
+        .then(d => {
+            alert(d.uzenet);
+            letoltVersenyzoketABazisbol();
+            letoltKategoriakatABazisbol();
+            letoltAllapotABazisbol();
+        })
+        .catch(e => console.error("Hiba a bontáskor:", e));
 }
