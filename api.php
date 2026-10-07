@@ -59,7 +59,7 @@ if ($akcio === 'kategoriakLekerdezese') {
     echo json_encode($versenyzok);
 
 // -----------------------------------------------------------------------------
-// 3. ÚJ NEVEZÉS RÖGZÍTÉSE (SQL Injection elleni védelemmel)
+// 3. ÚJ NEVEZÉS RÖGZÍTÉSE (Biztonsági szűrés + Súly mentése)
 // -----------------------------------------------------------------------------
 } elseif ($akcio === 'ujNevezes') {
     $k = json_decode(file_get_contents('php://input'), true);
@@ -67,11 +67,13 @@ if ($akcio === 'kategoriakLekerdezese') {
     // XSS szűrés: Eltávolítjuk a HTML tageket a beviteli mezőkből
     $nev = htmlspecialchars(trim($k['nev']), ENT_QUOTES, 'UTF-8');
     $klub = htmlspecialchars(trim($k['klub']), ENT_QUOTES, 'UTF-8');
+    $suly = isset($k['suly']) ? (float)$k['suly'] : 0.0; // SÚLY BEOLVASÁSA
     $katNev = $k['kategoria'];
     $v_id = isset($k['verseny_id']) ? (int)$k['verseny_id'] : 1; 
     
-    $stmt = $kapcsolat->prepare("INSERT INTO versenyzo (nev, egyesulet) VALUES (?, ?)");
-    $stmt->bind_param("ss", $nev, $klub);
+    // SÚLY BESZÚRÁSA AZ ADATBÁZISBA (ssd -> string, string, double)
+    $stmt = $kapcsolat->prepare("INSERT INTO versenyzo (nev, egyesulet, suly) VALUES (?, ?, ?)");
+    $stmt->bind_param("ssd", $nev, $klub, $suly);
     
     if ($stmt->execute()) {
         $versenyzo_id = $stmt->insert_id;
@@ -110,10 +112,8 @@ if ($akcio === 'kategoriakLekerdezese') {
     
     if ($eredmeny && $eredmeny->num_rows > 0) { 
         $user = $eredmeny->fetch_assoc();
-        // Biztonság: Ha a jelszó hash-elve van a DB-ben, a password_verify() csekkolja.
-        // Visszafelé kompatibilitás: Ha egyelőre sima szöveg (pl. "1234"), azt is átengedi.
         if (password_verify($jel, $user['jelszo']) || $user['jelszo'] === $jel) {
-            unset($user['jelszo']); // Soha ne küldjük vissza a jelszót a kliensnek!
+            unset($user['jelszo']); 
             echo json_encode(["sikeres" => true, "felhasznalo" => $user]); 
         } else {
             echo json_encode(["sikeres" => false, "uzenet" => "Hibás felhasználónév vagy jelszó!"]); 
@@ -134,7 +134,7 @@ if ($akcio === 'kategoriakLekerdezese') {
     echo json_encode(["uzenet" => "Adatbázis kiürítve!"]);
 
 // -----------------------------------------------------------------------------
-// EGYÉB FUNKCIÓK (Állapot, Eredmények, stb. - Prepared Statements alkalmazva)
+// EGYÉB FUNKCIÓK
 // -----------------------------------------------------------------------------
 } elseif ($akcio === 'allapotLekerdezese') {
     if (file_exists('allapot.json')) { echo file_get_contents('allapot.json'); } 
@@ -284,7 +284,6 @@ if ($akcio === 'kategoriakLekerdezese') {
         }
         $uStmt->close();
         
-        // Versenyzők átdobása biztonságosan
         $v_ids = implode(",", array_map('intval', $versenyzok));
         $updStmt = $kapcsolat->prepare("UPDATE nevezes SET kategoria_id = ?, kategoria_megnevezes = ? WHERE versenyzo_id IN ($v_ids) AND kategoria_id = ?");
         $updStmt->bind_param("isi", $uj_id, $uj_nev, $regi_id);

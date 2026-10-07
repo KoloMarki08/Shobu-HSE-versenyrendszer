@@ -109,7 +109,7 @@ function rajzolVersenyzokListajat() {
     listaElem.innerHTML = htmlGyujto;
 }
 
-// 4. NEVEZÉS KATEGÓRIA SZŰRŐJE
+// 4. NEVEZÉS KATEGÓRIA SZŰRŐJE ÉS HOZZÁADÁS SÚLLYAL
 function frissitKategoriaLegordulot() {
     var nem = document.getElementById("p-gender").value;
     var kor = parseInt(document.getElementById("p-age").value);
@@ -157,21 +157,30 @@ function frissitKategoriaLegordulot() {
 function hozzaadVersenyzot() {
     if (aktualisFelhasznalo.szerepkor !== "admin" && aktualisFelhasznalo.szerepkor !== "coach") { alert("Nincs jogod ehhez!"); return; }
     var nevDoboz = document.getElementById("p-name");
+    var sulyMezo = document.getElementById("p-weight");
+
     if (nevDoboz.value.trim() === "" || document.getElementById("p-cat").value === "") { alert("Hiányos adatok!"); return; }
 
     var regSel = document.getElementById('p-verseny');
     var v_id = regSel && regSel.value ? regSel.value : AKTIV_VERSENY_ID;
 
+    var sulyErtek = sulyMezo && sulyMezo.value !== "" ? parseFloat(sulyMezo.value) : 0.0;
+
     var ujVersenyzo = {
         nev: nevDoboz.value.trim(),
         klub: document.getElementById("p-dojo").value,
         kategoria: document.getElementById("p-cat").value,
+        suly: sulyErtek,
         verseny_id: v_id
     };
 
     fetch('api.php?akcio=ujNevezes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ujVersenyzo) })
         .then(valasz => valasz.json())
-        .then(() => { letoltVersenyzoketABazisbol(); nevDoboz.value = ""; })
+        .then(() => {
+            letoltVersenyzoketABazisbol();
+            nevDoboz.value = "";
+            if (sulyMezo) sulyMezo.value = "";
+        })
         .catch(hiba => alert("Szerver hiba!"));
 }
 
@@ -338,10 +347,7 @@ function valtoztatNevezesAllapotot() {
     }
 }
 
-// =========================================================================
 // 8. ELŐ-SORSOLÁS (KIEMELÉS, MANUÁLIS TÍPUS ÉS KATEGÓRIA ÁTSOROLÁS)
-// =========================================================================
-
 var utolsoRendezes = { oszlop: 'kategoria', irany: 1 };
 
 function rajzolKiemelesTablazatot(oszlop) {
@@ -456,10 +462,7 @@ function allitKiemelest(versenyzoId, isChecked) {
     });
 }
 
-// =========================================================================
 // 9. AUTOMATIKUS SÚLYCSOPORT GENERÁTOR (Okos szétvágás 10kg-os sávokra)
-// =========================================================================
-
 function generalSulycsoportokat() {
     if (!confirm("Biztosan automatikusan szétvágod a kategóriákat 10kg-os súlycsoportokra (-50kg, -60kg, stb.)?\nA kis létszámú (2 fő vagy alatti) csoportokat a rendszer automatikusan összevonja a legközelebbi súlycsoporttal!")) return;
 
