@@ -328,3 +328,101 @@ body {
 .data-table tr:hover {
     background-color: #f9f9f9;
 }
+
+/* --- BÍRÓI PANEL / EREDMÉNYJELZŐ --- */
+.scoreboard-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 20px;
+    height: 80vh;
+    gap: 20px;
+}
+
+.fighter-card {
+    flex: 1;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.aka-card {
+    background-color: #dc3545;
+    color: white;
+    border: 5px solid #a71d2a;
+}
+
+.shiro-card {
+    background-color: #f8f9fa;
+    color: #111;
+    border: 5px solid #ccc;
+}
+
+.fighter-title {
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.fighter-name {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.score-display {
+    font-size: 8rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+    line-height: 1;
+}
+
+.point-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.point-buttons button {
+    font-size: 1.2rem;
+    padding: 15px 30px;
+}
+
+.center-console {
+    flex: 0.8;
+    background-color: #222;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: white;
+}
+
+.match-info h3 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #aaa;
+}
+
+.timer-display {
+    font-size: 6rem;
+    font-family: monospace;
+    font-weight: bold;
+    color: #ffc107; /* Sárgás szín az órának */
+    margin-bottom: 30px;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.timer-controls button {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+}

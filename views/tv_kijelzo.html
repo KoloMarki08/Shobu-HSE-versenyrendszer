@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatami Master - TV Kijelző</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
+</head>
+<body style="background-color: #111; overflow: hidden;"> <!-- Nincs görgetősáv -->
+    
+    <!-- Csak a színtiszta eredményjelző, gombok nélkül -->
+    <main class="scoreboard-container" style="height: 100vh; padding: 40px;">
+        
+        <!-- PIROS OLDAL (AKA) -->
+        <div class="fighter-card aka-card">
+            <h2 class="fighter-title">AKA (Piros)</h2>
+            <div class="fighter-name" id="tvAkaName">Kovács János</div>
+            <div class="score-display" id="tvAkaScore">0</div>
+        </div>
+
+        <!-- KÖZÉPSŐ SÁV: IDŐMÉRŐ -->
+        <div class="center-console">
+            <div class="match-info">
+                <h3 id="tvMatchInfo" style="font-size: 1.5rem; margin-bottom: 50px;">A Tatami - Döntő</h3>
+            </div>
+            <div class="timer-display" id="tvTimerDisplay" style="font-size: 8rem;">02:00</div>
+        </div>
+
+        <!-- FEHÉR OLDAL (SHIRO) -->
+        <div class="fighter-card shiro-card">
+            <h2 class="fighter-title">SHIRO (Fehér)</h2>
+            <div class="fighter-name" id="tvShiroName" style="color: #333;">Nagy Péter</div>
+            <div class="score-display" id="tvShiroScore" style="color: #333;">0</div>
+        </div>
+    </main>
+
+    <!-- A TV saját kis szkriptje -->
+    <script src="../JS/tv_kijelzo.js"></script>
+</body>
+</html>
