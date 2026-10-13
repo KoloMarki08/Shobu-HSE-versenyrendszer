@@ -1,0 +1,330 @@
+/* Alapbeállítások és betűtípus */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #55555c; /* A képen látható sötétszürke árnyalat */
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Fejléc formázása */
+.top-header {
+    background-color: #111;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    border-bottom: 4px solid #111;
+}
+
+.top-header h1 {
+    font-size: 1.8rem;
+    font-style: italic;
+    letter-spacing: 1px;
+}
+
+.top-header .red-text {
+    color: #dc3545;
+    font-style: normal;
+}
+
+/* Fő elrendezés (Flexbox) */
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    padding: 60px 20px;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+/* --- BAL OLDAL: Versenyek --- */
+.tournaments-section {
+    flex: 1;
+    max-width: 750px;
+}
+
+.tournaments-section h2 {
+    color: white;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.tournament-card {
+    background-color: white;
+    border-radius: 6px;
+    display: flex;
+    padding: 25px;
+    gap: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.tournament-logo {
+    width: 150px;
+    height: auto;
+    border-radius: 4px;
+}
+
+.card-right h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9rem;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.badge-green {
+    background-color: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+
+.organizer {
+    color: #666;
+    font-weight: normal;
+}
+
+/* Gombok */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    background: white;
+    transition: 0.2s;
+}
+
+.btn-outline {
+    border: 1px solid #777;
+    color: #333;
+}
+.btn-outline:hover { background-color: #f4f4f4; }
+
+.btn-outline-blue {
+    border: 1px solid #007bff;
+    color: #007bff;
+}
+.btn-outline-blue:hover { background-color: #007bff; color: white; }
+
+.btn-outline-green {
+    border: 1px solid #28a745;
+    color: #28a745;
+}
+.btn-outline-green:hover { background-color: #28a745; color: white; }
+
+/* --- JOBB OLDAL: Belépés --- */
+.login-section {
+    width: 100%;
+    max-width: 350px;
+}
+
+.login-card {
+    background-color: white;
+    border-radius: 6px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.login-title {
+    text-align: center;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.input-group {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 32px;
+    width: 20px;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.btn-red {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    margin-top: 10px;
+}
+.btn-red:hover { background-color: #c82333; }
+
+.btn-full { width: 100%; }
+
+/* Teszt adatok doboza */
+.test-data-box {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px dashed #b1c7dc;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.test-data-box p {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.test-data-box ul {
+    list-style: none;
+    line-height: 1.6;
+}
+
+/* Lábléc */
+.bottom-footer {
+    background-color: #111;
+    color: #777;
+    text-align: center;
+    padding: 20px;
+    font-size: 0.85rem;
+    margin-top: auto;
+}
+
+.bottom-footer p {
+    margin-bottom: 5px;
+}
+
+/* --- ADMIN PANEL: Fülek (Tabs) dizájn --- */
+.admin-container {
+    padding: 30px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex: 1;
+}
+
+.tabs {
+    display: flex;
+    background-color: #222;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.tab-button {
+    background-color: inherit;
+    color: #ccc;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 24px;
+    transition: 0.3s;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.tab-button:hover {
+    background-color: #444;
+    color: white;
+}
+
+.tab-button.active {
+    background-color: white;
+    color: #dc3545; /* A piros színed */
+    border-top: 3px solid #dc3545;
+}
+
+.tab-content {
+    display: none;
+    padding: 30px;
+    background-color: white;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    min-height: 400px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content h2 {
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* --- ADMIN PANEL: Táblázatok és Űrlapok --- */
+.add-form-container {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    border: 1px solid #ddd;
+}
+
+.input-field {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: bold;
+}
+
+.data-table tr:hover {
+    background-color: #f9f9f9;
+}

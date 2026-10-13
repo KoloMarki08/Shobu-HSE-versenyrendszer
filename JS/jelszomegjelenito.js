@@ -1,15 +1,11 @@
-function jelszomegjelenito() {
-    var passinput = document.getElementById("login-pass");
-    var eyeicon = document.getElementById("eye-icon");
-
-
-    if (passinput.getAttribute("type") == "password") {
-        passinput.setAttribute("type", "text");
-        eyeicon.src="eye-fill.svg"
+document.getElementById('togglePassword').onclick = function () {
+    const passwordInput = document.getElementById('password');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        this.src = 'eye-slash-fill.svg';
+    } else {
+        passwordInput.type = 'password';
+        this.src = 'eye-fill.svg';
     }
-
-    else {
-        passinput.setAttribute("type", "password");
-        eyeicon.src="eye-slash-fill.svg"
-    }
-}
+};
