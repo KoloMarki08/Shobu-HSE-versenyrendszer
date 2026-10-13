@@ -1,16 +1,69 @@
 @HostAddress = https://localhost:7045
 
-### Összes kategória lekérése
-GET {{HostAddress}}/api/Categories
-
-### Új kategória létrehozása
-POST {{HostAddress}}/api/Categories
+### 1. VERSENY FELTÖLTÉSE[cite: 1]
+POST {{HostAddress}}/api/Tournaments
 Content-Type: application/json
 
 {
-  "name": "Junior Fiú Kata",
-  "matchType": "Kata",
-  "gender": "Boys",
-  "minAge": 14,
-  "maxAge": 15
+  "name": "V. Halas Kupa",
+  "date": "2026-10-10T00:00:00",
+  "status": "ÉLŐ / NYITVA",
+  "organizer": "Vácrátóti HSE - Tornai Bálint"
 }
+
+### 2. ADMIN FELHASZNÁLÓ FELTÖLTÉSE[cite: 1]
+POST {{HostAddress}}/api/Users
+Content-Type: application/json
+
+{
+  "username": "KoloMarki",
+  "password": "1234",
+  "role": "Admin"
+}
+
+### 3. ASZTALBÍRÓ FELHASZNÁLÓ FELTÖLTÉSE[cite: 1]
+POST {{HostAddress}}/api/Users
+Content-Type: application/json
+
+{
+  "username": "A tatami",
+  "password": "A-tatami",
+  "role": "Referee"
+}
+
+### 4. EDZŐ FELHASZNÁLÓ FELTÖLTÉSE[cite: 1]
+POST {{HostAddress}}/api/Users
+Content-Type: application/json
+
+{
+  "username": "Balint.Tornai",
+  "password": "1234",
+  "role": "Coach"
+}
+
+### 5. TATAMIK FELTÖLTÉSE (A, B, C)
+POST {{HostAddress}}/api/Tatamis
+Content-Type: application/json
+
+{
+  "name": "A tatami"
+}
+
+###
+POST {{HostAddress}}/api/Tatamis
+Content-Type: application/json
+
+{
+  "name": "B tatami"
+}
+
+###
+POST {{HostAddress}}/api/Tatamis
+Content-Type: application/json
+
+{
+  "name": "C tatami"
+}
+### 4. Kategória TÖRLÉSE (DELETE)
+# Írd át a link végén a 2-est a törlendő kategória ID-jára!
+DELETE {{HostAddress}}/api/Competitors/1
