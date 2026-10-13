@@ -1,6 +1,16 @@
-@Versenyrendszer_HostAddress = http://localhost:5008
+@HostAddress = https://localhost:7045
 
-GET {{Versenyrendszer_HostAddress}}/weatherforecast/
-Accept: application/json
+### Összes kategória lekérése
+GET {{HostAddress}}/api/Categories
 
-###
+### Új kategória létrehozása
+POST {{HostAddress}}/api/Categories
+Content-Type: application/json
+
+{
+  "name": "Junior Fiú Kata",
+  "matchType": "Kata",
+  "gender": "Boys",
+  "minAge": 14,
+  "maxAge": 15
+}

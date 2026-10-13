@@ -34,5 +34,54 @@ namespace Versenyrendszer.Controllers
 
             return Ok(competitor);
         }
+
+        // PUT: api/Competitors/5
+        // Egy létező versenyző adatainak módosítása
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCompetitor(int id, Competitor competitor)
+        {
+            // Ellenőrizzük, hogy a linkben lévő ID megegyezik-e a beküldött adat ID-jával
+            if (id != competitor.Id)
+            {
+                return BadRequest("A megadott ID nem egyezik a versenyző ID-jával.");
+            }
+
+            _context.Entry(competitor).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Competitors.Any(e => e.Id == id))
+                {
+                    return NotFound("A versenyző nem található.");
+                }
+                else
+                {
+                    throw; // Ha más hiba van, dobjuk tovább
+                }
+            }
+
+            return NoContent(); // 204 No Content: Sikeres frissítés, nem küldünk vissza extra adatot
+        }
+
+        // DELETE: api/Competitors/5
+        // Versenyző törlése az adatbázisból
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCompetitor(int id)
+        {
+            var competitor = await _context.Competitors.FindAsync(id);
+            if (competitor == null)
+            {
+                return NotFound("A versenyző nem található.");
+            }
+
+            _context.Competitors.Remove(competitor);
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // 204 No Content: Sikeres törlés
+        }
     }
 }
