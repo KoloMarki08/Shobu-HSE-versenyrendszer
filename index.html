@@ -1,125 +1,88 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATAMI MASTER Versenyrendszer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <title>Tatami Master - Versenyrendszer</title>
+    <!-- A stíluslapod bekötése -->
+    <link rel="stylesheet" href="CSS/stilus.css">
 </head>
+<body>
+    <!-- Felső fekete sáv -->
+    <header class="top-header">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">VERSENYRENDSZER</span></h1>
+    </header>
 
-<body class="oldal-alap-hattere">
-
-    <nav class="felso-menusor">
-        <div class="menu-tartalom">
-            <div class="logonk">
-                <span class="logo-szoveg">TATAMI MASTER <span class="piros-kiemeles">Versenyrendszer</span></span>
-            </div>
-        </div>
-    </nav>
-
-    <div class="kezdolap-tarolo">
-        <div class="kezdolap-bal-oldal">
-            <h2 class="szekcio-cim" style="color:white; border-color:#CE1126;">Versenyek és Nevezés</h2>
-
-            <div id="verseny-kartyak-taroloja">
-                <p style="color: white; font-style: italic;">Versenyek betöltése folyamatban...</p>
-            </div>
-        </div>
-
-        <div class="kezdolap-jobb-oldal">
-            <div class="belepes-doboz-tarolo">
-                <div class="belepes-fejlec">Szervezői / Bírói Belépés</div>
-                <div class="belepes-doboz">
-                    <label class="urlap-cimke">Felhasználónév</label>
-                    <input id="login-user" type="text" class="belepes-szovegdoboz">
-                    <label class="urlap-cimke">Jelszó</label>
-                    <div class="jelszo-tarolo">
-                        <input id="login-pass" type="password" class="belepes-szovegdoboz">
-                        <button class="JeszomegjelenitoGomb" onclick="jelszomegjelenito()">
-                            <img id="eye-icon" src="eye-slash-fill.svg"></img>
-                        </button>
+    <!-- Fő tartalom (Szürke háttéren) -->
+    <main class="main-container">
+        
+        <!-- Bal oldal: Versenyek és Nevezés -->
+        <section class="tournaments-section">
+            <h2>Versenyek és Nevezés</h2>
+            
+            <div class="tournament-card">
+                <div class="card-left">
+                    <!-- Ide jön a logód a gyökérkönyvtárból -->
+                    <img src="logo.jpg" alt="Shobu HSE Logo" class="tournament-logo">
+                </div>
+                <div class="card-right">
+                    <h3>V. Halas Kupa, 2026-10-10</h3>
+                    <div class="status-row">
+                        <span class="badge badge-green">ÉLŐ / NYITVA</span>
+                        <span class="date">2026-10-10</span>
+                        <span class="organizer">Rendező Dojo és Vezetője: Vácrátóti HSE - Tornai Bálint</span>
                     </div>
-                    <button onclick="bejelentkezesKezdolaprol()" class="piros-belepes-gomb">Belépés a
-                        rendszerbe</button>
-                    <div class="jelszo-emlekezteto-doboz"><b>TESZT ADATOK:</b><br><br>Admin: <b>KoloMarki</b> /
-                        1234<br>Bíró: <b>A tatami</b> / A-tatami<br>Edző: <b>Balint.Tornai</b> / 1234</div>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline" onclick="window.location.href='views/audience.html'">Közönség panel</button>
+                        <button class="btn btn-outline-blue" onclick="window.location.href='views/eredmenyek.html'">Eredmények</button>
+                        <button class="btn btn-outline-green" onclick="window.location.href='views/nevezes.html'">Nevezés</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <footer class="lablec-tarolo">
-        <div class="lablec-also-sav">
-            <p>&copy; 2026 SHOBU HSE. Minden jog fenntartva.</p>
-            <p>A rendszer még nem teljesen fejlett, de folyamatosan fejlesztés alatt van. Készítette:
-                <a href="https://www.instagram.com/kolomarki/" target="_blank">Kolonics Márk</a>
-            </p>
-        </div>
+        <!-- Jobb oldal: Belépés panel -->
+        <section class="login-section">
+            <div class="login-card">
+                <h3 class="login-title">SZERVEZŐI / BÍRÓI BELÉPÉS</h3>
+                
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label for="username">Felhasználónév</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    
+                    <div class="input-group password-group">
+                        <label for="password">Jelszó</label>
+                        <input type="password" id="password" required>
+                        <!-- A jelszó láthatóságát kapcsoló ikon (SVG) -->
+                        <img src="eye-fill.svg" alt="Mutat" class="toggle-password" id="togglePassword">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-red btn-full">Belépés a rendszerbe</button>
+                </form>
+
+                <div class="test-data-box">
+                    <p>TESZT ADATOK:</p>
+                    <ul>
+                        <li>Admin: <strong>KoloMarki</strong> / 1234</li>
+                        <li>Bíró: <strong>A tatami</strong> / A-tatami</li>
+                        <li>Edző: <strong>Balint.Tornai</strong> / 1234</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Alsó lábléc -->
+    <footer class="bottom-footer">
+        <p>© 2026 SHOBU HSE. Minden jog fenntartva.</p>
+        <p>A rendszer még nem teljesen fejlett, de folyamatosan fejlesztés alatt van. Készítette: Kolonics Márk</p>
     </footer>
 
-    <script src="data.js"></script>
-    <script src="auth.js"></script>
-    <script src="jelszomegjelenito.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch('api.php?akcio=versenyekLekerdezese')
-                .then(res => res.json())
-                .then(versenyek => {
-                    var tarolo = document.getElementById('verseny-kartyak-taroloja');
-                    tarolo.innerHTML = "";
-
-                    if (versenyek.length === 0) {
-                        tarolo.innerHTML = "<p style='color:white;'>Jelenleg nincsenek meghirdetett versenyek a rendszerben.</p>";
-                        return;
-                    }
-
-                    versenyek.forEach(v => {
-                        var nyitvaE = String(v.nevezes_lezarva) === "0";
-
-                        // A te eredeti címke dizájnjaid
-                        var cimkeHtml = nyitvaE
-                            ? '<span class="cimke-nyitva">ÉLŐ / NYITVA</span>'
-                            : '<span class="cimke-zarva">LEZÁRVA</span>';
-
-                        // A nevezés gomb elrejtése, ha le van zárva
-                        var nevezesGombHtml = nyitvaE
-                            ? '<button onclick="document.getElementById(\'login-user\').focus()" class="esemeny-gomb nevezes-gomb">Nevezés</button>'
-                            : '';
-
-                        // EZ ITT MILLIMÉTERRE PONTOSAN A TE HTML-ED
-                        var kartya = `
-                            <div class="esemeny-kartya">
-                                <div class="esemeny-kep-helye">
-                                    <img src="teszt_1.jpg" alt="${v.nev}" title="${v.nev}">
-                                </div>
-                                <div class="esemeny-adatok">
-                                    <h3 class="esemeny-cime">${v.nev}, ${v.datum}</h3>
-                                    <div class="esemeny-idopont">
-                                        ${cimkeHtml}
-                                        <span class="idopont-szoveg">${v.datum}</span>
-                                        <div><span class="rendezo-szoveg">Rendező Dojo és Vezetője:<b> Vácrátóti HSE - Tornai Bálint</b></span></div>
-                                    </div>
-                                    <div class="esemeny-gombok-taroloja">
-                                        <button onclick="belepesKozonsegkent('kategoriak')" class="esemeny-gomb kozonseg-gomb">Közönség panel</button>
-                                        <button onclick="belepesKozonsegkent('eredmenyek')" class="esemeny-gomb eredmeny-gomb">Eredmények</button>
-                                        ${nevezesGombHtml}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        tarolo.innerHTML += kartya;
-                    });
-                })
-                .catch(err => {
-                    console.error(err);
-                    document.getElementById('verseny-kartyak-taroloja').innerHTML = "<p style='color:#ef4444;'>Hiba az adatok betöltésekor! Ellenőrizd a szervert.</p>";
-                });
-        });
-    </script>
+    <!-- A JavaScript fájljaid bekötése -->
+    <script src="JS/jelszomegjelenito.js"></script>
+    <script src="JS/login.js"></script>
 </body>
-
 </html>
