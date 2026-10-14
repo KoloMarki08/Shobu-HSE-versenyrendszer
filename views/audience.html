@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatami Master - Élő Követés & Ágrajzok</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
+</head>
+<body>
+    <header class="top-header">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">ÉLŐ KÖVETÉS & ÁGRAJZOK</span></h1>
+        <button class="btn btn-outline" style="position: absolute; right: 20px; top: 15px;" onclick="window.location.href='../index.html'">Vissza a főoldalra</button>
+    </header>
+
+    <main class="admin-container">
+        <h2 style="margin-bottom: 15px;">🥋 Élő Tatami Beosztás (Most küzd & Felkészül)</h2>
+        <div id="audienceTatamiGrid" class="tatami-grid">
+            <p>Tatamik állásának betöltése...</p>
+        </div>
+
+        <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2>🏆 Kategóriák Ágrajzai és Eredményei</h2>
+                <select id="audienceKategoriaSelect" class="input-field" style="max-width: 320px;" onchange="audienceAgrajzFrissites()"></select>
+            </div>
+            <div id="audienceBracketContainer"></div>
+        </div>
+    </main>
+
+    <script src="../JS/core.js"></script>
+    <script src="../JS/audience.js"></script>
+</body>
+</html>

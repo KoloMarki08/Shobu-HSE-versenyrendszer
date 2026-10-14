@@ -3,60 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Vezérlőpult</title>
+    <title>Tatami Master - Asztalbírói Vezérlőpult</title>
     <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
 <body style="background-color: #333;"> 
     
-    <header class="top-header">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">VEZÉRLŐPULT</span></h1>
+    <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">ASZTALBÍRÓI VEZÉRLŐ</span></h1>
         
-        <!-- TV megnyitása gomb -->
-        <button class="btn btn-outline-blue" style="position: absolute; right: 150px; top: 15px; font-weight: bold; background: white;" onclick="window.open('tv_kijelzo.html', '_blank')">📺 TV Kijelző Megnyitása</button>
-        
-        <button class="btn btn-outline" style="position: absolute; right: 20px; top: 15px; color: white; border-color: white;" onclick="window.location.href='../index.html'">Kijelentkezés</button>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <!-- TATAMI VÁLASZTÓ (Asztalbíró fixálja a saját küzdőterét) -->
+            <div style="background: #222; padding: 6px 12px; border-radius: 6px; border: 2px solid #ffc107;">
+                <label style="color: #ffc107; font-weight: bold; margin-right: 8px;">📍 Saját Tatami:</label>
+                <select id="tatamiValaszto" style="padding: 5px 10px; font-weight: bold; font-size: 1rem; border-radius: 4px;" onchange="tatamiKivalasztva()">
+                    <option value="">-- Válassz Tatamit! --</option>
+                </select>
+            </div>
+
+            <button class="btn btn-outline-blue" style="font-weight: bold; background: white;" onclick="window.open('tv_kijelzo.html', '_blank')">📺 TV Kijelző Megnyitása</button>
+            <button class="btn btn-outline" style="color: white; border-color: white;" onclick="window.location.href='../index.html'">Kijelentkezés</button>
+        </div>
     </header>
+
+    <!-- Állapotsáv: Aktuális és Következő (Felkészül) mérkőzés automatikus kijelzése -->
+    <div style="background: #1a1a1a; color: white; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #444;">
+        <div>
+            <span style="background: #dc3545; padding: 4px 8px; border-radius: 4px; font-weight: bold; margin-right: 8px;">MOST KÖVETKEZIK:</span>
+            <strong id="soronKovetkezoText" style="font-size: 1.1rem; color: #ffc107;">Először válaszd ki a tatamidat a jobb felső sarokban!</strong>
+        </div>
+        <div style="color: #bbb; font-size: 0.95rem;">
+            <span style="background: #ffc107; color: #111; padding: 3px 7px; border-radius: 4px; font-weight: bold; margin-right: 6px;">FELKÉSZÜL:</span>
+            <span id="felkeszulText">-</span>
+        </div>
+    </div>
 
     <main class="scoreboard-container" style="height: auto;">
         
         <!-- PIROS OLDAL (AKA) VEZÉRLŐ -->
         <div class="fighter-card aka-card">
-            <h2 class="fighter-title">AKA Vezérlő</h2>
-            <div class="score-display" id="akaScore">0</div>
+            <h2 class="fighter-title">AKA (Piros)</h2>
+            <div class="fighter-name" id="akaName">Várakozás...</div>
+            <div class="score-display" id="akaScore" style="font-size: 5.5rem; margin-bottom: 10px;">0</div>
             
-            <div class="point-buttons">
-                <button class="btn btn-outline" style="background: white; color: black;" onclick="addPoint('aka', 'waza-ari')">+ Waza-ari (1)</button>
-                <button class="btn btn-outline" style="background: white; color: black;" onclick="addPoint('aka', 'ippon')">+ Ippon (2)</button>
+            <div class="penalty-container">
+                <div class="penalty-box chui-box">CHUI (max 2): <span id="akaChui">0</span></div>
+                <div class="penalty-box genten-box">GENTEN (max 1): <span id="akaGenten">0</span></div>
             </div>
-            <button class="btn btn-outline" style="margin-top: 15px; border-color: white; color: white;" onclick="resetPoint('aka')">Pontok törlése</button>
+
+            <div class="point-buttons" style="flex-wrap: wrap; justify-content: center;">
+                <button class="btn btn-outline" style="background: white; color: black;" onclick="addPoint('aka', 'waza-ari')">+ Waza-ari (1)</button>
+                <button class="btn btn-outline" style="background: white; color: black;" onclick="addPoint('aka', 'ippon')">+ Egyből Ippon (2)</button>
+                <button class="btn btn-outline" style="background: #ffcccc; color: #900; border: none; padding: 10px 14px;" title="1 pont levonása" onclick="removePoint('aka')">-1 Pont</button>
+            </div>
+
+            <div class="penalty-buttons" style="flex-wrap: wrap; justify-content: center;">
+                <button class="btn btn-outline" style="background: #ffc107; color: black; border: none;" onclick="addPenalty('aka', 'chui')">+ Chui</button>
+                <button class="btn btn-outline" style="background: #ffe8a1; color: #333; border: none; padding: 10px;" onclick="removePenalty('aka', 'chui')">- Chui</button>
+                <button class="btn btn-outline" style="background: #222; color: white; border-color: #ffc107;" onclick="addPenalty('aka', 'genten')">+ Genten</button>
+                <button class="btn btn-outline" style="background: #444; color: #ccc; border: none; padding: 10px;" onclick="removePenalty('aka', 'genten')">- Genten</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button class="btn btn-outline" style="background: #6c757d; color: white; border: none;" onclick="kikenGyoztes('shiro', 'AKA nem jelent meg / feladta')">🏳️ Feladta / Kiken</button>
+                <button class="btn btn-outline" style="border-color: white; color: white;" onclick="resetFighter('aka')">Nullázás</button>
+            </div>
         </div>
 
-        <!-- IDŐMÉRŐ VEZÉRLŐ -->
+        <!-- KÖZÉPSŐ KONZOL: AUTOMATIKUS MECCSADAGOLÓ, KUMITE ÓRA / KATA BEÜTŐ ÉS MENTÉS -->
         <div class="center-console">
-            <h3>Időmérő</h3>
-            <div class="timer-display" id="timerDisplay">02:00</div>
-            
-            <div class="timer-controls">
-                <button class="btn btn-outline-green" onclick="startTimer()">Start</button>
-                <button class="btn btn-outline" style="background-color: #dc3545; color: white; border: none;" onclick="stopTimer()">Stop</button>
-                <button class="btn btn-outline-blue" onclick="resetTimer()">Reset</button>
+            <div class="match-info">
+                <h3 id="matchInfoText" style="color: #ffc107; margin-bottom: 8px; font-size: 1.4rem;">Nincs aktív mérkőzés</h3>
+                <div id="winTypeBadge" style="background: #28a745; color: white; padding: 5px 12px; border-radius: 4px; font-weight: bold; display: none; margin-bottom: 10px;"></div>
             </div>
+
+            <!-- KUMITE IDŐMÉRŐ SZEKCIÓ -->
+            <div id="kumiteVezerloSzekcio" style="text-align: center; width: 100%;">
+                <div class="timer-display" id="timerDisplay" style="font-size: 5rem; margin-bottom: 15px;">02:00</div>
+                <div class="timer-controls" style="margin-bottom: 15px; flex-wrap: wrap; justify-content: center;">
+                    <button class="btn btn-outline-green" onclick="startTimer()">Start</button>
+                    <button class="btn btn-outline" style="background-color: #dc3545; color: white; border: none;" onclick="stopTimer()">Stop</button>
+                    <button class="btn btn-outline-blue" onclick="resetTimer(120)">Alapidő (2:00)</button>
+                    <button class="btn btn-outline" style="background-color: #ffc107; color: #111; border: none; font-weight: bold;" onclick="resetTimer(60)">+ Hosszabbítás (1:00)</button>
+                </div>
+                <!-- KÖZPONTI VISSZAVONÁS (UNDO) GOMB -->
+                <div style="margin-bottom: 15px;">
+                    <button id="undoBtn" class="btn btn-outline" style="width: 100%; background: #ff9800; color: #111; border: none; font-weight: bold; padding: 10px;" onclick="visszavonas()" disabled>
+                        ↩ Utolsó pont / büntetés visszavonása (Undo)
+                    </button>
+                </div>
+
+                <!-- Győzelem jogcímének (módjának) kiválasztója / visszajelzője -->
+                <div style="background: #1a1a1a; padding: 10px; border-radius: 6px; border: 1px solid #444; margin-bottom: 15px; text-align: left;">
+                    <label style="font-size: 0.85rem; color: #ffc107; font-weight: bold; display: block; margin-bottom: 5px;">🏆 Győzelem módja (Automatikusan beállítódik, de módosítható):</label>
+                    <select id="gyozelemModSelect" class="input-field" style="width: 100%; font-weight: bold;">
+                        <option value="HANTEI">HAN - Bírói döntés (Döntetlen / Hantei)</option>
+                        <option value="WAZAARI">WAZ - 1x Waza-ari előny</option>
+                        <option value="AWASETE">AWA - 2x Waza-ari (Awasete Ippon)</option>
+                        <option value="IPPON">IPP - Egyből Ippon (Teljes értékű)</option>
+                        <option value="SIKAKU">SIK - Leléptetés (2 Genten / Kizárás)</option>
+                        <option value="KIKEN">KIK - Nem jelent meg / Feladta</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- KATA GYORSBEÜTŐ SZEKCIÓ (2 számjegy = automatikus tizedespont + ugrás a következőre!) -->
+            <div id="kataVezerloSzekcio" style="display: none; text-align: center; width: 100%; margin-bottom: 20px; background: #1a1a1a; padding: 18px; border-radius: 8px; border: 2px solid #ffc107;">
+                <h4 style="color: #ffc107; margin: 0 0 6px 0;">🥋 KATA Gyorspontozás (5 Bíró)</h4>
+                <small style="color: #aaa; display: block; margin-bottom: 12px;">💡 Csak írj be 2 számjegyet (pl. <strong>75</strong> ➔ <strong>7.5</strong>), és a kurzor automatikusan átugrik a következő bíróra!</small>
+                
+                <div class="kata-judges-row">
+                    <div>
+                        <small style="color: #ffc107; display: block; font-weight: bold;">B1 (Vezető)</small>
+                        <input type="text" inputmode="numeric" class="kata-score-input" id="kataJudge0" placeholder="0.0" oninput="kataGyorsBevitel(this, 0)" onkeydown="kataBillentyuKezelo(event, 0)">
+                    </div>
+                    <div>
+                        <small style="color: #ccc; display: block;">B2</small>
+                        <input type="text" inputmode="numeric" class="kata-score-input" id="kataJudge1" placeholder="0.0" oninput="kataGyorsBevitel(this, 1)" onkeydown="kataBillentyuKezelo(event, 1)">
+                    </div>
+                    <div>
+                        <small style="color: #ccc; display: block;">B3</small>
+                        <input type="text" inputmode="numeric" class="kata-score-input" id="kataJudge2" placeholder="0.0" oninput="kataGyorsBevitel(this, 2)" onkeydown="kataBillentyuKezelo(event, 2)">
+                    </div>
+                    <div>
+                        <small style="color: #ccc; display: block;">B4</small>
+                        <input type="text" inputmode="numeric" class="kata-score-input" id="kataJudge3" placeholder="0.0" oninput="kataGyorsBevitel(this, 3)" onkeydown="kataBillentyuKezelo(event, 3)">
+                    </div>
+                    <div>
+                        <small style="color: #ccc; display: block;">B5</small>
+                        <input type="text" inputmode="numeric" class="kata-score-input" id="kataJudge4" placeholder="0.0" oninput="kataGyorsBevitel(this, 4)" onkeydown="kataBillentyuKezelo(event, 4)">
+                    </div>
+                </div>
+
+                <div id="kataTieBreakInfo" style="color: #ccc; font-size: 0.95rem; margin-top: 10px;">
+                    Írd be az 5 bíró pontszámát!
+                </div>
+            </div>
+
+            <!-- Mentés és Automatikus ugrás a tatami következő meccsére -->
+            <button id="mentesGomb" class="btn btn-outline-green" style="width: 100%; padding: 15px; font-size: 1.15rem; font-weight: bold;" onclick="meccsMentese()">
+                💾 Mérkőzés Lezárása & Következő Meccs Betöltése ➔
+            </button>
+
+            <!-- Ha manuálisan mégis bele kellene nyúlni a tatami meccseibe -->
+            <details style="width: 100%; margin-top: 12px; color: #aaa; font-size: 0.85rem; cursor: pointer;">
+                <summary>Kézi mérkőzésválasztás ezen a tatamin (opcionális)</summary>
+                <select id="meccsValaszto" class="input-field" style="width: 100%; margin-top: 6px; font-size: 0.9rem;" onchange="meccsKivalasztva(this.value)"></select>
+            </details>
         </div>
 
         <!-- FEHÉR OLDAL (SHIRO) VEZÉRLŐ -->
         <div class="fighter-card shiro-card">
-            <h2 class="fighter-title">SHIRO Vezérlő</h2>
-            <div class="score-display" id="shiroScore" style="color: #333;">0</div>
+            <h2 class="fighter-title">SHIRO (Fehér)</h2>
+            <div class="fighter-name" id="shiroName" style="color: #333;">Várakozás...</div>
+            <div class="score-display" id="shiroScore" style="color: #333; font-size: 5.5rem; margin-bottom: 10px;">0</div>
             
-            <div class="point-buttons">
-                <button class="btn btn-outline" style="background-color: #333; color: white;" onclick="addPoint('shiro', 'waza-ari')">+ Waza-ari (1)</button>
-                <button class="btn btn-outline" style="background-color: #333; color: white;" onclick="addPoint('shiro', 'ippon')">+ Ippon (2)</button>
+            <div class="penalty-container">
+                <div class="penalty-box chui-box">CHUI (max 2): <span id="shiroChui">0</span></div>
+                <div class="penalty-box genten-box">GENTEN (max 1): <span id="shiroGenten">0</span></div>
             </div>
-            <button class="btn btn-outline" style="margin-top: 15px; border-color: #333; color: #333;" onclick="resetPoint('shiro')">Pontok törlése</button>
+
+            <div class="point-buttons" style="flex-wrap: wrap; justify-content: center;">
+                <button class="btn btn-outline" style="background-color: #333; color: white;" onclick="addPoint('shiro', 'waza-ari')">+ Waza-ari (1)</button>
+                <button class="btn btn-outline" style="background-color: #333; color: white;" onclick="addPoint('shiro', 'ippon')">+ Egyből Ippon (2)</button>
+                <button class="btn btn-outline" style="background: #ffcccc; color: #900; border: none; padding: 10px 14px;" title="1 pont levonása" onclick="removePoint('shiro')">-1 Pont</button>
+            </div>
+
+            <div class="penalty-buttons" style="flex-wrap: wrap; justify-content: center;">
+                <button class="btn btn-outline" style="background: #ffc107; color: black; border: none;" onclick="addPenalty('shiro', 'chui')">+ Chui</button>
+                <button class="btn btn-outline" style="background: #ffe8a1; color: #333; border: none; padding: 10px;" onclick="removePenalty('shiro', 'chui')">- Chui</button>
+                <button class="btn btn-outline" style="background: #222; color: white; border-color: #ffc107;" onclick="addPenalty('shiro', 'genten')">+ Genten</button>
+                <button class="btn btn-outline" style="background: #444; color: #ccc; border: none; padding: 10px;" onclick="removePenalty('shiro', 'genten')">- Genten</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button class="btn btn-outline" style="background: #6c757d; color: white; border: none;" onclick="kikenGyoztes('aka', 'SHIRO nem jelent meg / feladta')">🏳️ Feladta / Kiken</button>
+                <button class="btn btn-outline" style="border-color: #333; color: #333;" onclick="resetFighter('shiro')">Nullázás</button>
+            </div>
         </div>
 
     </main>
 
+    <script src="../JS/core.js"></script>
     <script src="../JS/biroi_panel.js"></script>
 </body>
 </html>
