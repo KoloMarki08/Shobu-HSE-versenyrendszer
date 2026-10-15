@@ -11,6 +11,9 @@ let shiroGenten = 0;
 let aktualisGyozelemMod = 'HANTEI';
 let kenyszeritettGyoztesId = null;
 
+// Verem-memória a lépések visszavonásához (Undo)
+let undoStack = [];
+
 let akaKataAdatok = { pontok: [], minIdx: -1, maxIdx: -1 };
 let aktualisMod = 'KUMITE';
 
@@ -27,7 +30,6 @@ let meccsInfoSzoveg = "Nincs kiválasztott tatami";
 
 window.onload = async function() {
     await tatamikBetolteseBironak();
-    // Ha már korábban kiválasztotta a tatamiját ezen a gépen, automatikusan visszaállítjuk!
     const mentettTatami = localStorage.getItem('biroSajatTatamiId');
     if (mentettTatami) {
         document.getElementById('tatamiValaszto').value = mentettTatami;
@@ -58,7 +60,6 @@ function tatamiKivalasztva() {
     tatamiMeccseinekBetoltese(true);
 }
 
-// Lekéri a tatami meccseit, és automatikusan betölti a soron következőt!
 function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
     if (!kivalasztottTatamiId) return;
 
@@ -68,7 +69,6 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
         fetch('https://localhost:7045/api/Categories').then(r => r.json()),
         fetch('https://localhost:7045/api/Tatamis').then(r => r.json())
     ]).then(([meccsek, versenyzok, kategoriak, tatamik]) => {
-        // Csak a bíró saját tatamijának meccseit szűrjük le, sorrendben!
         let sajatMeccsek = meccsek.filter(m => m.tatamiId === kivalasztottTatamiId)
                                   .sort((a, b) => a.matchOrder - b.matchOrder);
 
@@ -83,14 +83,15 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
 
             m.matchType = (k && k.matchType) ? k.matchType.toUpperCase() : 'KUMITE';
 
-            // Kumiténél 2 küzdő kell (erőnyerőt átugorjuk), Katánál 1 küzdő kell
             if (m.matchType === 'KUMITE' && (!m.competitor1Id || !m.competitor2Id)) continue;
             if (m.matchType === 'KATA' && !m.competitor1Id) continue;
 
             m.akaNev = v1 ? (v1.name + " (" + v1.club + ")") : ("Versenyző #" + m.competitor1Id);
             m.shiroNev = v2 ? (v2.name + " (" + v2.club + ")") : "";
             m.tatamiNev = t ? t.name : ("Tatami " + m.tatamiId);
-            m.katNev = k ? k.name : ("Kat. " + m.categoryId);
+            
+            let isDontoKata = (m.matchType === 'KATA' && TatamiMaster.isKataDontoMeccs(m.id));
+            m.katNev = (k ? k.name : ("Kat. " + m.categoryId)) + (isDontoKata ? " [TOP 6 DÖNTŐ]" : "");
 
             ervenyesMeccsek.push(m);
 
@@ -102,7 +103,6 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
         merkozesekLista = ervenyesMeccsek;
         document.getElementById('meccsValaszto').innerHTML = selectHtml;
 
-        // Megkeressük a tatamin a soron következő (még le nem zárt) és a felkészülő meccset!
         let varakozok = ervenyesMeccsek.filter(m => !m.isFinished);
         let kovetkezo = varakozok[0] || null;
         let felkeszul = varakozok[1] || null;
@@ -123,10 +123,11 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
             document.getElementById('felkeszulText').innerText = "Nincs több várakozó mérkőzés.";
         }
 
-        // Automatikusan betöltjük a soron következő mérkőzést!
         if (autoToltKovetkezot && kovetkezo) {
             document.getElementById('meccsValaszto').value = kovetkezo.id;
             meccsKivalasztva(kovetkezo.id);
+        } else {
+            frissitKijelzo();
         }
     });
 }
@@ -162,8 +163,6 @@ function meccsKivalasztva(idParam) {
 
     resetFighter('aka');
     resetFighter('shiro');
-    kenyszeritettGyoztesId = null;
-    beallitGyozelemMod('HANTEI', '');
 
     for (let i = 0; i < 5; i++) {
         let inp = document.getElementById('kataJudge' + i);
@@ -171,7 +170,6 @@ function meccsKivalasztva(idParam) {
     }
     resetTimer(120);
 
-    // Ha Kata meccs jön, automatikusan az 1. bíró (Vezetőbíró) mezőjébe tesszük a kurzort!
     if (isKata) {
         setTimeout(() => {
             let elsoMezo = document.getElementById('kataJudge0');
@@ -181,10 +179,9 @@ function meccsKivalasztva(idParam) {
 }
 
 // =========================================================
-// KATA GYORSBEÜTŐ: 2 SZÁMJEGY -> TIZEDESPONT + AUTO-UGRÁS!
+// KATA GYORSBEÜTŐ: 2 SZÁMJEGY -> TIZEDESPONT + AUTO-UGRÁS
 // =========================================================
 function kataGyorsBevitel(inputElem, index) {
-    // Csak a számjegyeket hagyjuk meg (ha a bíró nem írt pontot, pl. "75")
     let csakSzamok = inputElem.value.replace(/[^0-9]/g, '');
 
     if (csakSzamok.length === 0) {
@@ -193,19 +190,15 @@ function kataGyorsBevitel(inputElem, index) {
         return;
     }
 
-    // Speciális eset: ha 10.0-t akar beírni ("100"), egyébként 2 számjegynél (pl. "75" -> "7.5")
     if (csakSzamok.startsWith('10') && csakSzamok.length >= 3) {
         inputElem.value = '10.0';
         szamolKataPontok();
         ugorjKovetkezoKataMezore(index);
     } else if (!csakSzamok.startsWith('10') && csakSzamok.length >= 2) {
-        let elso = csakSzamok[0];
-        let masodik = csakSzamok[1];
-        inputElem.value = elso + '.' + masodik;
+        inputElem.value = csakSzamok[0] + '.' + csakSzamok[1];
         szamolKataPontok();
         ugorjKovetkezoKataMezore(index);
     } else {
-        // Még csak 1 számjegyet írt be (pl. "7")
         inputElem.value = csakSzamok;
     }
 }
@@ -218,13 +211,11 @@ function ugorjKovetkezoKataMezore(aktualisIndex) {
             kov.select();
         }
     } else {
-        // Az 5. bíró után egyből a Mentés gombra ugrik, így egy Enterrel menthető!
         let mentesBtn = document.getElementById('mentesGomb');
         if (mentesBtn) mentesBtn.focus();
     }
 }
 
-// Ha Backspace-t nyom egy üres mezőben, visszaugrik az előző bíró kockájára
 function kataBillentyuKezelo(event, index) {
     if (event.key === 'Backspace' && event.target.value === '' && index > 0) {
         let elozo = document.getElementById('kataJudge' + (index - 1));
@@ -260,8 +251,66 @@ function szamolKataPontok() {
 }
 
 // =========================================================
-// KUMITE SZABÁLYOK: 3 CHUI = 1 GENTEN, 2 GENTEN = SIKAKU
+// KUMITE VISSZAVONÁS (UNDO) ÉS SZABÁLY-AUTOMATIZMUSOK
 // =========================================================
+function mentAllapotUndoHoz() {
+    undoStack.push({
+        akaWazaari: akaWazaari,
+        shiroWazaari: shiroWazaari,
+        akaScore: akaScore,
+        shiroScore: shiroScore,
+        akaChui: akaChui,
+        akaGenten: akaGenten,
+        shiroChui: shiroChui,
+        shiroGenten: shiroGenten,
+        aktualisGyozelemMod: aktualisGyozelemMod,
+        kenyszeritettGyoztesId: kenyszeritettGyoztesId,
+        badgeSzoveg: document.getElementById('winTypeBadge') ? document.getElementById('winTypeBadge').innerText : '',
+        badgeLathato: document.getElementById('winTypeBadge') ? document.getElementById('winTypeBadge').style.display : 'none'
+    });
+    frissitUndoGomb();
+}
+
+function visszavonas() {
+    if (undoStack.length === 0) return;
+    const elozo = undoStack.pop();
+
+    akaWazaari = elozo.akaWazaari;
+    shiroWazaari = elozo.shiroWazaari;
+    akaScore = elozo.akaScore;
+    shiroScore = elozo.shiroScore;
+    akaChui = elozo.akaChui;
+    akaGenten = elozo.akaGenten;
+    shiroChui = elozo.shiroChui;
+    shiroGenten = elozo.shiroGenten;
+    aktualisGyozelemMod = elozo.aktualisGyozelemMod;
+    kenyszeritettGyoztesId = elozo.kenyszeritettGyoztesId;
+
+    const select = document.getElementById('gyozelemModSelect');
+    if (select) select.value = aktualisGyozelemMod;
+
+    const badge = document.getElementById('winTypeBadge');
+    if (badge) {
+        badge.innerText = elozo.badgeSzoveg;
+        badge.style.display = elozo.badgeLathato;
+    }
+
+    frissitUndoGomb();
+    frissitPontEsBuntetesKijelzo();
+    frissitKijelzo();
+}
+
+function frissitUndoGomb() {
+    const btn = document.getElementById('undoBtn');
+    if (btn) {
+        btn.disabled = (undoStack.length === 0);
+        btn.style.opacity = (undoStack.length === 0) ? '0.5' : '1';
+        btn.innerText = undoStack.length > 0
+            ? ('↩ Utolsó művelet visszavonása (' + undoStack.length + ')')
+            : '↩ Utolsó pont / büntetés visszavonása (Undo)';
+    }
+}
+
 function beallitGyozelemMod(kod, uzenet) {
     aktualisGyozelemMod = kod;
     const select = document.getElementById('gyozelemModSelect');
@@ -274,11 +323,42 @@ function beallitGyozelemMod(kod, uzenet) {
             badge.innerText = uzenet;
         } else {
             badge.style.display = 'none';
+            badge.innerText = '';
         }
     }
 }
 
+function ujraszamolGyozelemMod() {
+    kenyszeritettGyoztesId = null;
+    if (akaGenten >= 2) {
+        kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor2Id : null;
+        beallitGyozelemMod('SIKAKU', '⚪ SHIRO NYERT: AKA leléptetve (2 Genten)!');
+    } else if (shiroGenten >= 2) {
+        kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor1Id : null;
+        beallitGyozelemMod('SIKAKU', '🔴 AKA NYERT: SHIRO leléptetve (2 Genten)!');
+    } else if (akaWazaari >= 2) {
+        kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor1Id : null;
+        beallitGyozelemMod('AWASETE', '🔴 AKA NYERT: 2x Waza-ari (Awasete Ippon)!');
+    } else if (shiroWazaari >= 2) {
+        kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor2Id : null;
+        beallitGyozelemMod('AWASETE', '⚪ SHIRO NYERT: 2x Waza-ari (Awasete Ippon)!');
+    } else if (akaScore >= 2 && akaWazaari === 0) {
+        kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor1Id : null;
+        beallitGyozelemMod('IPPON', '🔴 AKA NYERT: Egyből Ippon!');
+    } else if (shiroScore >= 2 && shiroWazaari === 0) {
+        kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor2Id : null;
+        beallitGyozelemMod('IPPON', '⚪ SHIRO NYERT: Egyből Ippon!');
+    } else if (akaScore > shiroScore) {
+        beallitGyozelemMod('WAZAARI', '🔴 AKA Waza-ari előny');
+    } else if (shiroScore > akaScore) {
+        beallitGyozelemMod('WAZAARI', '⚪ SHIRO Waza-ari előny');
+    } else {
+        beallitGyozelemMod('HANTEI', '');
+    }
+}
+
 function addPoint(oldal, tipus) {
+    mentAllapotUndoHoz();
     if (oldal === 'aka') {
         if (tipus === 'waza-ari') {
             akaWazaari++;
@@ -318,11 +398,25 @@ function addPoint(oldal, tipus) {
     frissitKijelzo();
 }
 
+function removePoint(oldal) {
+    mentAllapotUndoHoz();
+    if (oldal === 'aka' && akaScore > 0) {
+        akaScore--;
+        if (akaWazaari > 0) akaWazaari--;
+    } else if (oldal === 'shiro' && shiroScore > 0) {
+        shiroScore--;
+        if (shiroWazaari > 0) shiroWazaari--;
+    }
+    ujraszamolGyozelemMod();
+    frissitPontEsBuntetesKijelzo();
+    frissitKijelzo();
+}
+
 function addPenalty(oldal, tipus) {
+    mentAllapotUndoHoz();
     if (oldal === 'aka') {
         if (tipus === 'chui') {
             akaChui++;
-            // 3 db Chui = 1 Genten!
             if (akaChui >= 3) {
                 akaChui = 0;
                 akaGenten++;
@@ -330,7 +424,6 @@ function addPenalty(oldal, tipus) {
         } else if (tipus === 'genten') {
             akaGenten++;
         }
-        // 2 Genten = Automatikus leléptetés (Sikaku)!
         if (akaGenten >= 2) {
             stopTimer();
             kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor2Id : null;
@@ -340,7 +433,6 @@ function addPenalty(oldal, tipus) {
     } else {
         if (tipus === 'chui') {
             shiroChui++;
-            // 3 db Chui = 1 Genten!
             if (shiroChui >= 3) {
                 shiroChui = 0;
                 shiroGenten++;
@@ -348,7 +440,6 @@ function addPenalty(oldal, tipus) {
         } else if (tipus === 'genten') {
             shiroGenten++;
         }
-        // 2 Genten = Automatikus leléptetés (Sikaku)!
         if (shiroGenten >= 2) {
             stopTimer();
             kenyszeritettGyoztesId = aktualisMeccs ? aktualisMeccs.competitor1Id : null;
@@ -360,9 +451,23 @@ function addPenalty(oldal, tipus) {
     frissitKijelzo();
 }
 
-// Feladta / Nem jelent meg (Kiken) gomb kezelése
+function removePenalty(oldal, tipus) {
+    mentAllapotUndoHoz();
+    if (oldal === 'aka') {
+        if (tipus === 'chui' && akaChui > 0) akaChui--;
+        if (tipus === 'genten' && akaGenten > 0) akaGenten--;
+    } else {
+        if (tipus === 'chui' && shiroChui > 0) shiroChui--;
+        if (tipus === 'genten' && shiroGenten > 0) shiroGenten--;
+    }
+    ujraszamolGyozelemMod();
+    frissitPontEsBuntetesKijelzo();
+    frissitKijelzo();
+}
+
 function kikenGyoztes(gyoztesOldal, uzenet) {
     if (!aktualisMeccs) return;
+    mentAllapotUndoHoz();
     stopTimer();
     if (gyoztesOldal === 'aka') {
         kenyszeritettGyoztesId = aktualisMeccs.competitor1Id;
@@ -381,6 +486,8 @@ function resetFighter(oldal) {
     } else {
         shiroWazaari = 0; shiroScore = 0; shiroChui = 0; shiroGenten = 0;
     }
+    undoStack = [];
+    frissitUndoGomb();
     kenyszeritettGyoztesId = null;
     beallitGyozelemMod('HANTEI', '');
     frissitPontEsBuntetesKijelzo();
@@ -404,7 +511,7 @@ function kuldesATvnek(kijelzoIdo) {
         akaName: akaNevSzoveg,
         shiroName: shiroNevSzoveg,
         matchInfo: meccsInfoSzoveg,
-        nextMatch: felkeszulSzoveg, // <-- Ezt küldjük át pluszban a TV-nek!
+        nextMatch: felkeszulSzoveg,
         matchType: aktualisMod,
         winType: aktualisGyozelemMod,
         akaScore: akaScore,
@@ -455,7 +562,7 @@ function frissitKijelzo() {
     kuldesATvnek(formazottIdo);
 }
 
-// --- MENTÉS ÉS AUTOMATIKUS TOVÁBBLÉPÉS A KÖVETKEZŐ MECCSRE ---
+// --- MENTÉS, TOVÁBBJUTTATÁS ÉS KATA TOP 6 DÖNTŐ GENERÁLÁS ---
 async function meccsMentese() {
     if (!aktualisMeccs) {
         alert("Először válassz ki egy tatamit!");
@@ -486,7 +593,6 @@ async function meccsMentese() {
             gyoztesId = akaNyert ? aktualisMeccs.competitor1Id : aktualisMeccs.competitor2Id;
         }
 
-        // Elmentjük a győzelem pontos módját (IPP, AWA, WAZ, HAN, SIK, KIK) a körmérkőzéshez és az ágrajzhoz!
         TatamiMaster.mentKumiteReszletek(aktualisMeccs.id, {
             winType: valasztottMod,
             akaScore: akaScore,
@@ -513,7 +619,6 @@ async function meccsMentese() {
     });
 
     if (res.ok) {
-        // Ha Kumite egyenes kiesés volt, beírjuk a győztest a következő üres ágra
         if (aktualisMod === 'KUMITE') {
             let kovetkezoUresMeccs = merkozesekLista.find(m =>
                 m.categoryId === aktualisMeccs.categoryId &&
@@ -534,11 +639,62 @@ async function meccsMentese() {
             }
         }
 
+        // HA KATA SELEJTEZŐ VOLT: Ha mindenki végzett a selejtezőben, felajánljuk a TOP 6 DÖNTŐ indítását!
+        if (aktualisMod === 'KATA' && !TatamiMaster.isKataDontoMeccs(aktualisMeccs.id)) {
+            let katMeccsek = merkozesekLista.filter(m => m.categoryId === aktualisMeccs.categoryId);
+            let vanMarDonto = katMeccsek.some(m => TatamiMaster.isKataDontoMeccs(m.id));
+            let maradekSelejtezo = katMeccsek.filter(m => m.id !== aktualisMeccs.id && !m.isFinished && !TatamiMaster.isKataDontoMeccs(m.id));
+
+            if (!vanMarDonto && maradekSelejtezo.length === 0) {
+                if (confirm("Mindenki bemutatta a katát a selejtezőben!\n\nSzeretnéd most azonnal elindítani a TOP 6 DÖNTŐT ezen a tatamin (a legjobb 6 versenyző 0 pontról indulva újra katázik)?")) {
+                    await generalKataTop6BiroiPanelrol(aktualisMeccs.categoryId, aktualisMeccs.tatamiId);
+                }
+            }
+        }
+
         if (typeof TatamiMaster !== 'undefined') {
             await TatamiMaster.trigger('meccsLezarva', frissitettMeccs);
         }
 
-        // AUTOMATIKUSAN BETÖLTJÜK A TATAMI KÖVETKEZŐ MÉRKŐZÉSÉT!
         tatamiMeccseinekBetoltese(true);
     }
+}
+
+async function generalKataTop6BiroiPanelrol(katId, tatamiId) {
+    const kataTarolo = TatamiMaster.lekerKataEredmenyek();
+    let selejtezoMeccsek = merkozesekLista.filter(m => m.categoryId === katId && !TatamiMaster.isKataDontoMeccs(m.id));
+
+    let lepontozottak = selejtezoMeccsek.map(m => {
+        let eredmeny = kataTarolo[m.id];
+        return eredmeny && eredmeny.kesz ? { meccs: m, ...eredmeny } : null;
+    }).filter(Boolean);
+
+    lepontozottak.sort(TatamiMaster.kataSorrendHasonlito);
+    let top6 = lepontozottak.slice(0, 6).reverse(); // 6. helyezett kezd, 1. helyezett zárja a döntőt
+
+    let sorszam = merkozesekLista.length > 0 ? Math.max(...merkozesekLista.map(m => m.matchOrder)) + 1 : 1;
+    let ujDontoIdk = [];
+
+    for (let item of top6) {
+        let res = await fetch('https://localhost:7045/api/Matches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                categoryId: katId,
+                tatamiId: tatamiId,
+                competitor1Id: item.meccs.competitor1Id,
+                competitor2Id: null,
+                matchOrder: sorszam++,
+                isFinished: false,
+                winnerId: null
+            })
+        });
+        if (res.ok) {
+            let mentett = await res.json();
+            ujDontoIdk.push(mentett.id);
+        }
+    }
+
+    TatamiMaster.megjelolKataDontoMeccsek(ujDontoIdk);
+    alert("🏆 TOP 6 DÖNTŐ ELINDÍTVA! Máris betöltődik a döntő első katázója 0 ponttal!");
 }

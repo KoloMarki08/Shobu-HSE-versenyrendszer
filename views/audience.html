@@ -3,16 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Élő Követés & Ágrajzok</title>
+    <title>Tatami Master - Élő Követés & Edzői Felület</title>
     <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
 <body>
-    <header class="top-header">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">ÉLŐ KÖVETÉS & ÁGRAJZOK</span></h1>
-        <button class="btn btn-outline" style="position: absolute; right: 20px; top: 15px;" onclick="window.location.href='../index.html'">Vissza a főoldalra</button>
+    <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 25px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text" id="audienceHeaderSub">ÉLŐ KÖVETÉS & ÁGRAJZOK</span></h1>
+        <div>
+            <span id="loggedCoachBadge" style="display: none; background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; margin-right: 10px;"></span>
+            <button class="btn btn-outline" onclick="TatamiMaster.kijelentkezes()">Kilépés a főoldalra</button>
+        </div>
     </header>
 
     <main class="admin-container">
+
+        <!-- ========================================================= -->
+        <!-- CSAK EDZŐKNEK (COACH) LÁTHATÓ VERSENYZŐ NEVEZÉSI PANEL!   -->
+        <!-- ========================================================= -->
+        <div id="edzoiNevezesPanel" style="display: none; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-top: 5px solid #28a745; margin-bottom: 30px;">
+            <h2 style="margin-top: 0; color: #28a745;">🥋 Edzői Panel: Versenyzők Nevezése</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                Itt veheted fel a klubod versenyzőit, és nevezheted be őket a meghirdetett kategóriákba (Kata / Kumite).
+            </p>
+
+            <!-- 1. Új versenyző felvétele + azonnali nevezése -->
+            <div class="add-form-container" style="background: #f0fff4; border: 1px solid #c3e6cb; flex-wrap: wrap; align-items: center;">
+                <strong style="width: 100%; color: #155724; margin-bottom: 5px;">➕ Új versenyző regisztrálása és benevezése:</strong>
+                <input type="text" id="coachUjNev" placeholder="Versenyző neve" class="input-field" style="min-width: 180px;">
+                <input type="text" id="coachUjKlub" placeholder="Klub (pl. Shobu HSE)" class="input-field" style="max-width: 170px;">
+                <input type="text" id="coachUjOv" placeholder="Öv (pl. 4. kyu)" class="input-field" style="max-width: 120px;">
+                <input type="number" id="coachUjSuly" placeholder="Súly (kg)" class="input-field" style="max-width: 100px;">
+                <input type="number" id="coachUjSzulEv" placeholder="Szül. év (2008)" class="input-field" style="max-width: 130px;">
+                <select id="coachUjKategoriaSelect" class="input-field" style="min-width: 220px;">
+                    <option value="">-- Válassz kategóriát! --</option>
+                </select>
+                <button class="btn btn-outline-green" style="background: #28a745; color: white; font-weight: bold;" onclick="coachUjVersenyzoEsNevezes()">
+                    ✔ Felvétel & Nevezés
+                </button>
+            </div>
+
+            <!-- 2. Már felvett versenyző nevezése további kategóriába (pl. Kata + Kumite) -->
+            <div class="add-form-container" style="background: #f8f9fa; border: 1px solid #ddd; flex-wrap: wrap; align-items: center; margin-bottom: 0;">
+                <strong style="color: #333;">📌 Meglévő versenyző nevezése másik kategóriába (pl. Kata + Kumite):</strong>
+                <select id="coachMeglevoVersenyzoSelect" class="input-field" style="min-width: 220px;"></select>
+                <select id="coachMasikKategoriaSelect" class="input-field" style="min-width: 220px;"></select>
+                <button class="btn btn-outline-blue" onclick="coachMeglevoNevezes()">+ Benevezés</button>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- NÉZŐI ÉS EDZŐI ÉLŐ KÖVETÉS (MINDENKINEK LÁTHATÓ)          -->
+        <!-- ========================================================= -->
         <h2 style="margin-bottom: 15px;">🥋 Élő Tatami Beosztás (Most küzd & Felkészül)</h2>
         <div id="audienceTatamiGrid" class="tatami-grid">
             <p>Tatamik állásának betöltése...</p>

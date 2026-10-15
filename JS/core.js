@@ -29,6 +29,49 @@ const TatamiMaster = {
         return await res.json();
     },
 
+    apiSend: async function(vegpont, method, adat) {
+        return await fetch(this.API_URL + '/' + vegpont, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: adat ? JSON.stringify(adat) : null
+        });
+    },
+
+    // --- BELÉPÉSVÉDELEM (AUTH) ÉS JOGOSULTSÁG-ELLENŐRZÉS ---
+    mentBejelentkezes: function(userObj) {
+        localStorage.setItem('tatamiUser', JSON.stringify(userObj));
+    },
+
+    lekerBejelentkezes: function() {
+        const adat = localStorage.getItem('tatamiUser');
+        return adat ? JSON.parse(adat) : null;
+    },
+
+    kijelentkezes: function() {
+        localStorage.removeItem('tatamiUser');
+        window.location.href = '../index.html';
+    },
+
+    ellenorizJogosultsag: function() {
+        const utvonal = window.location.pathname.toLowerCase();
+        const user = this.lekerBejelentkezes();
+
+        // 1. Admin oldal védelme (csak ADMIN léphet be)
+        if (utvonal.includes('admin.html')) {
+            if (!user || user.role.toUpperCase() !== 'ADMIN') {
+                alert("⛔ Hozzáférés megtagadva! Az Admin Panel megnyitásához Adminisztrátori bejelentkezés szükséges.");
+                window.location.href = '../index.html';
+            }
+        }
+        // 2. Bírói vezérlőpult védelme (Bíró vagy Admin léphet be)
+        else if (utvonal.includes('biroi_panel.html')) {
+            if (!user) {
+                alert("⛔ Hozzáférés megtagadva! A Vezérlőpult használatához kérlek jelentkezz be!");
+                window.location.href = '../index.html';
+            }
+        }
+    },
+
     // --- KATA PONTSZÁMÍTÓ ÉS 4 LÉPCSŐS HOLTVERSENY MOTOR ---
     szamolKataErtekeles: function(pontokTomb) {
         let ervenyes = pontokTomb.map((p, idx) => ({ ertek: parseFloat(p), idx: idx }))
@@ -110,7 +153,7 @@ const TatamiMaster = {
     // --- KUMITE GYŐZELMI MÓD (JOGCÍM) TÁROLÓ ---
     mentKumiteReszletek: function(matchId, adatok) {
         let tarolo = JSON.parse(localStorage.getItem('kumiteReszletek') || '{}');
-        tarolo[matchId] = adatok; // { winType: 'AWASETE', akaWazaari: 2, shiroWazaari: 0, ... }
+        tarolo[matchId] = adatok;
         localStorage.setItem('kumiteReszletek', JSON.stringify(tarolo));
     },
 
@@ -118,3 +161,6 @@ const TatamiMaster = {
         return JSON.parse(localStorage.getItem('kumiteReszletek') || '{}');
     }
 };
+
+// Automatikus jogosultság-ellenőrzés minden oldalon, ahol a core.js be van kötve!
+TatamiMaster.ellenorizJogosultsag();

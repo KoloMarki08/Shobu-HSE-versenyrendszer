@@ -12,7 +12,7 @@
         <h1><em>TATAMI MASTER</em> <span class="red-text">ASZTALBÍRÓI VEZÉRLŐ</span></h1>
         
         <div style="display: flex; gap: 15px; align-items: center;">
-            <!-- TATAMI VÁLASZTÓ (Asztalbíró fixálja a saját küzdőterét) -->
+            <!-- TATAMI VÁLASZTÓ -->
             <div style="background: #222; padding: 6px 12px; border-radius: 6px; border: 2px solid #ffc107;">
                 <label style="color: #ffc107; font-weight: bold; margin-right: 8px;">📍 Saját Tatami:</label>
                 <select id="tatamiValaszto" style="padding: 5px 10px; font-weight: bold; font-size: 1rem; border-radius: 4px;" onchange="tatamiKivalasztva()">
@@ -21,7 +21,7 @@
             </div>
 
             <button class="btn btn-outline-blue" style="font-weight: bold; background: white;" onclick="window.open('tv_kijelzo.html', '_blank')">📺 TV Kijelző Megnyitása</button>
-            <button class="btn btn-outline" style="color: white; border-color: white;" onclick="window.location.href='../index.html'">Kijelentkezés</button>
+            <button class="btn btn-outline" style="color: white; border-color: white;" onclick="TatamiMaster.kijelentkezes()">Kijelentkezés</button>
         </div>
     </header>
 
@@ -65,18 +65,18 @@
 
             <div style="display: flex; gap: 10px; margin-top: 12px;">
                 <button class="btn btn-outline" style="background: #6c757d; color: white; border: none;" onclick="kikenGyoztes('shiro', 'AKA nem jelent meg / feladta')">🏳️ Feladta / Kiken</button>
-                <button class="btn btn-outline" style="border-color: white; color: black;" onclick="resetFighter('aka')">Nullázás</button>
+                <button class="btn btn-outline" style="border-color: white; color: white;" onclick="resetFighter('aka')">Nullázás</button>
             </div>
         </div>
 
-        <!-- KÖZÉPSŐ KONZOL: AUTOMATIKUS MECCSADAGOLÓ, KUMITE ÓRA / KATA BEÜTŐ ÉS MENTÉS -->
+        <!-- KÖZÉPSŐ KONZOL -->
         <div class="center-console">
             <div class="match-info">
                 <h3 id="matchInfoText" style="color: #ffc107; margin-bottom: 8px; font-size: 1.4rem;">Nincs aktív mérkőzés</h3>
                 <div id="winTypeBadge" style="background: #28a745; color: white; padding: 5px 12px; border-radius: 4px; font-weight: bold; display: none; margin-bottom: 10px;"></div>
             </div>
 
-            <!-- KUMITE IDŐMÉRŐ SZEKCIÓ -->
+            <!-- KUMITE IDŐMÉRŐ ÉS UNDO SZEKCIÓ -->
             <div id="kumiteVezerloSzekcio" style="text-align: center; width: 100%;">
                 <div class="timer-display" id="timerDisplay" style="font-size: 5rem; margin-bottom: 15px;">02:00</div>
                 <div class="timer-controls" style="margin-bottom: 15px; flex-wrap: wrap; justify-content: center;">
@@ -85,6 +85,7 @@
                     <button class="btn btn-outline-blue" onclick="resetTimer(120)">Alapidő (2:00)</button>
                     <button class="btn btn-outline" style="background-color: #ffc107; color: #111; border: none; font-weight: bold;" onclick="resetTimer(60)">+ Hosszabbítás (1:00)</button>
                 </div>
+
                 <!-- KÖZPONTI VISSZAVONÁS (UNDO) GOMB -->
                 <div style="margin-bottom: 15px;">
                     <button id="undoBtn" class="btn btn-outline" style="width: 100%; background: #ff9800; color: #111; border: none; font-weight: bold; padding: 10px;" onclick="visszavonas()" disabled>
@@ -92,7 +93,6 @@
                     </button>
                 </div>
 
-                <!-- Győzelem jogcímének (módjának) kiválasztója / visszajelzője -->
                 <div style="background: #1a1a1a; padding: 10px; border-radius: 6px; border: 1px solid #444; margin-bottom: 15px; text-align: left;">
                     <label style="font-size: 0.85rem; color: #ffc107; font-weight: bold; display: block; margin-bottom: 5px;">🏆 Győzelem módja (Automatikusan beállítódik, de módosítható):</label>
                     <select id="gyozelemModSelect" class="input-field" style="width: 100%; font-weight: bold;">
@@ -106,7 +106,7 @@
                 </div>
             </div>
 
-            <!-- KATA GYORSBEÜTŐ SZEKCIÓ (2 számjegy = automatikus tizedespont + ugrás a következőre!) -->
+            <!-- KATA GYORSBEÜTŐ SZEKCIÓ -->
             <div id="kataVezerloSzekcio" style="display: none; text-align: center; width: 100%; margin-bottom: 20px; background: #1a1a1a; padding: 18px; border-radius: 8px; border: 2px solid #ffc107;">
                 <h4 style="color: #ffc107; margin: 0 0 6px 0;">🥋 KATA Gyorspontozás (5 Bíró)</h4>
                 <small style="color: #aaa; display: block; margin-bottom: 12px;">💡 Csak írj be 2 számjegyet (pl. <strong>75</strong> ➔ <strong>7.5</strong>), és a kurzor automatikusan átugrik a következő bíróra!</small>
@@ -139,12 +139,10 @@
                 </div>
             </div>
 
-            <!-- Mentés és Automatikus ugrás a tatami következő meccsére -->
             <button id="mentesGomb" class="btn btn-outline-green" style="width: 100%; padding: 15px; font-size: 1.15rem; font-weight: bold;" onclick="meccsMentese()">
                 💾 Mérkőzés Lezárása & Következő Meccs Betöltése ➔
             </button>
 
-            <!-- Ha manuálisan mégis bele kellene nyúlni a tatami meccseibe -->
             <details style="width: 100%; margin-top: 12px; color: #aaa; font-size: 0.85rem; cursor: pointer;">
                 <summary>Kézi mérkőzésválasztás ezen a tatamin (opcionális)</summary>
                 <select id="meccsValaszto" class="input-field" style="width: 100%; margin-top: 6px; font-size: 0.9rem;" onchange="meccsKivalasztva(this.value)"></select>
