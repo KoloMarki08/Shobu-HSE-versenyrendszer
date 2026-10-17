@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATAMI MASTER Versenyrendszer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <title>Tatami Master - Kata Ranglista Központ</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
-
-<body>
-    <section id="tab-kata" class="hidden">
-        <div id="kata-content"></div>
-    </section>
+<body id="pageKata">
+    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">KATA RANGLISTA KÖZPONT</span></h1>
+        <select id="kataHubSelect" class="input-field" style="min-width:260px;" onchange="rajzolDedikaltKataTabla()"></select>
+    </header>
+    <main class="admin-container">
+        <div id="kataHubContainer" style="background:white;padding:20px;border-radius:8px;"></div>
+    </main>
+    <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
+    <script src="../JS/KATA.js"></script>
+    <script src="../JS/data.js"></script>
 </body>
-
 </html>

@@ -448,6 +448,7 @@ async function kategoriaSorsolasa() {
             }
         }
     } else {
+        // KUMITE EGYENES KIESÉS (Ágrajz + Erőnyerők pontos fa-struktúrában)
         let agrajzMeret = 2;
         while (agrajzMeret < rendezett.length) agrajzMeret *= 2;
 
@@ -455,16 +456,9 @@ async function kategoriaSorsolasa() {
         let kuzdok = [...rendezett];
         let elsoKorMeccsek = [];
 
-        for (let i = 0; i < eronyerokSzama; i++) {
-            let v = kuzdok.shift();
-            elsoKorMeccsek.push({
-                categoryId: katId, tatamiId: tatamiId,
-                competitor1Id: v.id, competitor2Id: null,
-                matchOrder: sorszam++, isFinished: true, winnerId: v.id
-            });
-        }
-
-        while (kuzdok.length >= 2) {
+        // 1. Valódi 1. körös meccsek összeállítása (klub-szétválasztással)
+        let valodiMeccsekSzama = (rendezett.length - eronyerokSzama) / 2;
+        for (let i = 0; i < valodiMeccsekSzama; i++) {
             let aka = kuzdok.shift();
             let shiroIdx = kuzdok.findIndex(v => v.club !== aka.club);
             if (shiroIdx === -1) shiroIdx = 0;
@@ -477,8 +471,19 @@ async function kategoriaSorsolasa() {
             });
         }
 
+        // 2. Erőnyerő (BYE) ágak hozzáadása a maradék versenyzőknek
+        while (kuzdok.length > 0) {
+            let v = kuzdok.shift();
+            elsoKorMeccsek.push({
+                categoryId: katId, tatamiId: tatamiId,
+                competitor1Id: v.id, competitor2Id: null,
+                matchOrder: sorszam++, isFinished: true, winnerId: v.id
+            });
+        }
+
         generaltMeccsek.push(...elsoKorMeccsek);
 
+        // 3. Következő fordulók (Elődöntők, Döntő) felépítése és az erőnyerők automatikus továbbjuttatása
         let elozoKorok = elsoKorMeccsek;
         let aktualisAgMeret = agrajzMeret / 4;
 
@@ -487,10 +492,13 @@ async function kategoriaSorsolasa() {
             for (let i = 0; i < aktualisAgMeret; i++) {
                 let m1 = elozoKorok[i * 2];
                 let m2 = elozoKorok[i * 2 + 1];
+
+                let c1 = (m1 && m1.isFinished) ? m1.winnerId : null;
+                let c2 = (m2 && m2.isFinished) ? m2.winnerId : null;
+
                 ujKorMeccsek.push({
                     categoryId: katId, tatamiId: tatamiId,
-                    competitor1Id: (m1 && m1.isFinished) ? m1.winnerId : null,
-                    competitor2Id: (m2 && m2.isFinished) ? m2.winnerId : null,
+                    competitor1Id: c1, competitor2Id: c2,
                     matchOrder: sorszam++, isFinished: false, winnerId: null
                 });
             }
@@ -559,7 +567,7 @@ async function merkozesekBetoltese() {
             if (isKata) {
                 shiroNev = "<em>🥋 KATA Egyéni</em>";
             } else if (m.isFinished && !m.competitor2Id) {
-                shiroNev = "<em>ERŐNYERŐ (BYE)</em>";
+                shiroNev = ""; // Üresen hagyjuk az erőnyerőnél!
             } else if (v2) {
                 shiroNev = v2.name + " <small>(" + v2.club + ")</small>";
             } else {
@@ -764,20 +772,24 @@ function rajzolAgrajz() {
             let v1 = globalVersenyzok.find(v => v.id === m.competitor1Id);
             let v2 = globalVersenyzok.find(v => v.id === m.competitor2Id);
 
+            let isBye = (m.isFinished && !m.competitor2Id);
             let akaNev = v1 ? v1.name : "Várakozik...";
-            let shiroNev = (m.isFinished && !m.competitor2Id) ? "ERŐNYERŐ (BYE)" : (v2 ? v2.name : "Várakozik...");
+            let shiroNev = isBye ? "" : (v2 ? v2.name : "Várakozik...");
 
             let akaWinner = (m.isFinished && m.winnerId === m.competitor1Id) ? "winner" : "";
             let shiroWinner = (m.isFinished && m.winnerId === m.competitor2Id) ? "winner" : "";
 
             let reszlet = kumiteAdatok[m.id];
-            let modKod = (!m.competitor2Id && m.isFinished) ? 'BYE' : (reszlet && reszlet.winType ? reszlet.winType : 'HANTEI');
-            let modRovid = TatamiMaster.WIN_TYPES[modKod] ? TatamiMaster.WIN_TYPES[modKod].rovid : modKod;
-            let modCimke = TatamiMaster.WIN_TYPES[modKod] ? TatamiMaster.WIN_TYPES[modKod].cimke : '';
+            let modKod = isBye ? '' : (reszlet && reszlet.winType ? reszlet.winType : 'HANTEI');
+            let modRovid = (modKod && TatamiMaster.WIN_TYPES[modKod]) ? TatamiMaster.WIN_TYPES[modKod].rovid : modKod;
+            let modCimke = (modKod && TatamiMaster.WIN_TYPES[modKod]) ? TatamiMaster.WIN_TYPES[modKod].cimke : '';
+
+            let akaJelzes = akaWinner ? (modRovid ? '<strong>[' + modRovid + ']</strong> ✔' : '✔') : '';
+            let shiroJelzes = shiroWinner ? (modRovid ? '<strong>[' + modRovid + ']</strong> ✔' : '✔') : '';
 
             html += '<div class="bracket-match ' + (m.isFinished ? 'finished' : '') + '" title="' + (m.isFinished ? modCimke : '') + '">';
-            html += '<div class="bracket-fighter aka ' + akaWinner + '"><span>🔴 ' + akaNev + '</span><span>' + (akaWinner ? '<strong>[' + modRovid + ']</strong> ✔' : '') + '</span></div>';
-            html += '<div class="bracket-fighter shiro ' + shiroWinner + '"><span>⚪ ' + shiroNev + '</span><span>' + (shiroWinner ? '<strong>[' + modRovid + ']</strong> ✔' : '') + '</span></div>';
+            html += '<div class="bracket-fighter aka ' + akaWinner + '"><span>🔴 ' + akaNev + '</span><span>' + akaJelzes + '</span></div>';
+            html += '<div class="bracket-fighter shiro ' + shiroWinner + '"><span>' + (shiroNev ? '⚪ ' + shiroNev : '&nbsp;') + '</span><span>' + shiroJelzes + '</span></div>';
             html += '</div>';
         }
         html += '</div>';

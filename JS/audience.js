@@ -336,19 +336,23 @@ function audienceAgrajzFrissites() {
 
         html += '<div class="bracket-round"><h4>' + korCim + '</h4>';
         for (let m of fordulok[r]) {
+            let isBye = (m.isFinished && !m.competitor2Id);
             let akaWinner = (m.isFinished && m.winnerId === m.competitor1Id) ? "winner" : "";
             let shiroWinner = (m.isFinished && m.winnerId === m.competitor2Id) ? "winner" : "";
-            let shiroSzoveg = (m.isFinished && !m.competitor2Id) ? "ERŐNYERŐ (BYE)" : nevKereso(m.competitor2Id);
+            let shiroSzoveg = isBye ? "" : nevKereso(m.competitor2Id);
 
             let reszlet = kumiteAdatok[m.id];
-            let modKod = (!m.competitor2Id && m.isFinished) ? 'BYE' : (reszlet && reszlet.winType ? reszlet.winType : 'HANTEI');
-            let modRovid = TatamiMaster.WIN_TYPES[modKod] ? TatamiMaster.WIN_TYPES[modKod].rovid : modKod;
-            let modCimke = TatamiMaster.WIN_TYPES[modKod] ? TatamiMaster.WIN_TYPES[modKod].cimke : '';
+            let modKod = isBye ? '' : (reszlet && reszlet.winType ? reszlet.winType : 'HANTEI');
+            let modRovid = (modKod && TatamiMaster.WIN_TYPES[modKod]) ? TatamiMaster.WIN_TYPES[modKod].rovid : modKod;
+            let modCimke = (modKod && TatamiMaster.WIN_TYPES[modKod]) ? TatamiMaster.WIN_TYPES[modKod].cimke : '';
+
+            let akaJelzes = akaWinner ? (modRovid ? '<strong>[' + modRovid + ']</strong> 🏆' : '🏆') : '';
+            let shiroJelzes = shiroWinner ? (modRovid ? '<strong>[' + modRovid + ']</strong> 🏆' : '🏆') : '';
 
             html += '<div class="bracket-match ' + (m.isFinished ? 'finished' : '') + '" title="' + (m.isFinished ? modCimke : '') + '">';
             html += '<div style="background:#eee; padding: 4px 10px; font-size:0.8rem; font-weight:bold; display:flex; justify-content:space-between;"><span>Mérkőzés #' + m.matchOrder + '</span><span>' + (m.isFinished ? modCimke : '') + '</span></div>';
-            html += '<div class="bracket-fighter aka ' + akaWinner + '"><span>🔴 ' + nevKereso(m.competitor1Id) + '</span><span>' + (akaWinner ? '<strong>[' + modRovid + ']</strong> 🏆' : '') + '</span></div>';
-            html += '<div class="bracket-fighter shiro ' + shiroWinner + '"><span>⚪ ' + shiroSzoveg + '</span><span>' + (shiroWinner ? '<strong>[' + modRovid + ']</strong> 🏆' : '') + '</span></div>';
+            html += '<div class="bracket-fighter aka ' + akaWinner + '"><span>🔴 ' + nevKereso(m.competitor1Id) + '</span><span>' + akaJelzes + '</span></div>';
+            html += '<div class="bracket-fighter shiro ' + shiroWinner + '"><span>' + (shiroSzoveg ? '⚪ ' + shiroSzoveg : '&nbsp;') + '</span><span>' + shiroJelzes + '</span></div>';
             html += '</div>';
         }
         html += '</div>';

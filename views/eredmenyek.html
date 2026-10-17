@@ -1,22 +1,32 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATAMI MASTER Versenyrendszer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <title>Tatami Master - Végeredmények, Klubranglista & Oklevélnyomtatás</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
-
-<body>
-    <section id="tab-eredmenyek" class="hidden">
-        <div class="kategoriak-feher-doboz flex flex-col items-center text-center">
-            <h2 class="doboz-cime" style="color:#ca8a04;">🏆 Hivatalos Végeredmények (Top 4)</h2>
-            <div id="eredmenyek-content" class="w-full flex flex-col items-center">Nincs még eredmény.</div>
+<body id="pageEredmenyek">
+    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">EREDMÉNYHIRDETÉS & OKLEVÉLNYOMTATÓ</span></h1>
+        <div>
+            <button class="btn btn-outline-blue" style="background:white;margin-right:10px;" onclick="window.print()">🖨️ Teljes eredménylista nyomtatása</button>
+            <button class="btn btn-outline" onclick="window.history.back()">⬅ Vissza</button>
         </div>
-    </section>
-</body>
+    </header>
 
+    <main class="admin-container">
+        <div style="background:white;padding:25px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-bottom:30px;border-top:5px solid #ffc107;">
+            <h2 style="margin-top:0;">🏅 Klubok és Egyesületek Pontversenye (🥇 Arany = 5p, 🥈 Ezüst = 3p, 🥉 Bronz = 1p)</h2>
+            <div id="klubRanglistaContainer"></div>
+        </div>
+
+        <h2>🏆 Kategóriák Dobogósai (1–3. helyezettek) & Egyéni Oklevél Nyomtatás</h2>
+        <div id="dobogosokContainer"></div>
+    </main>
+
+    <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
+    <script src="../JS/data.js"></script>
+</body>
 </html>

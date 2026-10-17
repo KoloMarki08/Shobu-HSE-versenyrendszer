@@ -1,19 +1,21 @@
-function openTab(evt, tabName) {
-    // 1. Minden tartalom elrejtése
-    const tabContents = document.getElementsByClassName("tab-content");
+function openTab(evt, tabId) {
+    const tabContents = document.getElementsByClassName('tab-content');
     for (let i = 0; i < tabContents.length; i++) {
-        tabContents[i].style.display = "none";
-        tabContents[i].classList.remove("active");
+        tabContents[i].style.display = 'none';
+        tabContents[i].classList.remove('active');
     }
 
-    // 2. Minden gomb "active" osztályának levétele
-    const tabButtons = document.getElementsByClassName("tab-button");
-    for (let i = 0; i < tabButtons.length; i++) {
-        tabButtons[i].classList.remove("active");
+    const tabBtns = document.getElementsByClassName('tab-btn');
+    for (let i = 0; i < tabBtns.length; i++) {
+        tabBtns[i].classList.remove('active');
     }
 
-    // 3. A kiválasztott fül megjelenítése és a gomb aktívvá tétele
-    document.getElementById(tabName).style.display = "block";
-    document.getElementById(tabName).classList.add("active");
-    evt.currentTarget.classList.add("active");
+    const target = document.getElementById(tabId);
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add('active');
+    }
 }

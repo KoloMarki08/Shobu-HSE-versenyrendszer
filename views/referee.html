@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatami Master - Oldalbírói Mobil Pontozó</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
+</head>
+<body id="pageReferee" style="background:#111;color:white;text-align:center;padding:30px;">
+    <h1 style="color:#ffc107;">🥋 OLDALBÍRÓI PAD</h1>
+    <p id="refAktMeccsInfo" style="color:#ccc;font-size:1.1rem;margin-bottom:25px;">Várakozás...</p>
+
+    <div style="max-width:360px;margin:0 auto;background:#222;padding:25px;border-radius:12px;border:2px solid #ffc107;">
+        <label style="display:block;margin-bottom:8px;font-weight:bold;">Melyik széken ülsz?</label>
+        <select id="refBiroSzamSelect" class="input-field" style="width:100%;margin-bottom:20px;font-size:1.2rem;font-weight:bold;">
+            <option value="0">B1 - Vezetőbíró (Chief Judge)</option>
+            <option value="1">B2 - Oldalbíró</option>
+            <option value="2">B3 - Oldalbíró</option>
+            <option value="3">B4 - Oldalbíró</option>
+            <option value="4">B5 - Oldalbíró</option>
+        </select>
+
+        <label style="display:block;margin-bottom:8px;font-weight:bold;">Kata Pontszám (pl. 7.5):</label>
+        <input type="number" step="0.1" min="0" max="10" id="refPontInput" class="input-field" style="width:100%;font-size:2.5rem;text-align:center;font-weight:bold;margin-bottom:20px;" placeholder="7.5">
+
+        <button class="btn btn-outline-green" style="width:100%;background:#28a745;color:white;font-size:1.3rem;padding:15px;font-weight:bold;" onclick="kuldOldalbiroiPont()">
+            🚀 Pontszám Beküldése
+        </button>
+    </div>
+
+    <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
+    <script src="../JS/data.js"></script>
+</body>
+</html>

@@ -1,30 +1,65 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATAMI MASTER Versenyrendszer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <title>Tatami Master - Kategóriák & Kata Kyu-bontó Varázsló</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
+<body id="pageKategoriak">
+    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">KATEGÓRIA- ÉS KYU-BONTÓ VARÁZSLÓ</span></h1>
+        <button class="btn btn-outline" onclick="window.location.href='admin.html'">⬅ Vissza az Admin Panelre</button>
+    </header>
 
-<body>
-    <section id="tab-kategoriak" class="kategoriak-oldal hidden">
-        <div class="kategoriak-feher-doboz">
-            <h2 class="doboz-cime">Kategóriák és beosztások</h2>
-            <table class="kategoria-tabla">
-                <thead>
-                    <tr>
-                        <th class="kategoria-tabla-cella">Kategória neve</th>
-                        <th class="kategoria-tabla-cella">Tatami</th>
-                    </tr>
-                </thead>
-                <tbody id="kategoria-tabla-torzs"></tbody>
-            </table>
+    <main class="admin-container">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 30px;">
+            
+            <!-- 1. KATA KYU-BONTÓ VARÁZSLÓ (KIS VERSENYEKRE: A / B / C KATEGÓRIA) -->
+            <div style="background: #fff8e6; border: 2px solid #ffc107; border-radius: 8px; padding: 20px;">
+                <h2 style="margin-top: 0; color: #b8860b;">🥋 Kata Kyu-bontó Varázsló (Kis versenyekre)</h2>
+                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+                    Nagy versenyen (EB, nemzetközi) egyben marad a korcsoport, kisebb versenyen viszont itt 1 kattintással szétoszthatod a Kata kategóriát a versenyzők övfokozata (<code>Belt</code>) alapján <strong>A / B / C kategóriákra</strong>!
+                </p>
+                <label style="font-weight:bold;display:block;margin-bottom:5px;">Bontandó Kata kategória:</label>
+                <select id="kyuBontoKatSelect" class="input-field" style="width:100%;margin-bottom:12px;"></select>
+
+                <label style="font-weight:bold;display:block;margin-bottom:5px;">Kyu bontási séma:</label>
+                <select id="kyuBontasModSelect" class="input-field" style="width:100%;margin-bottom:15px;">
+                    <option value="ABC">3 csoportra: A (2. kyu - Dan) | B (6-3. kyu) | C (10-7. kyu)</option>
+                    <option value="AB">2 csoportra: A (5. kyu - Dan) | B (10-6. kyu)</option>
+                </select>
+
+                <button class="btn btn-outline" style="width:100%;background:#ffc107;color:#111;border:none;font-weight:bold;padding:12px;" onclick="kataKyuBontasVegrehajtas()">
+                    ⚡ Kata Kategória Automatikus Szétbontása Kyu Szerint
+                </button>
+            </div>
+
+            <!-- 2. KUMITE SÚLYCSOPORT-BONTÓ VARÁZSLÓ -->
+            <div style="background: #eef7ff; border: 2px solid #b8daff; border-radius: 8px; padding: 20px;">
+                <h2 style="margin-top: 0; color: #0056b3;">⚖️ Kumite Súlycsoport-bontó Varázsló</h2>
+                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+                    Mérlegelés után egyetlen kattintással kettébonthatod a népes Kumite kategóriákat egy megadott súlyhatárnál (pl. 70 kg felettiek automatikus átsorolása új kategóriába).
+                </p>
+                <label style="font-weight:bold;display:block;margin-bottom:5px;">Bontandó Kumite kategória:</label>
+                <select id="sulyBontoKatSelect" class="input-field" style="width:100%;margin-bottom:12px;"></select>
+
+                <label style="font-weight:bold;display:block;margin-bottom:5px;">Súlyhatár (kg):</label>
+                <input type="number" id="extraSulyHatar" class="input-field" placeholder="Pl. 70" style="width:100%;margin-bottom:15px;">
+
+                <button class="btn btn-outline-blue" style="width:100%;background:#007bff;color:white;font-weight:bold;padding:12px;" onclick="extraSulyBontas()">
+                    ⚖️ Kumite Kategória Kettébontása Súly Szerint
+                </button>
+            </div>
+
         </div>
-    </section>
-</body>
 
+        <h2>📋 Aktuális Kategóriák és Benevezett Versenyzők (Övfokozattal & Súllyal)</h2>
+        <div id="kategoriakOsszesitoContainer"></div>
+    </main>
+
+    <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
+    <script src="../JS/data.js"></script>
+</body>
 </html>

@@ -9,7 +9,20 @@
 <body>
     <header class="top-header">
         <h1><em>TATAMI MASTER</em> <span class="red-text">ADMIN PANEL</span></h1>
-        <button class="btn btn-outline" style="position: absolute; right: 20px; top: 15px;" onclick="TatamiMaster.kijelentkezes()">Kijelentkezés</button>
+        <!-- FELSŐ GYORSNAVIGÁCIÓS MENÜ AZ ÖSSZES MODULHOZ (.HTML FÁJLOKHOZ) -->
+        <nav style="background: #222; padding: 10px 25px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-bottom: 3px solid #dc3545;">
+            <strong style="color: #ffc107; margin-right: 6px;">🧭 Modulok:</strong>
+            <a href="admin.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🏠 Admin Főpanel</a>
+            <a href="kategoriak.html" class="btn btn-outline" style="background: #ffc107; color: #111; border: none; font-weight: bold; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🥋 Kyu- & Súlybontó</a>
+            <a href="nevezes.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">⚖️ Mérlegelő Állomás</a>
+            <a href="kiemeles.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🎲 Sorsolás & Kiemelés</a>
+            <a href="kata.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🧘 Kata Ranglisták</a>
+            <a href="kumite.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🥊 Kumite Ágrajzok</a>
+            <a href="tatami.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">📢 Pástszéli Szólító</a>
+            <a href="eredmenyek.html" class="btn btn-outline" style="background: #28a745; color: white; border: none; font-weight: bold; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🏆 Eredmények & Oklevél</a>
+            <a href="referee.html" target="_blank" class="btn btn-outline" style="color: #ffc107; border-color: #ffc107; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">📱 Oldalbírói Pad</a>
+            <button class="btn btn-outline" style="position: absolute; right: 20px; top: 15px;" onclick="TatamiMaster.kijelentkezes()">Kijelentkezés</button>
+        </nav>
     </header>
 
     <main class="admin-container">
@@ -166,5 +179,6 @@
     <script src="../JS/tabs.js"></script>
     <script src="../JS/admin_adatok.js"></script>
     <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
 </body>
 </html>

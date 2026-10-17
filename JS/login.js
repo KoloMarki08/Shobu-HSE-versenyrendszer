@@ -1,37 +1,53 @@
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    e.preventDefault(); 
+async function bejelentkezes(event) {
+    event.preventDefault();
+    const uName = document.getElementById('loginUsername').value.trim();
+    const uPass = document.getElementById('loginPassword').value.trim();
+    const errDiv = document.getElementById('loginError');
+    if (errDiv) errDiv.style.display = 'none';
 
-    const usernameInput = document.getElementById('username').value;
-    const passwordInput = document.getElementById('password').value;
+    let sikeresUser = null;
 
-    // Sima API lekérdezés a C# backendtől
-    fetch('https://localhost:7045/api/Users')
-        .then(response => response.json())
-        .then(users => {
-            let foundUser = false;
-
-            // Végigmegyünk a kapott adatokon
-            for (let i = 0; i < users.length; i++) {
-                if (users[i].username === usernameInput && users[i].password === passwordInput) {
-                    foundUser = true;
-                    
-                    // Irányítás a szerepkörnek megfelelő oldalra
-                    if (users[i].role === 'Admin') {
-                        window.location.href = 'views/admin.html';
-                    } else if (users[i].role === 'Referee') {
-                        window.location.href = 'views/biroi_panel.html';
-                    } else if (users[i].role === 'Coach') {
-                        window.location.href = 'views/nevezes.html';
-                    }
-                    break;
-                }
+    // 1. Ellenőrzés a C# /api/Users táblában
+    try {
+        const res = await fetch(TatamiMaster.API_URL + '/Users');
+        if (res.ok) {
+            const users = await res.json();
+            const talalat = users.find(u =>
+                (u.username && u.username.toLowerCase() === uName.toLowerCase()) &&
+                (u.password === uPass || u.passwordHash === uPass)
+            );
+            if (talalat) {
+                sikeresUser = {
+                    id: talalat.id,
+                    username: talalat.username,
+                    role: (talalat.role || 'COACH').toUpperCase()
+                };
             }
+        }
+    } catch (e) {
+        console.warn("Users API nem elérhető, beépített fiókok használata.");
+    }
 
-            if (!foundUser) {
-                alert('Hibás felhasználónév vagy jelszó!');
-            }
-        })
-        .catch(err => {
-            alert('Nem sikerült elérni az adatbázist.');
-        });
-});
+    // 2. Beépített fiókok (Admin, Bíró, Edző)
+    if (!sikeresUser) {
+        if (uName.toLowerCase() === 'admin' && uPass === 'admin123') {
+            sikeresUser = { id: 1, username: 'Adminisztrátor', role: 'ADMIN' };
+        } else if ((uName.toLowerCase() === 'biro' || uName.toLowerCase() === 'bíró') && uPass === 'biro123') {
+            sikeresUser = { id: 2, username: 'Asztalbíró', role: 'JUDGE' };
+        } else if ((uName.toLowerCase() === 'edzo' || uName.toLowerCase() === 'edző' || uName.toLowerCase() === 'coach') && uPass === 'edzo123') {
+            sikeresUser = { id: 3, username: 'Klubedző (Shobu HSE)', role: 'COACH' };
+        }
+    }
+
+    if (sikeresUser) {
+        TatamiMaster.mentBejelentkezes(sikeresUser);
+        const role = sikeresUser.role.toUpperCase();
+
+        if (role === 'ADMIN') window.location.href = 'views/admin.html';
+        else if (role === 'JUDGE' || role === 'BIRO') window.location.href = 'views/biroi_panel.html';
+        else window.location.href = 'views/audience.html';
+    } else if (errDiv) {
+        errDiv.innerText = "❌ Hibás felhasználónév vagy jelszó!";
+        errDiv.style.display = 'block';
+    }
+}

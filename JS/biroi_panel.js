@@ -619,23 +619,42 @@ async function meccsMentese() {
     });
 
     if (res.ok) {
+        // VALÓDI ÁGRAJZ TOVÁBBJUTTATÁS (KUMITE):
         if (aktualisMod === 'KUMITE') {
-            let kovetkezoUresMeccs = merkozesekLista.find(m =>
-                m.categoryId === aktualisMeccs.categoryId &&
-                m.id > aktualisMeccs.id &&
-                !m.isFinished &&
-                (m.competitor1Id === null || m.competitor2Id === null)
-            );
+            // Lekérjük a kategória ÖSSZES meccsét (azokat is, amikben még null van!)
+            const osszesRes = await fetch('https://localhost:7045/api/Matches');
+            const osszesMeccs = await osszesRes.json();
 
-            if (kovetkezoUresMeccs) {
-                if (kovetkezoUresMeccs.competitor1Id === null) kovetkezoUresMeccs.competitor1Id = gyoztesId;
-                else kovetkezoUresMeccs.competitor2Id = gyoztesId;
+            let katMeccsek = osszesMeccs
+                .filter(m => m.categoryId === aktualisMeccs.categoryId)
+                .sort((a, b) => a.id - b.id);
 
-                await fetch('https://localhost:7045/api/Matches/' + kovetkezoUresMeccs.id, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(kovetkezoUresMeccs)
-                });
+            let n = katMeccsek.length;
+            // Megnézzük, hogy egyenes kieséses ágrajz-e (3, 7, 15 vagy 31 meccs)
+            let isAgrajz = (n === 3 || n === 7 || n === 15 || n === 31);
+            let idx = katMeccsek.findIndex(m => m.id === aktualisMeccs.id);
+
+            // Ha ágrajz és még nem a döntőnél (utolsó meccsnél) járunk:
+            if (isAgrajz && idx !== -1 && idx < n - 1) {
+                let elsoKorMeret = (n + 1) / 2;
+                // Kiszámoljuk, melyik következő fordulós meccsbe jut tovább a győztes
+                let kovetkezoIndex = elsoKorMeret + Math.floor(idx / 2);
+                let kovetkezoMeccs = katMeccsek[kovetkezoIndex];
+
+                if (kovetkezoMeccs) {
+                    // Páros indexű ágról az AKA (competitor1Id), páratlanról a SHIRO (competitor2Id) helyre kerül!
+                    if (idx % 2 === 0) {
+                        kovetkezoMeccs.competitor1Id = gyoztesId;
+                    } else {
+                        kovetkezoMeccs.competitor2Id = gyoztesId;
+                    }
+
+                    await fetch('https://localhost:7045/api/Matches/' + kovetkezoMeccs.id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(kovetkezoMeccs)
+                    });
+                }
             }
         }
 
