@@ -10,7 +10,6 @@ window.onload = function() {
     setInterval(audienceAdatokBetoltese, 5000);
 };
 
-// Ha COACH (Edző) vagy ADMIN lépett be, megjelenítjük neki a Nevezési Panelt!
 function ellenorizEdzoiMod() {
     const user = TatamiMaster.lekerBejelentkezes();
     const edzoPanel = document.getElementById('edzoiNevezesPanel');
@@ -21,9 +20,18 @@ function ellenorizEdzoiMod() {
         if (edzoPanel) edzoPanel.style.display = 'block';
         if (badge) {
             badge.style.display = 'inline-block';
-            badge.innerText = '👤 Bejelentkezve: ' + user.username + ' (Edző)';
+            const nev = user.displayName || user.username;
+            const klubInfo = user.club ? ` - ${user.club}` : '';
+            const ovInfo = user.degree ? ` (${user.degree})` : '';
+            badge.innerText = `👤 ${nev}${ovInfo}${klubInfo} [EDZŐ]`;
         }
         if (headerSub) headerSub.innerText = 'EDZŐI NEVEZÉS & ÉLŐ KÖVETÉS';
+
+        // Automatikusan beírjuk a regisztrált edző klubját a nevezési mezőbe!
+        const klubInput = document.getElementById('coachUjKlub');
+        if (klubInput && user.club && !klubInput.value) {
+            klubInput.value = user.club;
+        }
     } else {
         if (edzoPanel) edzoPanel.style.display = 'none';
     }
