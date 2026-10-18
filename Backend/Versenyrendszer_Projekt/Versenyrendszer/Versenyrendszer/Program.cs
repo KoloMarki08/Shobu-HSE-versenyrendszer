@@ -30,6 +30,26 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Globális hibakezelő: megakadályozza a szerver leállását adatbázis/konverziós hiba esetén
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[BACKEND HIBA - {context.Request.Path}]: {ex.Message}");
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = "Szerveroldali adatbázis- vagy feldolgozási hiba történt.",
+            details = ex.Message
+        });
+    }
+});
+
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
