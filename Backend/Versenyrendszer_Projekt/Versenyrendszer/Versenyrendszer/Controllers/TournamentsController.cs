@@ -18,7 +18,16 @@ namespace Versenyrendszer.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Tournament>>> GetTournaments()
         {
-            return await _context.Tournaments.ToListAsync();
+            try
+            {
+                return await _context.Tournaments.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Ha bármilyen adatbázis-olvasási hiba van, logoljuk és visszaadunk egy üres listát
+                System.Console.WriteLine("Hiba a versenyek lekérésekor: " + ex.Message);
+                return Ok(new List<Tournament>());
+            }
         }
 
         [HttpPost]
