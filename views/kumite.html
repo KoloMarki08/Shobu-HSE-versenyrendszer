@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATAMI MASTER Versenyrendszer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <title>Tatami Master - Kumite Ágrajz Központ</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
-
-<body>
-    <section id="tab-bracket" class="hidden">
-        <div id="bracket-view"></div>
-    </section>
+<body id="pageKumite">
+    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">KUMITE ÁGRAJZ & NYOMTATÁSI KÖZPONT</span></h1>
+        <div style="display:flex;gap:10px;">
+            <select id="kumiteHubSelect" class="input-field" style="min-width:260px;" onchange="rajzolDedikaltKumiteAgrajz()"></select>
+            <button class="btn btn-outline-blue" style="background:white;" onclick="window.print()">🖨️ Ágrajz Nyomtatása</button>
+        </div>
+    </header>
+    <main class="admin-container">
+        <div id="kumiteHubContainer" style="background:white;padding:20px;border-radius:8px;"></div>
+    </main>
+    <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
+    <script src="../JS/KUMITE.js"></script>
+    <script src="../JS/data.js"></script>
 </body>
-
 </html>

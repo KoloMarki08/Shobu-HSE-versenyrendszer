@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatami Master - TV Kijelző</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
+</head>
+<body style="background-color: #111; overflow: hidden;">
+    
+    <main class="scoreboard-container" style="height: 100vh; padding: 40px;">
+        
+        <!-- PIROS OLDAL (AKA) -->
+        <div class="fighter-card aka-card">
+            <h2 class="fighter-title">AKA (Piros)</h2>
+            <div class="fighter-name" id="tvAkaName" style="font-size: 2rem;">Válassz mérkőzést!</div>
+            <div class="score-display" id="tvAkaScore" style="font-size: 8.5rem;">0</div>
+            
+            <!-- Kumite büntetések -->
+            <div class="penalty-container" id="tvAkaPenalties">
+                <div class="penalty-box chui-box" style="font-size: 2rem;">CHUI: <span id="tvAkaChui">0</span></div>
+                <div class="penalty-box genten-box" style="font-size: 2rem;">GENTEN: <span id="tvAkaGenten">0</span></div>
+            </div>
+
+            <!-- Kata 5 bírói pontszám a TV-n -->
+            <div id="tvAkaJudges" class="kata-judges-row" style="display: none;"></div>
+        </div>
+
+        <!-- KÖZÉPSŐ SÁV: KATEGÓRIA, IDŐMÉRŐ ÉS FELKÉSZÜL SÁV -->
+        <div class="center-console" style="justify-content: space-between; padding: 30px 20px;">
+            <div class="match-info">
+                <h3 id="tvMatchInfo" style="font-size: 1.8rem; margin: 0; color: #ffc107;">A Tatami</h3>
+            </div>
+
+            <div style="text-align: center;">
+                <div class="timer-display" id="tvTimerDisplay" style="font-size: 8rem; margin-bottom: 0;">02:00</div>
+                <div id="tvKataModeBadge" style="display: none; font-size: 2.2rem; font-weight: bold; color: #fff; letter-spacing: 3px; border: 3px solid #ffc107; padding: 15px 30px; border-radius: 10px;">
+                    KATA (FORMAGYAKORLAT)
+                </div>
+            </div>
+
+            <!-- FELKÉSZÜL (KÖVETKEZŐ MECCS) KIJELZŐ KICSIBEN A TV-N -->
+            <div id="tvNextMatchBox" style="width: 100%; background: #151515; border: 1px solid #444; border-top: 3px solid #ffc107; border-radius: 8px; padding: 12px 15px; text-align: center;">
+                <span style="background: #ffc107; color: #111; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; display: inline-block; margin-bottom: 6px;">
+                    ⏭ FELKÉSZÜL
+                </span>
+                <div id="tvNextMatchText" style="font-size: 1.15rem; color: #eee; font-weight: bold;">
+                    Várakozás...
+                </div>
+            </div>
+        </div>
+
+        <!-- FEHÉR OLDAL (SHIRO) -->
+        <div class="fighter-card shiro-card">
+            <h2 class="fighter-title">SHIRO (Fehér)</h2>
+            <div class="fighter-name" id="tvShiroName" style="color: #333; font-size: 2rem;">Válassz mérkőzést!</div>
+            <div class="score-display" id="tvShiroScore" style="color: #333; font-size: 8.5rem;">0</div>
+            
+            <!-- Kumite büntetések -->
+            <div class="penalty-container" id="tvShiroPenalties">
+                <div class="penalty-box chui-box" style="font-size: 2rem;">CHUI: <span id="tvShiroChui">0</span></div>
+                <div class="penalty-box genten-box" style="font-size: 2rem;">GENTEN: <span id="tvShiroGenten">0</span></div>
+            </div>
+
+            <!-- Kata 5 bírói pontszám a TV-n -->
+            <div id="tvShiroJudges" class="kata-judges-row" style="display: none;"></div>
+        </div>
+
+    </main>
+
+    <script src="../JS/tv_kijelzo.js"></script>
+</body>
+</html>

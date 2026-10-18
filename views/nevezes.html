@@ -1,55 +1,27 @@
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATAMI MASTER Versenyrendszer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="stilus.css">
-    <link rel="icon" href="logo.jpg">
+    <title>Tatami Master - Mérlegelési & Regisztrációs Állomás</title>
+    <link rel="stylesheet" href="../CSS/stlye.css">
 </head>
+<body id="pageNevezes">
+    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">MÉRLEGELÉSI ÁLLOMÁS</span></h1>
+        <button class="btn btn-outline" onclick="window.location.href='admin.html'">⬅ Admin Panel</button>
+    </header>
 
-<body>
-    <section id="tab-reg" class="nevezes-oldal hidden">
-        <div class="nevezes-feher-doboz">
-            <h2 class="doboz-cime">Nevezés</h2>
-            <select id="p-verseny" onchange="letoltVersenyzoketABazisbol(); frissitNevezesFelulete();"
-                class="urlap-legordulo mb-4"></select>
-
-            <div id="nevezes-urlap-tarolo">
-                <div class="urlap-racs">
-                    <input id="p-name" type="text" placeholder="Név" class="urlap-szovegdoboz">
-                    <input id="p-dojo" type="text" placeholder="Klub" class="urlap-szovegdoboz">
-                    <select id="p-gender" onchange="frissitKategoriaLegordulot()" class="urlap-legordulo">
-                        <option value="">Nem...</option>
-                        <option value="Boys">Fiú</option>
-                        <option value="Girls">Lány</option>
-                        <option value="Men">Férfi</option>
-                        <option value="Women">Női</option>
-                    </select>
-                    <input id="p-age" type="number" placeholder="Kor" oninput="frissitKategoriaLegordulot()"
-                        class="urlap-szamdoboz">
-                    <input id="p-weight" type="number" placeholder="Súly (kg)" class="urlap-szamdoboz">
-                    <select id="p-cat" class="urlap-kategoria-valaszto"></select>
-                </div>
-                <button onclick="hozzaadVersenyzot()" class="hozzaadas-gomb">HOZZÁADÁS</button>
-            </div>
-
-            <div id="nevezes-lezarva-uzenet" class="hidden"
-                style="background: #fee2e2; border-left: 4px solid #ef4444; color: #b91c1c; padding: 15px; margin-bottom: 20px;">
-                <p style="font-weight: bold; margin: 0;">🔒 A nevezés lezárult!</p>
-                <p style="margin: 5px 0 0 0;">Ehhez a versenyhez már nem lehet új versenyzőt rögzíteni.</p>
-            </div>
-
-            <ul id="player-list" class="lista-elemek mt-4"></ul>
-
-            <div id="admin-controls" class="admin-gombok hidden mt-6">
-                <button onclick="valtFul('bracket')" class="admin-gomb-sorsolas">Kumite Sorsolás</button>
-                <button onclick="generalKata()" class="admin-gomb-kata">Kata Sorsolás</button>
-            </div>
+    <main class="admin-container">
+        <div style="background:white;padding:20px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:15px;">
+            <h2 style="margin:0;">⚖️ Gyors Mérlegelés (Keresés név vagy klub alapján):</h2>
+            <input type="text" id="merlegKeresoInput" class="input-field" style="min-width:300px;" placeholder="🔍 Írd be a versenyző vagy klub nevét..." oninput="initNevezesPage()">
         </div>
-    </section>
-</body>
+        <div id="gyorsMerlegeloContainer" style="background:white;padding:20px;border-radius:8px;"></div>
+    </main>
 
+    <script src="../JS/core.js"></script>
+    <script src="../JS/auth.js"></script>
+    <script src="../JS/data.js"></script>
+</body>
 </html>

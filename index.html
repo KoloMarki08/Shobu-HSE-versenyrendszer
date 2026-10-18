@@ -3,86 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Versenyrendszer</title>
-    <!-- A stíluslapod bekötése -->
-    <link rel="stylesheet" href="CSS/stilus.css">
+    <title>Tatami Master - Kyokushin Karate Versenyrendszer</title>
+    <link rel="stylesheet" href="CSS/stlye.css">
+    <style>
+        .auth-tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .auth-tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: #f8f9fa;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #555;
+            transition: 0.2s;
+        }
+        .auth-tab-btn.active {
+            background: #dc3545;
+            color: white;
+        }
+        .reg-label {
+            display: block;
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .reg-label .req {
+            color: #dc3545;
+            margin-left: 2px;
+        }
+        .reg-group {
+            margin-bottom: 14px;
+        }
+        .reg-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .dob-row {
+            display: flex;
+            gap: 10px;
+        }
+        .dob-col {
+            flex: 1;
+        }
+    </style>
 </head>
-<body>
-    <!-- Felső fekete sáv -->
-    <header class="top-header">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">VERSENYRENDSZER</span></h1>
+<body style="background-color: #f4f6f9;">
+
+    <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
+        <h1><em>TATAMI MASTER</em> <span class="red-text">KYOKUSHIN KARATE</span></h1>
+        <button class="btn btn-outline-blue" style="font-weight: bold; background: white; padding: 8px 16px;" onclick="window.location.href='views/audience.html'">
+            📊 Élő Eredmények & Ágrajzok (Nézői felület)
+        </button>
     </header>
 
-    <!-- Fő tartalom (Szürke háttéren) -->
-    <main class="main-container">
+    <main style="max-width: 1100px; margin: 35px auto; display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; padding: 0 20px;">
         
-        <!-- Bal oldal: Versenyek és Nevezés -->
-        <section class="tournaments-section">
-            <h2>Versenyek és Nevezés</h2>
-            
-            <div class="tournament-card">
-                <div class="card-left">
-                    <!-- Ide jön a logód a gyökérkönyvtárból -->
-                    <img src="logo.jpg" alt="Shobu HSE Logo" class="tournament-logo">
-                </div>
-                <div class="card-right">
-                    <h3>V. Halas Kupa, 2026-10-10</h3>
-                    <div class="status-row">
-                        <span class="badge badge-green">ÉLŐ / NYITVA</span>
-                        <span class="date">2026-10-10</span>
-                        <span class="organizer">Rendező Dojo és Vezetője: Vácrátóti HSE - Tornai Bálint</span>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn btn-outline" onclick="window.location.href='views/audience.html'">Közönség panel</button>
-                        <button class="btn btn-outline-blue" onclick="window.location.href='views/eredmenyek.html'">Eredmények</button>
-                        <button class="btn btn-outline-green" onclick="window.location.href='views/nevezes.html'">Nevezés</button>
-                    </div>
-                </div>
+        <!-- BAL OLDAL: AKTUÁLIS VERSENYEK -->
+        <div style="flex: 1.1; min-width: 320px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid #dc3545;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0;">🏆 Aktuális Versenyek</h2>
+                <button class="btn btn-outline-green" style="font-size: 0.85rem; padding: 5px 10px;" onclick="ujVersenyGyorsLetrehozas()">+ Új verseny</button>
             </div>
-        </section>
+            
+            <p style="color: #666; margin-bottom: 20px; font-size: 0.95rem;">
+                Válaszd ki a versenyt az élő ágrajzok, tatami-beosztások és kata ranglisták megtekintéséhez:
+            </p>
 
-        <!-- Jobb oldal: Belépés panel -->
-        <section class="login-section">
-            <div class="login-card">
-                <h3 class="login-title">SZERVEZŐI / BÍRÓI BELÉPÉS</h3>
-                
-                <form id="loginForm">
-                    <div class="input-group">
-                        <label for="username">Felhasználónév</label>
-                        <input type="text" id="username" required>
+            <div id="versenyekContainer">
+                <p style="color: #888;">Versenyek betöltése az adatbázisból...</p>
+            </div>
+        </div>
+
+        <!-- JOBB OLDAL: BEJELENTKEZÉS ÉS EDZŐI REGISZTRÁCIÓ -->
+        <div style="flex: 1.2; min-width: 340px; background: white; padding: 25px 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid #222;">
+            
+            <!-- Fülválasztó: Belépés vs. Regisztráció -->
+            <div class="auth-tabs">
+                <button type="button" id="tabBtnLogin" class="auth-tab-btn active" onclick="valtsAuthFul('login')">🔐 Belépés</button>
+                <button type="button" id="tabBtnReg" class="auth-tab-btn" onclick="valtsAuthFul('register')">📝 Edzői Regisztráció</button>
+            </div>
+
+            <!-- 1. BEJELENTKEZÉSI ŰRLAP -->
+            <div id="loginFormContainer">
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">
+                    Adminisztrátorok, asztalbírók és regisztrált klubedzők részére.
+                </p>
+
+                <form onsubmit="bejelentkezes(event)">
+                    <div class="reg-group">
+                        <label class="reg-label">Felhasználónév vagy E-mail cím<span class="req">*</span></label>
+                        <input type="text" id="loginUsername" class="reg-input" placeholder="E-mail cím vagy felhasználónév" required>
                     </div>
-                    
-                    <div class="input-group password-group">
-                        <label for="password">Jelszó</label>
-                        <input type="password" id="password" required>
-                        <!-- A jelszó láthatóságát kapcsoló ikon (SVG) -->
-                        <img src="eye-fill.svg" alt="Mutat" class="toggle-password" id="togglePassword">
+
+                    <div class="reg-group" style="margin-bottom: 20px;">
+                        <label class="reg-label">Jelszó<span class="req">*</span></label>
+                        <input type="password" id="loginPassword" class="reg-input" placeholder="••••••••" required>
                     </div>
-                    
-                    <button type="submit" class="btn btn-red btn-full">Belépés a rendszerbe</button>
+
+                    <div id="loginError" style="color: #dc3545; font-weight: bold; margin-bottom: 12px; display: none;"></div>
+
+                    <button type="submit" class="btn btn-outline" style="width: 100%; background: #dc3545; color: white; border: none; padding: 12px; font-size: 1.05rem; font-weight: bold;">
+                        Bejelentkezés ➔
+                    </button>
                 </form>
 
-                <div class="test-data-box">
-                    <p>TESZT ADATOK:</p>
-                    <ul>
-                        <li>Admin: <strong>KoloMarki</strong> / 1234</li>
-                        <li>Bíró: <strong>A tatami</strong> / A-tatami</li>
-                        <li>Edző: <strong>Balint.Tornai</strong> / 1234</li>
-                    </ul>
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; font-size: 0.85rem; color: #777;">
+                    <strong>💡 Teszt belépési fiókok:</strong><br>
+                    • Adminisztrátor: <code>admin</code> / <code>admin123</code><br>
+                    • Asztalbíró: <code>biro</code> / <code>biro123</code><br>
+                    • Klubedző: <code>edzo</code> / <code>edzo123</code> (vagy regisztrálj új edzői fiókot a fenti fülön!)
                 </div>
             </div>
-        </section>
+
+            <!-- 2. REGISZTRÁCIÓS ŰRLAP (A KÉPEN LÁTHATÓ MEZŐKKEL -> AUTOMATIKUS COACH RANG) -->
+            <div id="registerFormContainer" style="display: none;">
+                <div style="background: #f8f9fa; padding: 10px 15px; border-left: 4px solid #28a745; margin-bottom: 18px; font-size: 0.85rem; color: #444;">
+                    🥋 A regisztrált felhasználók automatikusan megkapják az <strong>Edzői (COACH)</strong> jogosultságot, amellyel benevezhetik klubjuk versenyzőit.
+                </div>
+
+                <form onsubmit="regisztraciokuldese(event)" id="coachRegForm">
+                    
+                    <div class="reg-group">
+                        <label class="reg-label">Login (Correct Email)<span class="req">*</span></label>
+                        <input type="email" id="regEmail" class="reg-input" placeholder="pelda@klub.hu" required>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">First name (Keresztnév)<span class="req">*</span></label>
+                        <input type="text" id="regFirstName" class="reg-input" required>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Last name (Vezetéknév)<span class="req">*</span></label>
+                        <input type="text" id="regLastName" class="reg-input" required>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Phone (Telefonszám)<span class="req">*</span></label>
+                        <input type="tel" id="regPhone" class="reg-input" placeholder="+36 30 123 4567" required>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Club name (Klub neve)<span class="req">*</span></label>
+                        <input type="text" id="regClubName" class="reg-input" placeholder="Pl. Shobu HSE" required>
+                        <button type="button" onclick="valasszMeglevoKlubot()" style="margin-top: 6px; padding: 6px 12px; background: white; color: #007bff; border: 1px solid #007bff; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                            Change selected Club
+                        </button>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Branchief<span class="req">*</span></label>
+                        <input type="text" id="regBranchief" class="reg-input" required>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Country (Ország)<span class="req">*</span></label>
+                        <select id="regCountry" class="reg-input" required>
+                            <option value="">-- Select Country --</option>
+                            <option value="Hungary" selected>Hungary (Magyarország)</option>
+                            <option value="Poland">Poland</option>
+                            <option value="Romania">Romania</option>
+                            <option value="Slovakia">Slovakia</option>
+                            <option value="Ukraine">Ukraine</option>
+                            <option value="Austria">Austria</option>
+                            <option value="Germany">Germany</option>
+                            <option value="Croatia">Croatia</option>
+                            <option value="Serbia">Serbia</option>
+                            <option value="Bulgaria">Bulgaria</option>
+                            <option value="Spain">Spain</option>
+                            <option value="France">France</option>
+                            <option value="Japan">Japan</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Degree (Övfokozat)</label>
+                        <select id="regDegree" class="reg-input">
+                            <option value="">-- Select Degree --</option>
+                            <option value="10. kyu">10. kyu</option>
+                            <option value="9. kyu">9. kyu</option>
+                            <option value="8. kyu">8. kyu</option>
+                            <option value="7. kyu">7. kyu</option>
+                            <option value="6. kyu">6. kyu</option>
+                            <option value="5. kyu">5. kyu</option>
+                            <option value="4. kyu">4. kyu</option>
+                            <option value="3. kyu">3. kyu</option>
+                            <option value="2. kyu">2. kyu</option>
+                            <option value="1. kyu">1. kyu</option>
+                            <option value="1. dan">1. dan (Senpai)</option>
+                            <option value="2. dan">2. dan (Senpai)</option>
+                            <option value="3. dan">3. dan (Sensei)</option>
+                            <option value="4. dan">4. dan (Sensei)</option>
+                            <option value="5. dan">5. dan (Shihan)</option>
+                            <option value="6. dan">6. dan (Shihan)</option>
+                            <option value="7. dan">7. dan (Shihan)</option>
+                            <option value="8. dan">8. dan (Kancho)</option>
+                        </select>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">IKO Membership</label>
+                        <input type="text" id="regIkoMembership" class="reg-input" placeholder="Opcionális tagsági azonosító">
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Sex (Nem)<span class="req">*</span></label>
+                        <select id="regSex" class="reg-input" required>
+                            <option value="">-- Select --</option>
+                            <option value="Male">Male (Férfi)</option>
+                            <option value="Female">Female (Nő)</option>
+                        </select>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Date of Birth<span class="req">*</span></label>
+                        <div class="dob-row">
+                            <div class="dob-col">
+                                <label class="reg-label" style="font-size: 0.8rem;">Year<span class="req">*</span></label>
+                                <select id="regDobYear" class="reg-input" required></select>
+                            </div>
+                            <div class="dob-col">
+                                <label class="reg-label" style="font-size: 0.8rem;">Month<span class="req">*</span></label>
+                                <select id="regDobMonth" class="reg-input" required></select>
+                            </div>
+                            <div class="dob-col">
+                                <label class="reg-label" style="font-size: 0.8rem;">Day<span class="req">*</span></label>
+                                <select id="regDobDay" class="reg-input" required></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Password<span class="req">*</span></label>
+                        <input type="password" id="regPassword" class="reg-input" required>
+                    </div>
+
+                    <div class="reg-group" style="margin-bottom: 20px;">
+                        <label class="reg-label">Confirm password<span class="req">*</span></label>
+                        <input type="password" id="regConfirmPassword" class="reg-input" required>
+                    </div>
+
+                    <div id="regError" style="color: #dc3545; font-weight: bold; margin-bottom: 12px; display: none;"></div>
+
+                    <button type="submit" class="btn btn-outline-green" style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; font-size: 1.05rem; font-weight: bold;">
+                        ✔ Regisztráció & Belépés Edzőként
+                    </button>
+                </form>
+            </div>
+
+        </div>
 
     </main>
 
-    <!-- Alsó lábléc -->
-    <footer class="bottom-footer">
-        <p>© 2026 SHOBU HSE. Minden jog fenntartva.</p>
-        <p>A rendszer még nem teljesen fejlett, de folyamatosan fejlesztés alatt van. Készítette: Kolonics Márk</p>
-    </footer>
-
-    <!-- A JavaScript fájljaid bekötése -->
+    <script src="JS/core.js"></script>
     <script src="JS/jelszomegjelenito.js"></script>
     <script src="JS/login.js"></script>
+    <script src="JS/index.js"></script>
 </body>
 </html>
