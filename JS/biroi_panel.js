@@ -28,7 +28,7 @@ let akaNevSzoveg = "Várakozás...";
 let shiroNevSzoveg = "Várakozás...";
 let meccsInfoSzoveg = "Nincs kiválasztott tatami";
 
-window.onload = async function() {
+window.onload = async function () {
     await tatamikBetolteseBironak();
     const mentettTatami = localStorage.getItem('biroSajatTatamiId');
     if (mentettTatami) {
@@ -70,7 +70,7 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
         fetch('https://localhost:7045/api/Tatamis').then(r => r.json())
     ]).then(([meccsek, versenyzok, kategoriak, tatamik]) => {
         let sajatMeccsek = meccsek.filter(m => m.tatamiId === kivalasztottTatamiId)
-                                  .sort((a, b) => a.matchOrder - b.matchOrder);
+            .sort((a, b) => a.matchOrder - b.matchOrder);
 
         let ervenyesMeccsek = [];
         let selectHtml = '';
@@ -89,7 +89,7 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
             m.akaNev = v1 ? (v1.name + " (" + v1.club + ")") : ("Versenyző #" + m.competitor1Id);
             m.shiroNev = v2 ? (v2.name + " (" + v2.club + ")") : "";
             m.tatamiNev = t ? t.name : ("Tatami " + m.tatamiId);
-            
+
             let isDontoKata = (m.matchType === 'KATA' && TatamiMaster.isKataDontoMeccs(m.id));
             m.katNev = (k ? k.name : ("Kat. " + m.categoryId)) + (isDontoKata ? " [TOP 6 DÖNTŐ]" : "");
 
@@ -109,7 +109,7 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
 
         if (kovetkezo) {
             let kiiras = '#' + kovetkezo.matchOrder + ' (' + kovetkezo.katNev + '): ' +
-                         (kovetkezo.matchType === 'KATA' ? kovetkezo.akaNev : (kovetkezo.akaNev + ' vs. ' + kovetkezo.shiroNev));
+                (kovetkezo.matchType === 'KATA' ? kovetkezo.akaNev : (kovetkezo.akaNev + ' vs. ' + kovetkezo.shiroNev));
             document.getElementById('soronKovetkezoText').innerText = kiiras;
         } else {
             document.getElementById('soronKovetkezoText').innerText = "🎉 Ezen a tatamin minden kisorsolt mérkőzés lezajlott!";
@@ -117,7 +117,7 @@ function tatamiMeccseinekBetoltese(autoToltKovetkezot = true) {
 
         if (felkeszul) {
             let felkKiiras = '#' + felkeszul.matchOrder + ' (' + felkeszul.katNev + '): ' +
-                             (felkeszul.matchType === 'KATA' ? felkeszul.akaNev : (felkeszul.akaNev + ' vs. ' + felkeszul.shiroNev));
+                (felkeszul.matchType === 'KATA' ? felkeszul.akaNev : (felkeszul.akaNev + ' vs. ' + felkeszul.shiroNev));
             document.getElementById('felkeszulText').innerText = felkKiiras;
         } else {
             document.getElementById('felkeszulText').innerText = "Nincs több várakozó mérkőzés.";
@@ -529,7 +529,7 @@ function kuldesATvnek(kijelzoIdo) {
 // --- IDŐMÉRŐ ---
 function startTimer() {
     if (timerInterval !== null) return;
-    timerInterval = setInterval(function() {
+    timerInterval = setInterval(function () {
         if (timeLeft > 0) {
             timeLeft--;
             frissitKijelzo();
@@ -562,120 +562,149 @@ function frissitKijelzo() {
     kuldesATvnek(formazottIdo);
 }
 
-// --- MENTÉS, TOVÁBBJUTTATÁS ÉS KATA TOP 6 DÖNTŐ GENERÁLÁS ---
+let mentesFolyamatban = false;
+
 async function meccsMentese() {
+    if (mentesFolyamatban) return; // Dupla kattintás elleni védelem!
     if (!aktualisMeccs) {
-        alert("Először válassz ki egy tatamit!");
+        alert("⚠️ Először válassz ki egy tatamit és egy aktív mérkőzést!");
         return;
     }
 
-    stopTimer();
-    let gyoztesId = null;
-
-    if (aktualisMod === 'KATA') {
-        if (!akaKataAdatok || !akaKataAdatok.kesz) {
-            alert("Kérlek írd be mind az 5 bíró pontszámát a lezárás előtt!");
+    // Ha már lezárt meccset töltött vissza kézzel a bíró, kérdezzünk rá a felülírásra!
+    if (aktualisMeccs.isFinished) {
+        if (!confirm("⚠️ Ez a mérkőzés már egyszer le lett zárva! Biztosan felülírod az eredményét?")) {
             return;
         }
-        TatamiMaster.mentKataEredmeny(aktualisMeccs.id, aktualisMeccs.competitor1Id, akaKataAdatok);
-        gyoztesId = aktualisMeccs.competitor1Id;
-    } else {
-        const valasztottMod = document.getElementById('gyozelemModSelect').value;
-
-        if (kenyszeritettGyoztesId) {
-            gyoztesId = kenyszeritettGyoztesId;
-        } else if (akaScore > shiroScore) {
-            gyoztesId = aktualisMeccs.competitor1Id;
-        } else if (shiroScore > akaScore) {
-            gyoztesId = aktualisMeccs.competitor2Id;
-        } else {
-            const akaNyert = confirm("Döntetlen állás! Bírói döntéssel (Hantei / " + valasztottMod + ") AKA (Piros) nyert?\n\nOK = 🔴 AKA nyert\nMégse = ⚪ SHIRO nyert");
-            gyoztesId = akaNyert ? aktualisMeccs.competitor1Id : aktualisMeccs.competitor2Id;
-        }
-
-        TatamiMaster.mentKumiteReszletek(aktualisMeccs.id, {
-            winType: valasztottMod,
-            akaScore: akaScore,
-            shiroScore: shiroScore,
-            winnerId: gyoztesId
-        });
     }
 
-    const frissitettMeccs = {
-        id: aktualisMeccs.id,
-        categoryId: aktualisMeccs.categoryId,
-        tatamiId: aktualisMeccs.tatamiId,
-        competitor1Id: aktualisMeccs.competitor1Id,
-        competitor2Id: aktualisMeccs.competitor2Id,
-        matchOrder: aktualisMeccs.matchOrder,
-        isFinished: true,
-        winnerId: gyoztesId
-    };
+    const mentesBtn = document.getElementById('mentesGomb');
+    mentesFolyamatban = true;
+    if (mentesBtn) {
+        mentesBtn.disabled = true;
+        mentesBtn.style.opacity = '0.6';
+        mentesBtn.innerText = '⏳ Mentés folyamatban...';
+    }
 
-    const res = await fetch('https://localhost:7045/api/Matches/' + aktualisMeccs.id, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(frissitettMeccs)
-    });
+    try {
+        stopTimer();
+        let gyoztesId = null;
 
-    if (res.ok) {
-        // VALÓDI ÁGRAJZ TOVÁBBJUTTATÁS (KUMITE):
-        if (aktualisMod === 'KUMITE') {
-            // Lekérjük a kategória ÖSSZES meccsét (azokat is, amikben még null van!)
-            const osszesRes = await fetch('https://localhost:7045/api/Matches');
-            const osszesMeccs = await osszesRes.json();
+        if (aktualisMod === 'KATA') {
+            if (!akaKataAdatok || !akaKataAdatok.kesz) {
+                alert("Kérlek írd be mind az 5 bíró pontszámát a lezárás előtt!");
+                return;
+            }
+            TatamiMaster.mentKataEredmeny(aktualisMeccs.id, aktualisMeccs.competitor1Id, akaKataAdatok);
+            gyoztesId = aktualisMeccs.competitor1Id;
+        } else {
+            const valasztottMod = document.getElementById('gyozelemModSelect').value;
 
-            let katMeccsek = osszesMeccs
-                .filter(m => m.categoryId === aktualisMeccs.categoryId)
-                .sort((a, b) => a.id - b.id);
+            if (kenyszeritettGyoztesId) {
+                gyoztesId = kenyszeritettGyoztesId;
+            } else if (akaScore > shiroScore) {
+                gyoztesId = aktualisMeccs.competitor1Id;
+            } else if (shiroScore > akaScore) {
+                gyoztesId = aktualisMeccs.competitor2Id;
+            } else {
+                const akaNyert = confirm("Döntetlen állás! Bírói döntéssel (Hantei / " + valasztottMod + ") AKA (Piros) nyert?\n\nOK = 🔴 AKA nyert\nMégse = ⚪ SHIRO nyert");
+                gyoztesId = akaNyert ? aktualisMeccs.competitor1Id : aktualisMeccs.competitor2Id;
+            }
 
-            let n = katMeccsek.length;
-            // Megnézzük, hogy egyenes kieséses ágrajz-e (3, 7, 15 vagy 31 meccs)
-            let isAgrajz = (n === 3 || n === 7 || n === 15 || n === 31);
-            let idx = katMeccsek.findIndex(m => m.id === aktualisMeccs.id);
+            TatamiMaster.mentKumiteReszletek(aktualisMeccs.id, {
+                winType: valasztottMod,
+                akaScore: akaScore,
+                shiroScore: shiroScore,
+                winnerId: gyoztesId
+            });
+        }
 
-            // Ha ágrajz és még nem a döntőnél (utolsó meccsnél) járunk:
-            if (isAgrajz && idx !== -1 && idx < n - 1) {
-                let elsoKorMeret = (n + 1) / 2;
-                // Kiszámoljuk, melyik következő fordulós meccsbe jut tovább a győztes
-                let kovetkezoIndex = elsoKorMeret + Math.floor(idx / 2);
-                let kovetkezoMeccs = katMeccsek[kovetkezoIndex];
+        const frissitettMeccs = {
+            id: aktualisMeccs.id,
+            categoryId: aktualisMeccs.categoryId,
+            tatamiId: aktualisMeccs.tatamiId,
+            competitor1Id: aktualisMeccs.competitor1Id,
+            competitor2Id: aktualisMeccs.competitor2Id,
+            matchOrder: aktualisMeccs.matchOrder,
+            isFinished: true,
+            winnerId: gyoztesId
+        };
 
-                if (kovetkezoMeccs) {
-                    // Páros indexű ágról az AKA (competitor1Id), páratlanról a SHIRO (competitor2Id) helyre kerül!
-                    if (idx % 2 === 0) {
-                        kovetkezoMeccs.competitor1Id = gyoztesId;
-                    } else {
-                        kovetkezoMeccs.competitor2Id = gyoztesId;
+        const res = await fetch('https://localhost:7045/api/Matches/' + aktualisMeccs.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(frissitettMeccs)
+        });
+
+        if (res.ok) {
+            // VALÓDI ÁGRAJZ TOVÁBBJUTTATÁS (KUMITE):
+            if (aktualisMod === 'KUMITE') {
+                // Lekérjük a kategória ÖSSZES meccsét (azokat is, amikben még null van!)
+                const osszesRes = await fetch('https://localhost:7045/api/Matches');
+                const osszesMeccs = await osszesRes.json();
+
+                let katMeccsek = osszesMeccs
+                    .filter(m => m.categoryId === aktualisMeccs.categoryId)
+                    .sort((a, b) => a.id - b.id);
+
+                let n = katMeccsek.length;
+                // Megnézzük, hogy egyenes kieséses ágrajz-e (3, 7, 15 vagy 31 meccs)
+                let isAgrajz = (n === 3 || n === 7 || n === 15 || n === 31);
+                let idx = katMeccsek.findIndex(m => m.id === aktualisMeccs.id);
+
+                // Ha ágrajz és még nem a döntőnél (utolsó meccsnél) járunk:
+                if (isAgrajz && idx !== -1 && idx < n - 1) {
+                    let elsoKorMeret = (n + 1) / 2;
+                    // Kiszámoljuk, melyik következő fordulós meccsbe jut tovább a győztes
+                    let kovetkezoIndex = elsoKorMeret + Math.floor(idx / 2);
+                    let kovetkezoMeccs = katMeccsek[kovetkezoIndex];
+
+                    if (kovetkezoMeccs) {
+                        // Páros indexű ágról az AKA (competitor1Id), páratlanról a SHIRO (competitor2Id) helyre kerül!
+                        if (idx % 2 === 0) {
+                            kovetkezoMeccs.competitor1Id = gyoztesId;
+                        } else {
+                            kovetkezoMeccs.competitor2Id = gyoztesId;
+                        }
+
+                        await fetch('https://localhost:7045/api/Matches/' + kovetkezoMeccs.id, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(kovetkezoMeccs)
+                        });
                     }
-
-                    await fetch('https://localhost:7045/api/Matches/' + kovetkezoMeccs.id, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(kovetkezoMeccs)
-                    });
                 }
             }
-        }
 
-        // HA KATA SELEJTEZŐ VOLT: Ha mindenki végzett a selejtezőben, felajánljuk a TOP 6 DÖNTŐ indítását!
-        if (aktualisMod === 'KATA' && !TatamiMaster.isKataDontoMeccs(aktualisMeccs.id)) {
-            let katMeccsek = merkozesekLista.filter(m => m.categoryId === aktualisMeccs.categoryId);
-            let vanMarDonto = katMeccsek.some(m => TatamiMaster.isKataDontoMeccs(m.id));
-            let maradekSelejtezo = katMeccsek.filter(m => m.id !== aktualisMeccs.id && !m.isFinished && !TatamiMaster.isKataDontoMeccs(m.id));
+            // HA KATA SELEJTEZŐ VOLT: Ha mindenki végzett a selejtezőben, felajánljuk a TOP 6 DÖNTŐ indítását!
+            if (aktualisMod === 'KATA' && !TatamiMaster.isKataDontoMeccs(aktualisMeccs.id)) {
+                let katMeccsek = merkozesekLista.filter(m => m.categoryId === aktualisMeccs.categoryId);
+                let vanMarDonto = katMeccsek.some(m => TatamiMaster.isKataDontoMeccs(m.id));
+                let maradekSelejtezo = katMeccsek.filter(m => m.id !== aktualisMeccs.id && !m.isFinished && !TatamiMaster.isKataDontoMeccs(m.id));
 
-            if (!vanMarDonto && maradekSelejtezo.length === 0) {
-                if (confirm("Mindenki bemutatta a katát a selejtezőben!\n\nSzeretnéd most azonnal elindítani a TOP 6 DÖNTŐT ezen a tatamin (a legjobb 6 versenyző 0 pontról indulva újra katázik)?")) {
-                    await generalKataTop6BiroiPanelrol(aktualisMeccs.categoryId, aktualisMeccs.tatamiId);
+                if (!vanMarDonto && maradekSelejtezo.length === 0) {
+                    if (confirm("Mindenki bemutatta a katát a selejtezőben!\n\nSzeretnéd most azonnal elindítani a TOP 6 DÖNTŐT ezen a tatamin (a legjobb 6 versenyző 0 pontról indulva újra katázik)?")) {
+                        await generalKataTop6BiroiPanelrol(aktualisMeccs.categoryId, aktualisMeccs.tatamiId);
+                    }
                 }
             }
-        }
 
-        if (typeof TatamiMaster !== 'undefined') {
-            await TatamiMaster.trigger('meccsLezarva', frissitettMeccs);
-        }
+            if (typeof TatamiMaster !== 'undefined') {
+                await TatamiMaster.trigger('meccsLezarva', frissitettMeccs);
+            }
 
-        tatamiMeccseinekBetoltese(true);
+            tatamiMeccseinekBetoltese(true);
+        }
+    } catch (hiba) {
+        console.error("Hiba a mérkőzés mentésekor:", hiba);
+        TatamiMaster.mutatRendszerUzenet("❌ Hiba történt a mérkőzés mentésekor! Próbáld újra.", "hiba");
+    } finally {
+        mentesFolyamatban = false;
+        if (mentesBtn) {
+            mentesBtn.disabled = false;
+            mentesBtn.style.opacity = '1';
+            mentesBtn.innerText = '💾 Mérkőzés Lezárása & Következő Meccs Betöltése ➔';
+        }
     }
 }
 

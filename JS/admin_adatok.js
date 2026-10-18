@@ -287,17 +287,19 @@ function hozzadNevezes() {
     const kategoriaId = parseInt(document.getElementById('ujNevezesKategoria').value);
 
     if (!versenyzoId || !kategoriaId) {
-        alert("Válassz versenyzőt és kategóriát is!");
+        alert("⚠️ Válassz versenyzőt és kategóriát is!");
         return;
     }
 
-    fetch(API_URL + '/Registrations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ competitorId: versenyzoId, categoryId: kategoriaId })
-    }).then(res => {
-        if (res.ok) mindenAdatFrissitese();
-    });
+    // VÉDELEM: Ellenőrizzük, hogy nincs-e már benevezve ebbe a kategóriába!
+    const marNevezve = globalNevezesek.some(n => n.competitorId === versenyzoId && n.categoryId === kategoriaId);
+    if (marNevezve) {
+        alert("⛔ Ez a versenyző már szerepel ebben a kategóriában! (Dupla nevezés nem engedélyezett)");
+        return;
+    }
+
+    TatamiMaster.apiSend('Registrations', 'POST', { competitorId: versenyzoId, categoryId: kategoriaId })
+        .then(res => { if (res.ok) mindenAdatFrissitese(); });
 }
 
 function nevezesAtsorolasa(nevezesId, versenyzoId) {
@@ -397,6 +399,22 @@ async function kategoriaSorsolasa() {
     const katId = parseInt(document.getElementById('sorsolasKategoriaSelect').value);
     const tatamiId = parseInt(document.getElementById('sorsolasTatamiSelect').value);
     const formatum = document.getElementById('sorsolasFormatumSelect').value;
+
+    if (!isKata && indulok.length < 2) {
+        alert("⛔ Kumite kategória sorsolásához legalább 2 benevezett versenyző szükséges!");
+        return;
+    }
+
+    // VÉDELEM: Van-e már kisorsolt meccs ebben a kategóriában?
+    const meglevoKatMeccsek = globalMerkozesek.filter(m => m.categoryId === katId);
+    if (meglevoKatMeccsek.length > 0) {
+        if (!confirm(`⚠️ FIGYELEM! Ebben a kategóriában már van ${meglevoKatMeccsek.length} db kisorsolt mérkőzés!\n\nHa újrasorsolod, a rendszer előbb törli a kategória korábbi meccseit.\nBiztosan folytatod?`)) {
+            return;
+        }
+        for (let regim of meglevoKatMeccsek) {
+            await TatamiMaster.apiSend('Matches/' + regim.id, 'DELETE');
+        }
+    }
 
     if (!katId || !tatamiId) {
         alert("Válassz kategóriát és tatamit a sorsoláshoz!");
