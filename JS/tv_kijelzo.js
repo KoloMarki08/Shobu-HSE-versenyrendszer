@@ -94,7 +94,7 @@ function formazBuntetesSzoveg(buntetesSzam) {
     const b = parseInt(buntetesSzam) || 0;
     if (b === 0) return 'Büntetés: Nincs (0)';
     if (b === 1) return '⚠️ 1x Chui (Figyelmeztetés)';
-    if (b === 2) return '🚫 1x Genten (Intés)';
-    if (b === 3) return '🚫 1x Genten + 1x Chui';
+    if (b === 2) return '⚠️ 2x Chui (Figyelmeztetés)';
+    if (b === 3) return '🚫 1x GENTEN (3. Chui)';
     return '❌ SIKAKU (2x Genten - Kizárás!)';
 }

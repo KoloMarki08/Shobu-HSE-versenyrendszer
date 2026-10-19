@@ -194,16 +194,72 @@ function pontValtoztatas(kuzdo, ertek) {
     adatokMentese();
 }
 
-function buntetesValtoztatas(kuzdo, ertek) {
+// Büntetési állapotok (0..4):
+// 0 = 0
+// 1 = 1x Chui (csak figyelmeztetés)
+// 2 = 2x Chui (csak figyelmeztetés)
+// 3 = 1x Genten (a 3. Chui = 1 Genten! Innentől Chui már nem adható, csak Genten!)
+// 4 = 2x Genten = SIKAKU (Leléptetés)
+
+function formazPanelBuntetes(b) {
+    const p = parseInt(b) || 0;
+    if (p === 0) return "0";
+    if (p === 1) return "1 Chui";
+    if (p === 2) return "2 Chui";
+    if (p === 3) return "1 Genten";
+    return "SIKAKU (2G)";
+}
+
+function frissitBuntetesGombokEsKijelzo() {
+    document.getElementById('akaBuntetesDisplay').innerText = formazPanelBuntetes(akaBuntetes);
+    document.getElementById('shiroBuntetesDisplay').innerText = formazPanelBuntetes(shiroBuntetes);
+
+    // Ha elérte az 1 Gentent (3), innentől már CSAK Gentent lehet adni (a Chui gomb inaktívvá válik)!
+    const akaChuiBtn = document.getElementById('akaChuiBtn');
+    if (akaChuiBtn) {
+        akaChuiBtn.disabled = (akaBuntetes >= 3);
+        akaChuiBtn.style.opacity = (akaBuntetes >= 3) ? '0.35' : '1';
+        akaChuiBtn.style.cursor = (akaBuntetes >= 3) ? 'not-allowed' : 'pointer';
+        akaChuiBtn.innerText = (akaBuntetes >= 3) ? '🔒 Chui lezárva (1G után)' : '⚠️ +1 Chui (Figyelmeztetés)';
+    }
+
+    const shiroChuiBtn = document.getElementById('shiroChuiBtn');
+    if (shiroChuiBtn) {
+        shiroChuiBtn.disabled = (shiroBuntetes >= 3);
+        shiroChuiBtn.style.opacity = (shiroBuntetes >= 3) ? '0.35' : '1';
+        shiroChuiBtn.style.cursor = (shiroBuntetes >= 3) ? 'not-allowed' : 'pointer';
+        shiroChuiBtn.innerText = (shiroBuntetes >= 3) ? '🔒 Chui lezárva (1G után)' : '⚠️ +1 Chui (Figyelmeztetés)';
+    }
+}
+
+function buntetesValtoztatas(kuzdo, tipus) {
     kumiteHistory[kuzdo].push({ akaPont, shiroPont, akaBuntetes, shiroBuntetes });
 
-    if (kuzdo === 'aka') {
-        akaBuntetes = Math.max(0, akaBuntetes + ertek);
-        document.getElementById('akaBuntetesDisplay').innerText = akaBuntetes;
-    } else {
-        shiroBuntetes = Math.max(0, shiroBuntetes + ertek);
-        document.getElementById('shiroBuntetesDisplay').innerText = shiroBuntetes;
+    let aktualis = (kuzdo === 'aka') ? akaBuntetes : shiroBuntetes;
+
+    if (tipus === 'CHUI' || tipus === 1) {
+        // 1-2 Chuiig csak figyelmeztetés, a 3. Chui -> 1 Genten (3-as szint)
+        if (aktualis < 3) {
+            aktualis++;
+            if (aktualis === 3) {
+                TatamiMaster.toast(`🚫 3. Chui = 1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
+            }
+        }
+    } else if (tipus === 'GENTEN' || tipus >= 2) {
+        // Ha még 0, 1 vagy 2 Chuinál tart és egyből Gentent kap -> 1 Genten (3-as szint).
+        // Ha már volt 1 Gentenje (3-as szint) és kap még egy Gentent -> 2 Genten = SIKAKU (4-es szint)!
+        if (aktualis < 3) {
+            aktualis = 3;
+            TatamiMaster.toast(`🚫 1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
+        } else {
+            aktualis = 4;
+        }
     }
+
+    if (kuzdo === 'aka') akaBuntetes = aktualis;
+    else shiroBuntetes = aktualis;
+
+    frissitBuntetesGombokEsKijelzo();
     ellenorizAutomatikusGyozelem();
     adatokMentese();
 }
@@ -221,8 +277,7 @@ function kumiteUndo(kuzdo) {
 
     document.getElementById('akaPontDisplay').innerText = akaPont;
     document.getElementById('shiroPontDisplay').innerText = shiroPont;
-    document.getElementById('akaBuntetesDisplay').innerText = akaBuntetes;
-    document.getElementById('shiroBuntetesDisplay').innerText = shiroBuntetes;
+    frissitBuntetesGombokEsKijelzo();
 
     ellenorizAutomatikusGyozelem();
     adatokMentese();
@@ -233,18 +288,19 @@ function ellenorizAutomatikusGyozelem() {
     const modSel = document.getElementById('gyozelemModSelect');
     if (!gyoztesSel || !modSel) return;
 
+    // 4-es szint = 2 Genten = SIKAKU!
     if (akaBuntetes >= 4) {
         idoMegallitas();
         gyoztesSel.value = 'shiro';
         modSel.value = 'SIKAKU';
-        TatamiMaster.toast("⚠️ AKA elérte a 2 Gentent (Sikaku)! SHIRO győzött leléptetéssel.", "figyelem");
+        TatamiMaster.toast("❌ SIKAKU! AKA elérte a 2 Gentent — SHIRO győzött leléptetéssel!", "hiba");
         return;
     }
     if (shiroBuntetes >= 4) {
         idoMegallitas();
         gyoztesSel.value = 'aka';
         modSel.value = 'SIKAKU';
-        TatamiMaster.toast("⚠️ SHIRO elérte a 2 Gentent (Sikaku)! AKA győzött leléptetéssel.", "figyelem");
+        TatamiMaster.toast("❌ SIKAKU! SHIRO elérte a 2 Gentent — AKA győzött leléptetéssel!", "hiba");
         return;
     }
 
@@ -314,6 +370,7 @@ function nullazasMeccsre() {
     document.getElementById('shiroPontDisplay').innerText = 0;
     document.getElementById('akaBuntetesDisplay').innerText = 0;
     document.getElementById('shiroBuntetesDisplay').innerText = 0;
+    frissitBuntetesGombokEsKijelzo();
     document.getElementById('panelTimerDisplay').innerText = "02:00";
 
     const modSel = document.getElementById('gyozelemModSelect');
@@ -497,4 +554,11 @@ async function tovabbjuttatasKovetkezoForduloba(lezartMeccs, gyoztesId) {
             break;
         }
     }
+}
+
+function nyitObsOverlay() {
+    const tatamiId = document.getElementById('panelTatamiSelect')?.value || 1;
+    const url = `obs_overlay.html?tatami=${tatamiId}`;
+    window.open(url, '_blank', 'width=1280,height=720');
+    TatamiMaster.toast(`🎥 OBS Overlay megnyitva a(z) ${tatamiId}. Tatamihoz!`);
 }

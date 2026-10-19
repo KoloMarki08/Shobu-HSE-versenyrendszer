@@ -301,7 +301,9 @@
                 onclick="window.open('tv_kijelzo.html', '_blank', 'width=1280,height=720')">
                 📺 Élő TV Kijelző Megnyitása (2. monitorra)
             </button>
-            <button class="btn btn-outline" onclick="nyitObsOverlay()">🎥 OBS Stream Overlay</button>
+            <button class="btn btn-outline" style="border-color:#f59e0b;color:#f59e0b;" onclick="nyitObsOverlay()">
+                🎥 OBS Stream Overlay Megnyitása
+            </button>
             <a href="admin.html" class="btn btn-outline">⚙ Admin Központ</a>
             <button class="btn btn-danger" onclick="TatamiMaster.kijelentkezes()">Kilépés</button>
         </div>
@@ -370,10 +372,10 @@
                             pont)</button>
                         <button class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes
                             pont)</button>
-                        <button class="arena-btn btn-chui" onclick="buntetesValtoztatas('aka', 1)">⚠️ +1 Chui
-                            (Figyelmeztetés)</button>
-                        <button class="arena-btn btn-genten" onclick="buntetesValtoztatas('aka', 2)">🚫 Genten (Levonás
-                            / 2=Kizárás)</button>
+                        <button id="akaChuiBtn" class="arena-btn btn-chui"
+                            onclick="buntetesValtoztatas('aka', 'CHUI')">⚠️ +1 Chui (Figyelmeztetés)</button>
+                        <button id="akaGentenBtn" class="arena-btn btn-genten"
+                            onclick="buntetesValtoztatas('aka', 'GENTEN')">🚫 +1 Genten (Levonás)</button>
                         <button class="arena-btn btn-undo" onclick="kumiteUndo('aka')">↩ Utolsó AKA művelet visszavonása
                             (Undo)</button>
                     </div>
@@ -443,10 +445,10 @@
                             pont)</button>
                         <button class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes
                             pont)</button>
-                        <button class="arena-btn btn-chui" onclick="buntetesValtoztatas('shiro', 1)">⚠️ +1 Chui
-                            (Figyelmeztetés)</button>
-                        <button class="arena-btn btn-genten" onclick="buntetesValtoztatas('shiro', 2)">🚫 Genten
-                            (Levonás / 2=Kizárás)</button>
+                        <button id="shiroChuiBtn" class="arena-btn btn-chui"
+                            onclick="buntetesValtoztatas('shiro', 'CHUI')">⚠️ +1 Chui (Figyelmeztetés)</button>
+                        <button id="shiroGentenBtn" class="arena-btn btn-genten"
+                            onclick="buntetesValtoztatas('shiro', 'GENTEN')">🚫 +1 Genten (Levonás)</button>
                         <button class="arena-btn btn-undo" onclick="kumiteUndo('shiro')">↩ Utolsó SHIRO művelet
                             visszavonása (Undo)</button>
                     </div>
