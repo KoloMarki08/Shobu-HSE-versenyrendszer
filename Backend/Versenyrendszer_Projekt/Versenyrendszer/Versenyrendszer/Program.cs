@@ -50,6 +50,37 @@ app.Use(async (context, next) =>
     }
 });
 
+app.Use(async (context, next) =>
+{
+    // 1. Biztonsági HTTP Fejlécek (Clickjacking és XSS ellen)
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+
+    // 2. API Írásvédelem (POST, PUT, DELETE csak érvényes Tokennel!)
+    var method = context.Request.Method.ToUpper();
+    if (method == "POST" || method == "PUT" || method == "DELETE")
+    {
+        var token = context.Request.Headers["X-Tatami-Token"].FirstOrDefault();
+        if (token != "TM-SHOBU-2026-SECURE-KEY")
+        {
+            context.Response.StatusCode = 401;
+            await context.Response.WriteAsJsonAsync(new { error = "Jogosulatlan API hozzáférés blokkolva!" });
+            return;
+        }
+    }
+
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[BIZTONSÁGI / ADATBÁZIS NAPLÓ]: {ex.Message}");
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsJsonAsync(new { error = "Belső szerverhiba történt." });
+    }
+});
+
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
