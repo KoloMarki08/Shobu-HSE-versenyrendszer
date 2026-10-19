@@ -3,182 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Admin Panel</title>
-    <link rel="stylesheet" href="../CSS/stlye.css">
+    <title>Tatami Master - Adminisztrációs Központ</title>
+    <link rel="stylesheet" href="../CSS/design_system.css">
 </head>
 <body>
-    <header class="top-header">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">ADMIN PANEL</span></h1>
-        <!-- FELSŐ GYORSNAVIGÁCIÓS MENÜ AZ ÖSSZES MODULHOZ (.HTML FÁJLOKHOZ) -->
-        <nav style="background: #222; padding: 10px 25px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-bottom: 3px solid #dc3545;">
-            <strong style="color: #ffc107; margin-right: 6px;">🧭 Modulok:</strong>
-            <a href="admin.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🏠 Admin Főpanel</a>
-            <a href="kategoriak.html" class="btn btn-outline" style="background: #ffc107; color: #111; border: none; font-weight: bold; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🥋 Kyu- & Súlybontó</a>
-            <a href="nevezes.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">⚖️ Mérlegelő Állomás</a>
-            <a href="kiemeles.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🎲 Sorsolás & Kiemelés</a>
-            <a href="kata.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🧘 Kata Ranglisták</a>
-            <a href="kumite.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🥊 Kumite Ágrajzok</a>
-            <a href="tatami.html" class="btn btn-outline" style="color: white; border-color: #666; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">📢 Pástszéli Szólító</a>
-            <a href="eredmenyek.html" class="btn btn-outline" style="background: #28a745; color: white; border: none; font-weight: bold; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">🏆 Eredmények & Oklevél</a>
-            <a href="referee.html" target="_blank" class="btn btn-outline" style="color: #ffc107; border-color: #ffc107; padding: 6px 12px; text-decoration: none; font-size: 0.9rem;">📱 Oldalbírói Pad</a>
-            <button class="btn btn-outline" style="position: absolute; right: 20px; top: 15px;" onclick="TatamiMaster.kijelentkezes()">Kijelentkezés</button>
-        </nav>
+
+    <header class="top-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>🥋 <em>TATAMI MASTER</em> <span class="red-text">ADMIN KÖZPONT</span></h1>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="biroi_panel.html" class="btn btn-outline-blue">🖥️ Bírói Vezérlőpult</a>
+            <a href="audience.html" class="btn btn-outline" target="_blank">📊 Élő Nézői / Edzői Oldal</a>
+            <button class="btn btn-danger" onclick="TatamiMaster.kijelentkezes()">Kilépés</button>
+        </div>
     </header>
 
     <main class="admin-container">
-        <!-- Adatbázis gyorsfeltöltő gomb -->
-        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: #666; font-size: 0.95rem;">Központi versenyirányítás, mérlegelés és sorsolás</span>
-            <button class="btn btn-outline-green" style="background: #28a745; color: white; font-weight: bold;" onclick="adatbazisFeltoltese()">
-                🚀 Adatbázis feltöltése tesztadatokkal
-            </button>
+
+        <!-- ÉLŐ STATISZTIKAI IRÁNYÍTÓPULT (KPI KÁRTYÁK) -->
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-left-color: #2563eb;">
+                <div>
+                    <div class="kpi-label">Regisztrált Versenyzők</div>
+                    <div class="kpi-num" id="kpiVersenyzok">0</div>
+                </div>
+                <div class="kpi-icon">🥋</div>
+            </div>
+            <div class="kpi-card" style="border-left-color: #f59e0b;">
+                <div>
+                    <div class="kpi-label">Meghirdetett Kategóriák</div>
+                    <div class="kpi-num" id="kpiKategoriak">0</div>
+                </div>
+                <div class="kpi-icon">🏆</div>
+            </div>
+            <div class="kpi-card" style="border-left-color: #10b981;">
+                <div>
+                    <div class="kpi-label">Leadott Nevezések</div>
+                    <div class="kpi-num" id="kpiNevezesek">0</div>
+                </div>
+                <div class="kpi-icon">📋</div>
+            </div>
+            <div class="kpi-card" style="border-left-color: #e62e2d;">
+                <div>
+                    <div class="kpi-label">Mérkőzések (Kész / Összes)</div>
+                    <div class="kpi-num" id="kpiMeccsek">0 / 0</div>
+                </div>
+                <div class="kpi-icon">🥊</div>
+            </div>
         </div>
 
-        <!-- Fülek (Tabok) -->
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'versenyzok')">Versenyzők & Mérlegelés</button>
-            <button class="tab-button" onclick="openTab(event, 'kategoriak')">Kategóriák & Súlybontás</button>
-            <button class="tab-button" onclick="openTab(event, 'nevezesek')">Nevezések & Átsorolás</button>
-            <button class="tab-button" onclick="openTab(event, 'tatamik')">Tatamik & Sorsolás</button>
+        <!-- FÜLVÁLASZTÓ SÁV -->
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'tab-versenyzok')">👤 1. Versenyzők & Gyorsnevezés</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-kategoriak')">📂 2. Kategóriák & Bővítés</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-nevezesek')">📌 3. Nevezések Kezelése</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-tatamik')">🎲 4. Tatamik & Sorsolás</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-agrajz')">🌳 5. Ágrajzok & Kata Ranglista</button>
         </div>
 
-        <!-- 1. VERSENYZŐK ÉS MÉRLEGELÉS -->
-        <div id="versenyzok" class="tab-content active">
-            <h2>Versenyzők és Mérlegelés kezelése</h2>
-            
-            <div class="add-form-container" style="flex-wrap: wrap;">
-                <input type="text" id="ujVersenyzoNev" placeholder="Név" class="input-field">
-                <input type="text" id="ujVersenyzoKlub" placeholder="Klub (pl. Shobu HSE)" class="input-field">
-                <input type="text" id="ujVersenyzoOv" placeholder="Övfokozat (pl. 4. kyu)" class="input-field" style="max-width: 150px;">
+        <!-- 1. FÜL: VERSENYZŐK + TÖBBSZÖRÖS KATEGÓRIA BEPIPÁLÁS -->
+        <section id="tab-versenyzok" class="tab-content active pro-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px;">
+                <h2 style="margin: 0;">👤 Versenyzők Felvétele & Azonnali Benevezése</h2>
+                <input type="text" id="adminVersenyzoKereso" class="input-field" style="min-width: 280px;" placeholder="🔍 Gyorskeresés név vagy klub alapján..." oninput="versenyzokBetoltese()">
+            </div>
+
+            <div class="add-form-container" style="background: #f0fdf4; border-color: #bbf7d0;">
+                <input type="text" id="ujVersenyzoNev" placeholder="Teljes név (pl. Kovács Bence)" class="input-field" style="flex: 1.5; min-width: 180px;">
+                <input type="text" id="ujVersenyzoKlub" placeholder="Klub (pl. Shobu HSE)" class="input-field" style="flex: 1; min-width: 150px;">
+                <input type="text" id="ujVersenyzoOv" placeholder="Öv (pl. 4. kyu)" class="input-field" style="max-width: 130px;">
                 <input type="number" id="ujVersenyzoSuly" placeholder="Súly (kg)" class="input-field" style="max-width: 110px;">
-                <input type="number" id="ujVersenyzoSzulEv" placeholder="Szül. év (pl. 2008)" class="input-field" style="max-width: 140px;">
-                <button class="btn btn-outline-green" onclick="hozzadVersenyzo()">+ Felvétel</button>
+                <input type="number" id="ujVersenyzoSzulEv" placeholder="Szül. év (2008)" class="input-field" style="max-width: 140px;">
+
+                <div style="width: 100%; margin-top: 6px;">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #166534;">☑ Opcionális: Pipáld be rögtön a kategóriá(ka)t is, amikben indul (Kata / Kumite):</label>
+                    <div id="adminUjVersenyzoKatCheckboxes" class="kat-checkbox-grid"></div>
+                </div>
+
+                <button class="btn btn-outline-green" onclick="hozzadVersenyzo()">✔ Versenyző Mentése (+ Benevezés)</button>
             </div>
 
-            <div id="versenyzokTableContainer">
-                <p>Adatok betöltése...</p>
-            </div>
-        </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>ID</th><th>Név</th><th>Klub / Egyesület</th><th>Övfokozat</th><th>Súly</th><th>Szül. év</th><th>Nevezett Kategóriái</th><th>Művelet</th></tr>
+                </thead>
+                <tbody id="versenyzokTbody"></tbody>
+            </table>
+        </section>
 
-        <!-- 2. KATEGÓRIÁK ÉS AUTOMATIKUS SÚLYBONTÁS -->
-        <div id="kategoriak" class="tab-content">
-            <h2>Kategóriák kezelése</h2>
-            
-            <div class="add-form-container" style="flex-wrap: wrap;">
-                <input type="text" id="ujKategoriaNev" placeholder="Kategória neve (pl. Junior Kumite -70kg)" class="input-field" style="min-width: 240px;">
-                <select id="ujKategoriaTipus" class="input-field" style="max-width: 140px;">
-                    <option value="KUMITE">KUMITE</option>
-                    <option value="KATA">KATA</option>
-                </select>
-                <select id="ujKategoriaNem" class="input-field" style="max-width: 130px;">
-                    <option value="Férfi">Férfi / Fiú</option>
-                    <option value="Női">Női / Lány</option>
-                    <option value="Vegyes">Vegyes</option>
-                </select>
-                <input type="number" id="ujKategoriaMinKor" placeholder="Min kor" class="input-field" style="max-width: 100px;">
-                <input type="number" id="ujKategoriaMaxKor" placeholder="Max kor" class="input-field" style="max-width: 100px;">
-                <button class="btn btn-outline-blue" onclick="hozzadKategoria()">+ Kategória</button>
+        <!-- 2. FÜL: KATEGÓRIÁK -->
+        <section id="tab-kategoriak" class="tab-content pro-card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0;">📂 Versenykategóriák (Kata & Kumite)</h2>
+                <a href="kategoriak.html" class="btn btn-outline-blue">⚡ Kyu-bontó (A/B/C) & Súlybontó Varázsló megnyitása ➔</a>
             </div>
 
-            <!-- Automatikus súlycsoport-bontó -->
-            <div class="add-form-container" style="background-color: #fff3cd; border-color: #ffeeba; align-items: center;">
-                <strong style="color: #856404;">⚖️ Automatikus súlycsoport-bontás:</strong>
-                <select id="bontandoKategoriaSelect" class="input-field"></select>
-                <input type="number" id="sulyHatarInput" placeholder="Súlyhatár (pl. 70 kg)" class="input-field" style="max-width: 170px;">
-                <button class="btn btn-outline" style="background: #ffc107; color: #111; border: none; font-weight: bold;" onclick="sulycsoportBontas()">Kategória kettébontása</button>
-            </div>
-
-            <div id="kategoriakTableContainer">
-                <p>Adatok betöltése...</p>
-            </div>
-        </div>
-
-        <!-- 3. NEVEZÉSEK ÉS KATEGÓRIA ÁTSOROLÁS -->
-        <div id="nevezesek" class="tab-content">
-            <h2>Nevezések és Mérlegelés utáni átsorolás</h2>
-            
             <div class="add-form-container">
-                <select id="ujNevezesVersenyzo" class="input-field">
-                    <option value="">Válassz versenyzőt...</option>
+                <input type="text" id="ujKategoriaNev" placeholder="Kategória neve (pl. Junior Férfi Kumite -65kg)" class="input-field" style="flex: 2; min-width: 240px;">
+                <select id="ujKategoriaTipus" class="input-field">
+                    <option value="KUMITE">🥊 KUMITE (Küzdelem)</option>
+                    <option value="KATA">🧘 KATA (Formagyakorlat)</option>
                 </select>
-                <select id="ujNevezesKategoria" class="input-field">
-                    <option value="">Válassz kategóriát...</option>
+                <select id="ujKategoriaNem" class="input-field">
+                    <option value="Férfi">Férfi</option>
+                    <option value="Női">Női</option>
+                    <option value="Vegyes">Vegyes (pl. Team Kata)</option>
                 </select>
-                <button class="btn btn-outline-green" onclick="hozzadNevezes()">Nevezés rögzítése</button>
+                <input type="number" id="ujKategoriaMinKor" placeholder="Min kor" class="input-field" style="max-width: 95px;">
+                <input type="number" id="ujKategoriaMaxKor" placeholder="Max kor" class="input-field" style="max-width: 95px;">
+                <button class="btn btn-outline-green" onclick="hozzadKategoria()">+ Kategória Hozzáadása</button>
             </div>
 
-            <div id="nevezesekTableContainer">
-                <p>Adatok betöltése...</p>
-            </div>
-        </div>
-
-        <!-- 4. TATAMIK ÉS VALÓDI SORSOLÁS MOTOR -->
-        <div id="tatamik" class="tab-content">
-            <h2>Tatamik és Sorsolás Motor</h2>
-            
-            <div class="add-form-container" style="background-color: #e2f0ff; border-color: #b8daff; flex-wrap: wrap; align-items: center;">
-                <div style="flex: 1; min-width: 200px;">
-                    <label style="font-size: 0.85rem; font-weight: bold; color: #004085;">1. Sorsolandó kategória:</label>
-                    <select id="sorsolasKategoriaSelect" class="input-field" style="width: 100%;" onchange="kategoriaInduloitMutat()"></select>
-                </div>
-
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="font-size: 0.85rem; font-weight: bold; color: #004085;">2. Tatami kijelölése:</label>
-                    <select id="sorsolasTatamiSelect" class="input-field" style="width: 100%;"></select>
-                </div>
-
-                <div style="flex: 1; min-width: 180px;">
-                    <label style="font-size: 0.85rem; font-weight: bold; color: #004085;">3. Lebonyolítási rendszer:</label>
-                    <select id="sorsolasFormatumSelect" class="input-field" style="width: 100%;">
-                        <option value="kieses">Egyenes kiesés (Ágrajz + Erőnyerő)</option>
-                        <option value="kormeccs">Körmérkőzés (Mindenki mindenkivel)</option>
-                    </select>
-                </div>
-
-                <div style="padding-top: 18px;">
-                    <button class="btn btn-outline-blue" style="background: #007bff; color: white; font-weight: bold; padding: 10px 20px;" onclick="kategoriaSorsolasa()">
-                        🎲 Sorsolás Indítása
-                    </button>
-                </div>
+            <div class="add-form-container" style="background: #eff6ff; border-color: #bfdbfe;">
+                <strong>⚖️ Gyors Kumite Súlybontó:</strong>
+                <select id="bontandoKategoriaSelect" class="input-field" style="min-width: 220px;"></select>
+                <input type="number" id="sulyHatarInput" placeholder="Súlyhatár (pl. 70 kg)" class="input-field" style="max-width: 170px;">
+                <button class="btn btn-outline-blue" onclick="sulycsoportBontas()">Kettébontás súly szerint</button>
             </div>
 
-            <!-- Kiemelés (Seeding) beállító panel az adott kategória indulóinak -->
-            <div id="kiemelesContainer" style="margin-bottom: 20px; padding: 12px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; display: none;">
-                <strong>⭐ Kiemelt versenyzők kijelölése (nem kerülnek össze az 1. körben, és ők kapnak először erőnyerőt):</strong>
-                <div id="kiemelesLista" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 8px;"></div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>ID</th><th>Kategória megnevezése</th><th>Típus</th><th>Nem</th><th>Korhatár</th><th>Indulók</th><th>Művelet</th></tr>
+                </thead>
+                <tbody id="kategoriakTbody"></tbody>
+            </table>
+        </section>
+
+        <!-- 3. FÜL: NEVEZÉSEK -->
+        <section id="tab-nevezesek" class="tab-content pro-card" style="display: none;">
+            <h2 style="margin-top: 0;">📌 Meglévő Versenyző Benevezése További Kategóriába</h2>
+            <div class="add-form-container">
+                <select id="ujNevezesVersenyzo" class="input-field" style="flex: 1; min-width: 220px;"></select>
+                <select id="ujNevezesKategoria" class="input-field" style="flex: 1; min-width: 220px;"></select>
+                <button class="btn btn-outline-green" onclick="hozzadNevezes()">+ Benevezés Rögzítése</button>
             </div>
 
-            <div style="display: flex; gap: 20px; margin-top: 20px;">
-                <div style="flex: 0.7;">
-                    <h3>Tatamik és Új felvétele</h3>
-                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                        <input type="text" id="ujTatamiNev" placeholder="Pl. A tatami" class="input-field">
-                        <button class="btn btn-outline-green" onclick="hozzadTatami()">+</button>
-                    </div>
-                    <div id="tatamikTableContainer"></div>
-                </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>ID</th><th>Versenyző (Klub & Súly)</th><th>Kategória</th><th>Típus</th><th>Művelet</th></tr>
+                </thead>
+                <tbody id="nevezesekTbody"></tbody>
+            </table>
+        </section>
 
-                <div style="flex: 2.3;">
-                    <h3>Kisorsolt Mérkőzések (Sorrend és Tatami módosítás)</h3>
-                    <div id="merkozesekTableContainer"></div>
+        <!-- 4. FÜL: TATAMIK ÉS SORSOLÁS -->
+        <section id="tab-tatamik" class="tab-content pro-card" style="display: none;">
+            <h2 style="margin-top: 0;">🎲 Tatamik & Sorsolási Motor</h2>
+
+            <div class="add-form-container">
+                <input type="text" id="ujTatamiNev" placeholder="Új tatami neve (pl. 3. Tatami)" class="input-field" style="max-width: 240px;">
+                <button class="btn btn-outline-green" onclick="hozzadTatami()">+ Tatami Létrehozása</button>
+            </div>
+
+            <div id="tatamikTbody" class="tatami-grid" style="margin-bottom: 24px;"></div>
+
+            <div class="add-form-container" style="background: #fffbeb; border-color: #fde68a;">
+                <div style="width: 100%; font-weight: 700; color: #92400e;">🎯 Kategória Sorsolása Tatamira (Kiemeléssel & Klub-szétválasztással):</div>
+                <select id="sorsolasKategoriaSelect" class="input-field" style="flex: 1; min-width: 220px;" onchange="frissitKiemelesValaszto()"></select>
+                <select id="sorsolasTatamiSelect" class="input-field" style="min-width: 160px;"></select>
+                <select id="sorsolasFormatumSelect" class="input-field" style="min-width: 200px;">
+                    <option value="egyenes">Egyenes kiesés (Ágrajz / Kata lista)</option>
+                    <option value="kormeccs">Körmérkőzés (Mindenki mindenkivel)</option>
+                </select>
+                <button class="btn btn-outline-green" onclick="kategoriaSorsolasa()">🎲 Sorsolás Generálása</button>
+                <div id="kiemelesContainer" style="width: 100%; margin-top: 8px;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">📋 Kisorsolt Mérkőzések Sorrendje (Húzd & Ejtsd a sorrendcseréhez!)</h3>
+                <button class="btn btn-danger" onclick="osszesMerkozesTorlese()">🗑️ Összes Mérkőzés Törlése</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr><th>Sorszám</th><th>Tatami</th><th>Kategória</th><th>AKA (Piros / Katázó)</th><th>SHIRO (Fehér)</th><th>Státusz / Győztes</th><th>Művelet</th></tr>
+                </thead>
+                <tbody id="merkozesekTbody"></tbody>
+            </table>
+        </section>
+
+        <!-- 5. FÜL: VIZUÁLIS ÁGRAJZ ÉS KATA RANGLISTA -->
+        <section id="tab-agrajz" class="tab-content pro-card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                <h2 style="margin: 0;">🌳 Kategória Ágrajza / Kata Ranglistája</h2>
+                <div style="display: flex; gap: 10px;">
+                    <select id="agrajzKategoriaSelect" class="input-field" style="min-width: 280px;" onchange="rajzolAgrajz()"></select>
+                    <button class="btn btn-outline-blue" onclick="window.print()">🖨️ Nyomtatás</button>
                 </div>
             </div>
-            <!-- Ezt szúrd be a Tatamik fül aljára, a kétoszlopos div után: -->
-            <div style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>🏆 Kiválasztott Kategória Vizuális Ágrajza / Mérkőzései</h3>
-                    <select id="agrajzKategoriaSelect" class="input-field" style="max-width: 300px;" onchange="rajzolAgrajz()"></select>
-                </div>
-                <div id="agrajzContainer">
-                    <p style="color: #666; margin-top: 10px;">Válassz egy kisorsolt kategóriát az ágrajz megjelenítéséhez!</p>
-                </div>
-            </div>
-        </div>
+            <div id="bracketContainer"></div>
+        </section>
+
     </main>
 
-    <script src="../JS/tabs.js"></script>
-    <script src="../JS/admin_adatok.js"></script>
     <script src="../JS/core.js"></script>
     <script src="../JS/auth.js"></script>
+    <script src="../JS/tabs.js"></script>
+    <script src="../JS/admin_adatok.js"></script>
 </body>
 </html>

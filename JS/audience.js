@@ -1,12 +1,12 @@
 let audVersenyzok = [];
 let audKategoriak = [];
+let audNevezesek = [];
 let audTatamik = [];
 let audMeccsek = [];
 
 window.onload = function() {
     ellenorizEdzoiMod();
     audienceAdatokBetoltese();
-    // 5 másodpercenként automatikusan frissül az edzők és nézők képernyője!
     setInterval(audienceAdatokBetoltese, 5000);
 };
 
@@ -27,10 +27,13 @@ function ellenorizEdzoiMod() {
         }
         if (headerSub) headerSub.innerText = 'EDZŐI NEVEZÉS & ÉLŐ KÖVETÉS';
 
-        // Automatikusan beírjuk a regisztrált edző klubját a nevezési mezőbe!
         const klubInput = document.getElementById('coachUjKlub');
         if (klubInput && user.club && !klubInput.value) {
             klubInput.value = user.club;
+        }
+        const teamInput = document.getElementById('teamKataCsapatNev');
+        if (teamInput && user.club && !teamInput.value) {
+            teamInput.value = user.club + ' - A csapat';
         }
     } else {
         if (edzoPanel) edzoPanel.style.display = 'none';
@@ -39,34 +42,46 @@ function ellenorizEdzoiMod() {
 
 async function audienceAdatokBetoltese() {
     try {
-        const [v, k, t, m] = await Promise.all([
+        const [v, k, n, t, m] = await Promise.all([
             TatamiMaster.apiGet('Competitors'),
             TatamiMaster.apiGet('Categories'),
+            TatamiMaster.apiGet('Registrations'),
             TatamiMaster.apiGet('Tatamis'),
             TatamiMaster.apiGet('Matches')
         ]);
 
         audVersenyzok = v;
         audKategoriak = k;
+        audNevezesek = n;
         audTatamik = t;
         audMeccsek = m.sort((a, b) => a.matchOrder - b.matchOrder);
 
-        // Kategória választók feltöltése (megőrizve a kiválasztott értéket, hogy 5 mp-enként ne ugorjon el!)
+        // 1. Többszörös kategória-választó checkboxok frissítése (megőrizve a bepipáltakat!)
+        frissitKategoriaCheckboxok();
+
+        // 2. Legördülő menük frissítése
         frissitSelectMezo('audienceKategoriaSelect', audKategoriak.map(kat => ({
             val: kat.id, text: kat.name + ' (' + kat.matchType + ')'
         })));
-
-        frissitSelectMezo('coachUjKategoriaSelect', audKategoriak.map(kat => ({
-            val: kat.id, text: kat.name + ' (' + kat.matchType + ')'
-        })), '-- Válassz kategóriát! --');
 
         frissitSelectMezo('coachMasikKategoriaSelect', audKategoriak.map(kat => ({
             val: kat.id, text: kat.name + ' (' + kat.matchType + ')'
         })), '-- Válassz kategóriát! --');
 
-        frissitSelectMezo('coachMeglevoVersenyzoSelect', audVersenyzok.map(vers => ({
-            val: vers.id, text: vers.name + ' (' + vers.club + ' - ' + vers.weight + 'kg)'
-        })), '-- Válassz versenyzőt! --');
+        // Csapat Kata kategóriák (KATA típusú kategóriák)
+        const kataKategoriak = audKategoriak.filter(kat => kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+        frissitSelectMezo('teamKataKategoriaSelect', kataKategoriak.map(kat => ({
+            val: kat.id, text: '🥋 ' + kat.name
+        })), '-- Válassz Kata / Team Kata kategóriát! --');
+
+        // Versenyző választók (egyéni + csapattagok)
+        const versOpciok = audVersenyzok.map(vers => ({
+            val: vers.id, text: vers.name + ' (' + vers.club + ')'
+        }));
+        frissitSelectMezo('coachMeglevoVersenyzoSelect', versOpciok, '-- Válassz versenyzőt! --');
+        frissitSelectMezo('teamTag1Select', versOpciok, '-- 1. Csapattag --');
+        frissitSelectMezo('teamTag2Select', versOpciok, '-- 2. Csapattag --');
+        frissitSelectMezo('teamTag3Select', versOpciok, '-- 3. Csapattag (opcionális) --');
 
         rajzolTatamiKartyak();
         audienceAgrajzFrissites();
@@ -75,11 +90,29 @@ async function audienceAdatokBetoltese() {
     }
 }
 
+function frissitKategoriaCheckboxok() {
+    const cont = document.getElementById('coachUjKategoriaCheckboxes');
+    if (!cont) return;
+
+    // Megjegyezzük, mik voltak már bepipálva az 5 mp-es frissítés előtt
+    const bepipaltIdk = Array.from(cont.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+
+    cont.innerHTML = audKategoriak.map(kat => {
+        const isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+        const jelzo = isKata ? '🧘 KATA' : '🥊 KUMITE';
+        const checked = bepipaltIdk.includes(kat.id) ? 'checked' : '';
+        return `
+            <label class="kat-check-item">
+                <input type="checkbox" class="coach-kat-cb" value="${kat.id}" ${checked}>
+                <span><strong>${kat.name}</strong> <small style="color:#666;">[${jelzo}]</small></span>
+            </label>
+        `;
+    }).join('');
+}
+
 function frissitSelectMezo(selectId, elemek, alapSzoveg) {
     const sel = document.getElementById(selectId);
-    if (!sel) return;
-    // Ha a felhasználó épp lenyitotta a menüt, ne frissítsük rá
-    if (document.activeElement === sel) return;
+    if (!sel || document.activeElement === sel) return;
 
     const aktualis = sel.value;
     let html = alapSzoveg ? ('<option value="">' + alapSzoveg + '</option>') : '';
@@ -91,7 +124,7 @@ function frissitSelectMezo(selectId, elemek, alapSzoveg) {
 }
 
 // =========================================================
-// EDZŐI (COACH) VERSENYZŐ FELVÉTEL ÉS NEVEZÉS FUNKCIÓK
+// 1. ÚJ EGYÉNI VERSENYZŐ FELVÉTELE (AKÁR TÖBB KATEGÓRIÁBA EGYSZERRE!)
 // =========================================================
 async function coachUjVersenyzoEsNevezes() {
     const nev = document.getElementById('coachUjNev').value.trim();
@@ -99,14 +132,14 @@ async function coachUjVersenyzoEsNevezes() {
     const ov = document.getElementById('coachUjOv').value.trim() || "10. kyu";
     const suly = parseInt(document.getElementById('coachUjSuly').value) || 60;
     const szulEv = parseInt(document.getElementById('coachUjSzulEv').value) || 2008;
-    const katId = parseInt(document.getElementById('coachUjKategoriaSelect').value);
 
-    if (!nev || !katId) {
-        alert("Kérlek add meg a versenyző nevét és válaszd ki a kategóriát, amibe nevezni szeretnéd!");
+    const kijeloltKatIdk = Array.from(document.querySelectorAll('.coach-kat-cb:checked')).map(cb => parseInt(cb.value));
+
+    if (!nev || kijeloltKatIdk.length === 0) {
+        alert("⚠️ Kérlek add meg a versenyző nevét, és pipálj be legalább 1 kategóriát (pl. Kata és/vagy Kumite)!");
         return;
     }
 
-    // 1. Felvesszük a versenyzőt a Competitors táblába (Competitor.cs modell alapján)
     const compRes = await TatamiMaster.apiSend('Competitors', 'POST', {
         name: nev,
         club: klub,
@@ -117,27 +150,87 @@ async function coachUjVersenyzoEsNevezes() {
 
     if (compRes.ok) {
         const mentettVersenyzo = await compRes.json();
-        // 2. Azonnal be is nevezzük a kiválasztott kategóriába (Registrations tábla)
-        await TatamiMaster.apiSend('Registrations', 'POST', {
-            competitorId: mentettVersenyzo.id,
-            categoryId: katId
-        });
 
-        alert("✔ " + nev + " sikeresen regisztrálva és benevezve a kategóriába!");
+        // Minden bepipált kategóriába benevezzük!
+        for (let katId of kijeloltKatIdk) {
+            await TatamiMaster.apiSend('Registrations', 'POST', {
+                competitorId: mentettVersenyzo.id,
+                categoryId: katId
+            });
+        }
+
+        alert(`✔ ${nev} sikeresen regisztrálva és benevezve ${kijeloltKatIdk.length} db kategóriába!`);
         document.getElementById('coachUjNev').value = '';
         document.getElementById('coachUjSuly').value = '';
+        document.querySelectorAll('.coach-kat-cb').forEach(cb => cb.checked = false);
         audienceAdatokBetoltese();
-    } else {
-        alert("Hiba történt a versenyző felvételekor!");
     }
 }
 
+// =========================================================
+// 2. CSAPAT KATA (TEAM KATA) NEVEZÉSE MEGLÉVŐ VERSENYZŐKBŐL
+// =========================================================
+async function coachTeamKataNevezes() {
+    const csapatNev = document.getElementById('teamKataCsapatNev').value.trim();
+    const tag1Id = parseInt(document.getElementById('teamTag1Select').value);
+    const tag2Id = parseInt(document.getElementById('teamTag2Select').value);
+    const tag3Id = parseInt(document.getElementById('teamTag3Select').value);
+    const katId = parseInt(document.getElementById('teamKataKategoriaSelect').value);
+
+    if (!csapatNev || !tag1Id || !tag2Id || !katId) {
+        alert("⚠️ Kérlek adj meg egy csapatnevet, válassz ki legalább 2 csapattagot és a Kata / Team Kata kategóriát!");
+        return;
+    }
+
+    const tagIdk = [tag1Id, tag2Id, tag3Id].filter(Boolean);
+    const egyediTagIdk = [...new Set(tagIdk)];
+    if (egyediTagIdk.length !== tagIdk.length) {
+        alert("⛔ Ugyanazt a versenyzőt nem választhatod ki kétszer ugyanazon csapaton belül!");
+        return;
+    }
+
+    const tagObjektumok = egyediTagIdk.map(id => audVersenyzok.find(v => v.id === id)).filter(Boolean);
+    const tagNevek = tagObjektumok.map(v => v.name.split(' ')[0] || v.name).join(', ');
+    const klubNev = tagObjektumok[0]?.club || "Shobu HSE";
+    const teljesCsapatMegnevezes = `${csapatNev} (${tagNevek})`;
+
+    // Létrehozzuk a csapat-entitást és benevezzük a Team Kata kategóriába
+    const compRes = await TatamiMaster.apiSend('Competitors', 'POST', {
+        name: teljesCsapatMegnevezes,
+        club: klubNev,
+        belt: "TEAM KATA",
+        weight: 0,
+        birthYear: tagObjektumok[0]?.birthYear || 2008
+    });
+
+    if (compRes.ok) {
+        const mentettCsapat = await compRes.json();
+        await TatamiMaster.apiSend('Registrations', 'POST', {
+            competitorId: mentettCsapat.id,
+            categoryId: katId
+        });
+
+        alert(`🥋 "${teljesCsapatMegnevezes}" sikeresen benevezve a kategóriába!`);
+        audienceAdatokBetoltese();
+    }
+}
+
+// =========================================================
+// 3. MEGLÉVŐ VERSENYZŐ UTÓLAGOS NEVEZÉSE TOVÁBBI KATEGÓRIÁBA
+// =========================================================
 async function coachMeglevoNevezes() {
     const versId = parseInt(document.getElementById('coachMeglevoVersenyzoSelect').value);
     const katId = parseInt(document.getElementById('coachMasikKategoriaSelect').value);
 
     if (!versId || !katId) {
-        alert("Válaszd ki a versenyzőt és a kategóriát is!");
+        alert("⚠️ Válaszd ki a versenyzőt és a kategóriát is!");
+        return;
+    }
+
+    // VÉDELEM: Ellenőrizzük, hogy nincs-e már benevezve pontosan ebbe a kategóriába
+    const marBenneVan = audNevezesek.some(n => n.competitorId === versId && n.categoryId === katId);
+    if (marBenneVan) {
+        alert("⛔ Ez a versenyző már szerepel ebben a kategóriában! (Másik kategóriába ettől függetlenül benevezheted.)");
         return;
     }
 
@@ -147,15 +240,13 @@ async function coachMeglevoNevezes() {
     });
 
     if (res.ok) {
-        alert("✔ A versenyző sikeresen benevezve az új kategóriába!");
+        alert("✔ A versenyző sikeresen benevezve a további kategóriába!");
         audienceAdatokBetoltese();
-    } else {
-        alert("Hiba történt a nevezés rögzítésekor!");
     }
 }
 
 // =========================================================
-// ÉLŐ TATAMI KÁRTYÁK ÉS ÁGRAJZOK (NÉZŐKNEK ÉS EDZŐKNEK)
+// ÉLŐ TATAMI KÁRTYÁK ÉS ÁGRAJZOK MEGJELENÍTÉSE
 // =========================================================
 function nevKereso(id) {
     let v = audVersenyzok.find(x => x.id === id);
@@ -238,7 +329,6 @@ function audienceAgrajzFrissites() {
         return;
     }
 
-    // --- 1. HA KATA KATEGÓRIA: SELEJTEZŐ + TOP 6 DÖNTŐ RANGLISTA ---
     if (isKata) {
         const kataTarolo = TatamiMaster.lekerKataEredmenyek();
         let selejtezoMeccsek = katMeccsek.filter(m => !TatamiMaster.isKataDontoMeccs(m.id));
@@ -260,7 +350,7 @@ function audienceAgrajzFrissites() {
 
             let tHtml = '<h3 style="margin-top: 20px; margin-bottom: 10px; color: #222;">' + cim + '</h3>';
             tHtml += '<div style="overflow-x: auto;"><table class="data-table">';
-            tHtml += '<tr><th>Helyezés</th><th>Versenyző (Klub & Övfokozat)</th><th>B1 (Vezető)</th><th>B2</th><th>B3</th><th>B4</th><th>B5</th><th>Min (Kieső)</th><th>Max (Kieső)</th><th>ÖSSZPONTSZÁM</th><th>Státusz</th></tr>';
+            tHtml += '<tr><th>Helyezés</th><th>Versenyző / Csapat</th><th>B1 (Vezető)</th><th>B2</th><th>B3</th><th>B4</th><th>B5</th><th>Min (Kieső)</th><th>Max (Kieső)</th><th>ÖSSZPONTSZÁM</th><th>Státusz</th></tr>';
 
             for (let i = 0; i < teljesSorrend.length; i++) {
                 let item = teljesSorrend[i];
@@ -309,7 +399,6 @@ function audienceAgrajzFrissites() {
         return;
     }
 
-    // --- 2. HA KUMITE KATEGÓRIA: ÁGRAJZ + JELMAGYARÁZAT + KÖRMÉRKŐZÉS TABELLA ---
     const kumiteAdatok = TatamiMaster.lekerKumiteReszletek();
 
     let jelmagyarazatHtml = '<div style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 15px; border-radius: 6px; margin-top: 15px; font-size: 0.85rem; display: flex; gap: 15px; flex-wrap: wrap;">';
@@ -322,7 +411,7 @@ function audienceAgrajzFrissites() {
 
     let fordulok = [];
     let osszes = katMeccsek.length;
-    let isAgrajz = (osszes === 3 || osszes === 7 || osszes === 15);
+    let isAgrajz = (osszes === 3 || osszes === 7 || osszes === 15 || osszes === 31);
 
     if (isAgrajz) {
         let korMeret = (osszes + 1) / 2;
