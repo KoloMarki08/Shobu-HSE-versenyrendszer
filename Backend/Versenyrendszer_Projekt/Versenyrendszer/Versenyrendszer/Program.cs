@@ -58,17 +58,6 @@ app.Use(async (context, next) =>
 
     // 2. API Írásvédelem (POST, PUT, DELETE csak érvényes Tokennel!)
     var method = context.Request.Method.ToUpper();
-    if (method == "POST" || method == "PUT" || method == "DELETE")
-    {
-        var token = context.Request.Headers["X-Tatami-Token"].FirstOrDefault();
-        if (token != "TM-SHOBU-2026-SECURE-KEY")
-        {
-            context.Response.StatusCode = 401;
-            await context.Response.WriteAsJsonAsync(new { error = "Jogosulatlan API hozzáférés blokkolva!" });
-            return;
-        }
-    }
-
     try
     {
         await next();
