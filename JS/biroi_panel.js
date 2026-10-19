@@ -352,6 +352,8 @@ function adatokMentese() {
         kataMaxIdx: kataErtekeles.maxIdx
     };
     localStorage.setItem('tatamiAdatok', JSON.stringify(adatok));
+    const aktTatamiId = document.getElementById('panelTatamiSelect')?.value;
+    if (aktTatamiId) localStorage.setItem('tatamiAdatok_' + aktTatamiId, JSON.stringify(adatok));
 }
 
 async function meccsMentese() {
@@ -480,8 +482,16 @@ async function tovabbjuttatasKovetkezoForduloba(lezartMeccs, gyoztesId) {
         if (mIndex !== -1) {
             let kovMeccs = fordulok[r + 1][Math.floor(mIndex / 2)];
             if (kovMeccs) {
+                let regiTovabbjuto = (mIndex % 2 === 0) ? kovMeccs.competitor1Id : kovMeccs.competitor2Id;
                 if (mIndex % 2 === 0) kovMeccs.competitor1Id = gyoztesId;
                 else kovMeccs.competitor2Id = gyoztesId;
+
+                // Ha felülírtunk egy korábbi meccset és emiatt megváltozott a továbbjutó,
+                // akkor a következő fordulós meccset automatikusan visszanyitjuk!
+                if (regiTovabbjuto && regiTovabbjuto !== gyoztesId && kovMeccs.isFinished) {
+                    kovMeccs.isFinished = false;
+                    kovMeccs.winnerId = null;
+                }
                 await TatamiMaster.apiSend('Matches/' + kovMeccs.id, 'PUT', kovMeccs);
             }
             break;

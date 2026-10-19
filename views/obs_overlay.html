@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Tatami Master - OBS Live Stream Overlay</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: transparent !important;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            user-select: none;
+        }
+        /* FELSŐ KATEGÓRIA JELZŐ (BAL FELSŐ SAROK) */
+        .obs-top-badge {
+            position: fixed;
+            top: 32px;
+            left: 48px;
+            background: rgba(15, 23, 42, 0.92);
+            color: #fff;
+            padding: 10px 22px;
+            border-left: 6px solid #e62e2d;
+            border-radius: 0 10px 10px 0;
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .obs-live-dot {
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: blink 1.2s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.2; } }
+
+        /* ALSÓ TELEVÍZIÓS SCOREBOARD (LOWER THIRD) */
+        .obs-lower-bar {
+            position: fixed;
+            bottom: 38px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1380px;
+            background: rgba(15, 23, 42, 0.94);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.65);
+            border: 2px solid rgba(255,255,255,0.15);
+        }
+        .obs-kumite-row {
+            display: grid;
+            grid-template-columns: 1fr 110px 210px 110px 1fr;
+            align-items: center;
+            height: 92px;
+        }
+        .obs-fighter {
+            padding: 0 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+        .obs-aka {
+            background: linear-gradient(90deg, rgba(185, 28, 28, 0.95) 0%, rgba(127, 29, 29, 0.85) 100%);
+            color: #fff;
+        }
+        .obs-shiro {
+            background: linear-gradient(270deg, rgba(255, 255, 255, 0.96) 0%, rgba(226, 232, 240, 0.92) 100%);
+            color: #0f172a;
+            text-align: right;
+        }
+        .obs-name {
+            font-size: 1.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .obs-pen {
+            font-size: 0.9rem;
+            font-weight: 800;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+        .obs-score {
+            font-size: 3.4rem;
+            font-weight: 900;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #090d16;
+            color: #fff;
+        }
+        .obs-timer {
+            font-size: 3.2rem;
+            font-weight: 900;
+            text-align: center;
+            color: #38bdf8;
+            background: #000;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-variant-numeric: tabular-nums;
+            border-left: 2px solid #334155;
+            border-right: 2px solid #334155;
+        }
+        /* KATA NÉZET OBS-BEN */
+        .obs-kata-row {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            color: white;
+            height: 92px;
+        }
+        .obs-kata-judges {
+            display: flex;
+            gap: 12px;
+        }
+        .obs-j-pill {
+            background: #1e293b;
+            border: 1.5px solid #475569;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 1.35rem;
+            font-weight: 900;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="obs-top-badge">
+        <div class="obs-live-dot"></div>
+        <span id="obsMatchInfo">1. TATAMI — ÉLŐ KÖZVETÍTÉS</span>
+    </div>
+
+    <div class="obs-lower-bar">
+        <!-- KUMITE SÁV -->
+        <div id="obsKumiteRow" class="obs-kumite-row">
+            <div class="obs-fighter obs-aka">
+                <div id="obsAkaName" class="obs-name">AKA Versenyző</div>
+                <div id="obsAkaPen" class="obs-pen">Chui / Genten: 0</div>
+            </div>
+            <div id="obsAkaScore" class="obs-score" style="color: #f87171;">0</div>
+            <div id="obsTimer" class="obs-timer">02:00</div>
+            <div id="obsShiroScore" class="obs-score">0</div>
+            <div class="obs-fighter obs-shiro">
+                <div id="obsShiroName" class="obs-name">SHIRO Versenyző</div>
+                <div id="obsShiroPen" class="obs-pen" style="color:#dc2626;">Chui / Genten: 0</div>
+            </div>
+        </div>
+
+        <!-- KATA SÁV -->
+        <div id="obsKataRow" class="obs-kata-row">
+            <div>
+                <div style="font-size:0.8rem;color:#f59e0b;font-weight:800;">🧘 KATA BEMUTATÓ</div>
+                <div id="obsKataName" class="obs-name">Versenyző Neve</div>
+            </div>
+            <div class="obs-kata-judges">
+                <div id="obsB1" class="obs-j-pill" style="border-color:#f59e0b;">B1: -</div>
+                <div id="obsB2" class="obs-j-pill">B2: -</div>
+                <div id="obsB3" class="obs-j-pill">B3: -</div>
+                <div id="obsB4" class="obs-j-pill">B4: -</div>
+                <div id="obsB5" class="obs-j-pill">B5: -</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:0.75rem;color:#94a3b8;font-weight:800;">ÖSSZPONTSZÁM</div>
+                <div id="obsKataTotal" style="font-size:2.8rem;font-weight:900;color:#f59e0b;line-height:1;">0.0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const tatamiSzam = urlParams.get('tatami'); // Pl. ?tatami=1 vagy ?tatami=2
+
+        function frissitObs() {
+            const kulcs = tatamiSzam ? ('tatamiAdatok_' + tatamiSzam) : 'tatamiAdatok';
+            const nyers = localStorage.getItem(kulcs) || localStorage.getItem('tatamiAdatok');
+            if (!nyers) return;
+
+            try {
+                const d = JSON.parse(nyers);
+                document.getElementById('obsMatchInfo').innerText = d.matchInfo || 'TATAMI ÉLŐ STREAM';
+                const isKata = (d.mode && d.mode.toUpperCase() === 'KATA');
+
+                document.getElementById('obsKumiteRow').style.display = isKata ? 'none' : 'grid';
+                document.getElementById('obsKataRow').style.display = isKata ? 'flex' : 'none';
+
+                document.getElementById('obsAkaName').innerText = d.akaName || 'AKA';
+                document.getElementById('obsShiroName').innerText = d.shiroName || 'SHIRO';
+                document.getElementById('obsAkaScore').innerText = d.akaScore ?? 0;
+                document.getElementById('obsShiroScore').innerText = d.shiroScore ?? 0;
+                document.getElementById('obsAkaPen').innerText = 'Büntetés: ' + (d.akaPenalties || 0);
+                document.getElementById('obsShiroPen').innerText = 'Büntetés: ' + (d.shiroPenalties || 0);
+                document.getElementById('obsTimer').innerText = d.timer || '02:00';
+
+                document.getElementById('obsKataName').innerText = d.akaName || '-';
+                document.getElementById('obsKataTotal').innerText = d.kataTotal || '0.0';
+                const sc = d.kataScores || ['-','-','-','-','-'];
+                for (let i = 0; i < 5; i++) {
+                    const el = document.getElementById('obsB' + (i + 1));
+                    el.innerText = `B${i+1}: ${sc[i] || '-'}`;
+                    el.style.opacity = (i === d.kataMinIdx || i === d.kataMaxIdx) ? '0.35' : '1';
+                }
+            } catch (e) {}
+        }
+
+        window.addEventListener('storage', frissitObs);
+        setInterval(frissitObs, 250);
+        frissitObs();
+    </script>
+</body>
+</html>
