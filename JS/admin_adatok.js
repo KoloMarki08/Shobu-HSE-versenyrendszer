@@ -1012,3 +1012,78 @@ async function adatbazisFeltoltese() {
         alert("Hiba történt a feltöltéskor! Ellenőrizd, hogy fut-e a C# backend.");
     }
 }
+
+// ============================================================================
+// MÚLTBELI EMBERI HIBÁK JAVÍTÁSA (TELJES KORREKCIÓS KÖZPONT)
+// ============================================================================
+
+// 1. Versenyző összes adatának (Név, Klub, Öv, Súly, Szül. év) utólagos javítása
+async function szerkesztVersenyzoTeljes(id) {
+    const v = globalVersenyzok.find(x => x.id === id);
+    if (!v) return;
+
+    const ujNev = prompt("Versenyző neve:", v.name);
+    if (ujNev === null) return;
+    const ujKlub = prompt("Klub neve:", v.club);
+    if (ujKlub === null) return;
+    const ujOv = prompt("Övfokozat (pl. 4. kyu / 1. dan):", v.belt || "10. kyu");
+    if (ujOv === null) return;
+    const ujSuly = prompt("Mérlegelt súly (kg):", v.weight);
+    if (ujSuly === null) return;
+    const ujEv = prompt("Születési év:", v.birthYear);
+    if (ujEv === null) return;
+
+    v.name = ujNev.trim() || v.name;
+    v.club = ujKlub.trim() || v.club;
+    v.belt = ujOv.trim() || v.belt;
+    v.weight = parseInt(ujSuly) || v.weight;
+    v.birthYear = parseInt(ujEv) || v.birthYear;
+
+    const res = await TatamiMaster.apiSend('Competitors/' + id, 'PUT', v);
+    if (res.ok) {
+        TatamiMaster.toast(`✔ ${v.name} minden adata sikeresen frissítve!`);
+        await mindenAdatFrissitese();
+    }
+}
+
+// 2. Kategória nevének, típusának és korhatárainak utólagos javítása
+async function szerkesztKategoriaTeljes(id) {
+    const k = globalKategoriak.find(x => x.id === id);
+    if (!k) return;
+
+    const ujNev = prompt("Kategória neve:", k.name);
+    if (ujNev === null) return;
+    const ujTipus = prompt("Típus (KUMITE vagy KATA):", k.matchType);
+    if (ujTipus === null) return;
+
+    k.name = ujNev.trim() || k.name;
+    k.matchType = (ujTipus.trim().toUpperCase() === 'KATA') ? 'KATA' : 'KUMITE';
+
+    const res = await TatamiMaster.apiSend('Categories/' + id, 'PUT', k);
+    if (res.ok) {
+        TatamiMaster.toast(`✔ Kategória (${k.name}) sikeresen módosítva!`);
+        await mindenAdatFrissitese();
+    }
+}
+
+// 3. Tévesen lezárt mérkőzés visszanyitása (Reset) vagy küzdők kézi cseréje
+async function meccsUjranyitasaReset(matchId) {
+    const m = globalMerkozesek.find(x => x.id === matchId);
+    if (!m) return;
+
+    if (!confirm(`🔄 Biztosan újranyitod (nullázod) a #${m.matchOrder}. mérkőzést, hogy újra le lehessen bírálni?`)) return;
+
+    m.isFinished = false;
+    m.winnerId = null;
+
+    // Töröljük a helyi Kata/Kumite részeredményt is
+    let kataTar = TatamiMaster.lekerKataEredmenyek();
+    delete kataTar[matchId];
+    localStorage.setItem('kataEredmenyek', JSON.stringify(kataTar));
+
+    const res = await TatamiMaster.apiSend('Matches/' + matchId, 'PUT', m);
+    if (res.ok) {
+        TatamiMaster.toast(`🔄 A #${m.matchOrder}. mérkőzés visszanyitva (Újra aktív)!`);
+        await mindenAdatFrissitese();
+    }
+}

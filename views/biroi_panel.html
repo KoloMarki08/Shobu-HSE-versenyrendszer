@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
             background-color: #0b0f19;
             color: #f8fafc;
         }
+
         .arena-toolbar {
             background: #1e293b;
             border: 1px solid #334155;
@@ -21,8 +23,9 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 22px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
         }
+
         .arena-select {
             background: #0f172a !important;
             color: #f8fafc !important;
@@ -31,32 +34,40 @@
             padding: 10px 14px;
             border-radius: 8px;
         }
+
         .kumite-arena-grid {
             display: grid;
             grid-template-columns: 1fr 340px 1fr;
             gap: 20px;
             align-items: stretch;
         }
+
         @media (max-width: 1100px) {
-            .kumite-arena-grid { grid-template-columns: 1fr; }
+            .kumite-arena-grid {
+                grid-template-columns: 1fr;
+            }
         }
+
         .fighter-panel {
             border-radius: 14px;
             padding: 24px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
         }
+
         .fighter-panel.aka-side {
             background: linear-gradient(160deg, #450a0a 0%, #7f1d1d 100%);
             border: 2px solid #ef4444;
         }
+
         .fighter-panel.shiro-side {
             background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%);
             color: #0f172a;
             border: 2px solid #cbd5e1;
         }
+
         .fighter-header-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -67,8 +78,16 @@
             text-transform: uppercase;
             margin-bottom: 8px;
         }
-        .aka-side .fighter-header-badge { background: #ef4444; color: white; }
-        .shiro-side .fighter-header-badge { background: #0f172a; color: white; }
+
+        .aka-side .fighter-header-badge {
+            background: #ef4444;
+            color: white;
+        }
+
+        .shiro-side .fighter-header-badge {
+            background: #0f172a;
+            color: white;
+        }
 
         .fighter-name-input {
             width: 100%;
@@ -78,11 +97,13 @@
             border-radius: 8px !important;
             margin-bottom: 18px;
         }
+
         .aka-side .fighter-name-input {
-            background: rgba(0,0,0,0.35) !important;
+            background: rgba(0, 0, 0, 0.35) !important;
             color: #fff !important;
             border: 1px solid #f87171 !important;
         }
+
         .shiro-side .fighter-name-input {
             background: #fff !important;
             color: #0f172a !important;
@@ -95,21 +116,25 @@
             gap: 14px;
             margin-bottom: 20px;
         }
+
         .metric-card {
-            background: rgba(0,0,0,0.28);
+            background: rgba(0, 0, 0, 0.28);
             border-radius: 10px;
             padding: 14px;
             text-align: center;
         }
+
         .shiro-side .metric-card {
             background: rgba(15, 23, 42, 0.08);
         }
+
         .metric-label {
             font-size: 0.8rem;
             font-weight: 700;
             text-transform: uppercase;
             opacity: 0.85;
         }
+
         .metric-val {
             font-size: 3.4rem;
             font-weight: 900;
@@ -122,6 +147,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
+
         .arena-btn {
             padding: 14px 12px;
             border-radius: 10px;
@@ -135,18 +161,41 @@
             justify-content: center;
             gap: 6px;
         }
-        .arena-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        .arena-btn:active { transform: translateY(0); }
 
-        .btn-waza { background: #10b981; color: white; }
-        .btn-ippon { background: #f59e0b; color: #111; }
-        .btn-chui { background: #fbbf24; color: #111; }
-        .btn-genten { background: #e11d48; color: white; }
+        .arena-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        .arena-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-waza {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-ippon {
+            background: #f59e0b;
+            color: #111;
+        }
+
+        .btn-chui {
+            background: #fbbf24;
+            color: #111;
+        }
+
+        .btn-genten {
+            background: #e11d48;
+            color: white;
+        }
+
         .btn-undo {
             grid-column: span 2;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
             color: inherit;
-            border: 1px solid rgba(150,150,150,0.4);
+            border: 1px solid rgba(150, 150, 150, 0.4);
             margin-top: 6px;
         }
 
@@ -160,8 +209,9 @@
             align-items: center;
             justify-content: space-between;
             text-align: center;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
         }
+
         .timer-digits {
             font-size: 4.8rem;
             font-weight: 900;
@@ -181,17 +231,22 @@
             border: 2px solid #f59e0b;
             border-radius: 14px;
             padding: 28px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
         }
+
         .judge-score-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 16px;
             margin: 22px 0;
         }
+
         @media (max-width: 768px) {
-            .judge-score-grid { grid-template-columns: 1fr 1fr; }
+            .judge-score-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
+
         .judge-box {
             background: #0f172a;
             border: 1.5px solid #475569;
@@ -199,10 +254,12 @@
             padding: 16px;
             text-align: center;
         }
+
         .judge-box.chief {
             border-color: #f59e0b;
             background: rgba(245, 158, 11, 0.08);
         }
+
         .judge-input {
             width: 100%;
             font-size: 2.3rem !important;
@@ -214,6 +271,7 @@
             border-radius: 8px !important;
             margin-top: 8px;
         }
+
         .judge-input:focus {
             border-color: #f59e0b !important;
             background: #0f172a !important;
@@ -233,14 +291,17 @@
         }
     </style>
 </head>
+
 <body>
 
     <header class="top-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1>🥋 <em>TATAMI MASTER</em> <span class="red-text">ARÉNA BÍRÓI VEZÉRLŐPULT</span></h1>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <button class="btn btn-outline-blue" onclick="window.open('tv_kijelzo.html', '_blank', 'width=1280,height=720')">
+            <button class="btn btn-outline-blue"
+                onclick="window.open('tv_kijelzo.html', '_blank', 'width=1280,height=720')">
                 📺 Élő TV Kijelző Megnyitása (2. monitorra)
             </button>
+            <button class="btn btn-outline" onclick="nyitObsOverlay()">🎥 OBS Stream Overlay</button>
             <a href="admin.html" class="btn btn-outline">⚙ Admin Központ</a>
             <button class="btn btn-danger" onclick="TatamiMaster.kijelentkezes()">Kilépés</button>
         </div>
@@ -252,16 +313,25 @@
         <div class="arena-toolbar">
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 2;">
                 <div>
-                    <label style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Aktív Tatami</label>
-                    <select id="panelTatamiSelect" class="arena-select" style="min-width: 170px;" onchange="tatamiMeccsekBetoltese()"></select>
+                    <label
+                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Aktív
+                        Tatami</label>
+                    <select id="panelTatamiSelect" class="arena-select" style="min-width: 170px;"
+                        onchange="tatamiMeccsekBetoltese()"></select>
                 </div>
                 <div style="flex: 1; min-width: 260px;">
-                    <label style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Mérkőzés / Katázó a Tatamin</label>
-                    <select id="panelMeccsSelect" class="arena-select" style="width: 100%;" onchange="meccsKivalasztva()"></select>
+                    <label
+                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Mérkőzés
+                        / Katázó a Tatamin</label>
+                    <select id="panelMeccsSelect" class="arena-select" style="width: 100%;"
+                        onchange="meccsKivalasztva()"></select>
                 </div>
                 <div style="flex: 1; min-width: 200px;">
-                    <label style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Kategória Megnevezése (TV-n)</label>
-                    <input type="text" id="meccsKategoriaInput" class="arena-select" style="width: 100%;" oninput="adatokMentese()">
+                    <label
+                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Kategória
+                        Megnevezése (TV-n)</label>
+                    <input type="text" id="meccsKategoriaInput" class="arena-select" style="width: 100%;"
+                        oninput="adatokMentese()">
                 </div>
             </div>
 
@@ -280,7 +350,8 @@
                 <div class="fighter-panel aka-side">
                     <div>
                         <span class="fighter-header-badge">🔴 AKA (Piros küzdő / Katázó)</span>
-                        <input type="text" id="akaNevInput" class="fighter-name-input" value="AKA Versenyző" oninput="adatokMentese()">
+                        <input type="text" id="akaNevInput" class="fighter-name-input" value="AKA Versenyző"
+                            oninput="adatokMentese()">
 
                         <div class="score-box-row">
                             <div class="metric-card">
@@ -295,37 +366,54 @@
                     </div>
 
                     <div class="action-btn-grid">
-                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('aka', 1)">+1 Waza-ari (Fél pont)</button>
-                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes pont)</button>
-                        <button class="arena-btn btn-chui" onclick="buntetesValtoztatas('aka', 1)">⚠️ +1 Chui (Figyelmeztetés)</button>
-                        <button class="arena-btn btn-genten" onclick="buntetesValtoztatas('aka', 2)">🚫 Genten (Levonás / 2=Kizárás)</button>
-                        <button class="arena-btn btn-undo" onclick="kumiteUndo('aka')">↩ Utolsó AKA művelet visszavonása (Undo)</button>
+                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('aka', 1)">+1 Waza-ari (Fél
+                            pont)</button>
+                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes
+                            pont)</button>
+                        <button class="arena-btn btn-chui" onclick="buntetesValtoztatas('aka', 1)">⚠️ +1 Chui
+                            (Figyelmeztetés)</button>
+                        <button class="arena-btn btn-genten" onclick="buntetesValtoztatas('aka', 2)">🚫 Genten (Levonás
+                            / 2=Kizárás)</button>
+                        <button class="arena-btn btn-undo" onclick="kumiteUndo('aka')">↩ Utolsó AKA művelet visszavonása
+                            (Undo)</button>
                     </div>
                 </div>
 
                 <!-- KÖZÉP: IDŐMÉRŐ TORONY -->
                 <div class="center-tower">
                     <div style="width: 100%;">
-                        <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8;">⏱ Küzdőidő Vezérlés</span>
+                        <span
+                            style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8;">⏱
+                            Küzdőidő Vezérlés</span>
                         <div id="panelTimerDisplay" class="timer-digits">02:00</div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
-                            <button class="arena-btn" style="background: #22c55e; color: #fff; font-size: 1.1rem;" onclick="idoInditas()">▶ INDÍT (Hajime)</button>
-                            <button class="arena-btn" style="background: #ef4444; color: #fff; font-size: 1.1rem;" onclick="idoMegallitas()">⏸ ÁLLJ (Yame)</button>
+                            <button class="arena-btn" style="background: #22c55e; color: #fff; font-size: 1.1rem;"
+                                onclick="idoInditas()">▶ INDÍT (Hajime)</button>
+                            <button class="arena-btn" style="background: #ef4444; color: #fff; font-size: 1.1rem;"
+                                onclick="idoMegallitas()">⏸ ÁLLJ (Yame)</button>
                         </div>
 
-                        <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(60)">1:00</button>
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(90)">1:30</button>
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(120)">2:00</button>
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(180)">3:00</button>
+                        <div
+                            style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
+                                onclick="idoBeallitas(60)">1:00</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
+                                onclick="idoBeallitas(90)">1:30</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
+                                onclick="idoBeallitas(120)">2:00</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
+                                onclick="idoBeallitas(180)">3:00</button>
                         </div>
                     </div>
 
                     <div style="width: 100%; border-top: 1px solid #334155; padding-top: 14px;">
-                        <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 6px;">Egyéni Idő (másodperc):</label>
+                        <label
+                            style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 6px;">Egyéni
+                            Idő (másodperc):</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="number" id="egyeniIdoInput" class="arena-select" placeholder="Mp (pl. 90)" style="width: 100%;">
+                            <input type="number" id="egyeniIdoInput" class="arena-select" placeholder="Mp (pl. 90)"
+                                style="width: 100%;">
                             <button class="btn btn-outline-blue" onclick="egyeniIdoBeallitas()">Beállít</button>
                         </div>
                     </div>
@@ -335,7 +423,8 @@
                 <div class="fighter-panel shiro-side">
                     <div>
                         <span class="fighter-header-badge">⚪ SHIRO (Fehér küzdő)</span>
-                        <input type="text" id="shiroNevInput" class="fighter-name-input" value="SHIRO Versenyző" oninput="adatokMentese()">
+                        <input type="text" id="shiroNevInput" class="fighter-name-input" value="SHIRO Versenyző"
+                            oninput="adatokMentese()">
 
                         <div class="score-box-row">
                             <div class="metric-card">
@@ -350,11 +439,16 @@
                     </div>
 
                     <div class="action-btn-grid">
-                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('shiro', 1)">+1 Waza-ari (Fél pont)</button>
-                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes pont)</button>
-                        <button class="arena-btn btn-chui" onclick="buntetesValtoztatas('shiro', 1)">⚠️ +1 Chui (Figyelmeztetés)</button>
-                        <button class="arena-btn btn-genten" onclick="buntetesValtoztatas('shiro', 2)">🚫 Genten (Levonás / 2=Kizárás)</button>
-                        <button class="arena-btn btn-undo" onclick="kumiteUndo('shiro')">↩ Utolsó SHIRO művelet visszavonása (Undo)</button>
+                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('shiro', 1)">+1 Waza-ari (Fél
+                            pont)</button>
+                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes
+                            pont)</button>
+                        <button class="arena-btn btn-chui" onclick="buntetesValtoztatas('shiro', 1)">⚠️ +1 Chui
+                            (Figyelmeztetés)</button>
+                        <button class="arena-btn btn-genten" onclick="buntetesValtoztatas('shiro', 2)">🚫 Genten
+                            (Levonás / 2=Kizárás)</button>
+                        <button class="arena-btn btn-undo" onclick="kumiteUndo('shiro')">↩ Utolsó SHIRO művelet
+                            visszavonása (Undo)</button>
                     </div>
                 </div>
 
@@ -364,41 +458,54 @@
         <!-- 2. KATA PONTOZÓ FELÜLET -->
         <section id="kataVezerlo" style="display: none;">
             <div class="kata-arena-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid #334155; padding-bottom: 16px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid #334155; padding-bottom: 16px;">
                     <div>
-                        <span style="background: #f59e0b; color: #111; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">🧘 KATA PONTOZÁS (5 BÍRÓ)</span>
-                        <h2 style="margin: 8px 0 0 0; color: #fff;">Katázó versenyző: <span id="kataAktivVersenyzoNev" style="color: #f59e0b;">-</span></h2>
+                        <span
+                            style="background: #f59e0b; color: #111; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">🧘
+                            KATA PONTOZÁS (5 BÍRÓ)</span>
+                        <h2 style="margin: 8px 0 0 0; color: #fff;">Katázó versenyző: <span id="kataAktivVersenyzoNev"
+                                style="color: #f59e0b;">-</span></h2>
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">VÉGSŐ KATA ÖSSZPONTSZÁM</div>
-                        <div id="kataOsszpontDisplay" style="font-size: 3.8rem; font-weight: 900; color: #f59e0b; line-height: 1;">0.0</div>
+                        <div id="kataOsszpontDisplay"
+                            style="font-size: 3.8rem; font-weight: 900; color: #f59e0b; line-height: 1;">0.0</div>
                     </div>
                 </div>
 
-                <div style="margin-top: 16px; background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; color: #a7f3d0;">
-                    ⚡ <strong>Villámgyors beütés:</strong> Csak gépeld be a 2 számjegyet tizedespont nélkül (pl. <code>75</code> ➔ automatikusan <code>7.5</code> lesz, és a kurzor azonnal átugrik a következő bíróra)!
+                <div
+                    style="margin-top: 16px; background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; color: #a7f3d0;">
+                    ⚡ <strong>Villámgyors beütés:</strong> Csak gépeld be a 2 számjegyet tizedespont nélkül (pl.
+                    <code>75</code> ➔ automatikusan <code>7.5</code> lesz, és a kurzor azonnal átugrik a következő
+                    bíróra)!
                 </div>
 
                 <div class="judge-score-grid">
                     <div class="judge-box chief">
                         <label style="font-weight: 800; color: #f59e0b; font-size: 0.9rem;">👑 B1 - VEZETŐBÍRÓ</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
+                            oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
                         <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B2 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
+                            oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
                         <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B3 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
+                            oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
                         <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B4 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
+                            oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
                         <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B5 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
+                            oninput="kataPontSzamitas()">
                     </div>
                 </div>
             </div>
@@ -406,16 +513,21 @@
 
         <!-- ALSÓ LEZÁRÓ ÉS TOVÁBBJUTTATÓ DOKK -->
         <div class="finish-dock">
-            <div id="kumiteGyoztesValaszto" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; flex: 2;">
+            <div id="kumiteGyoztesValaszto"
+                style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; flex: 2;">
                 <div>
-                    <label style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700; margin-bottom: 4px;">🏆 Mérkőzés Győztese</label>
+                    <label
+                        style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700; margin-bottom: 4px;">🏆
+                        Mérkőzés Győztese</label>
                     <select id="gyoztesSelect" class="arena-select" style="min-width: 230px;">
                         <option value="aka">🔴 AKA (Piros győzött)</option>
                         <option value="shiro">⚪ SHIRO (Fehér győzött)</option>
                     </select>
                 </div>
                 <div>
-                    <label style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700; margin-bottom: 4px;">📌 Győzelem Jogcíme (Súlyozás)</label>
+                    <label
+                        style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700; margin-bottom: 4px;">📌
+                        Győzelem Jogcíme (Súlyozás)</label>
                     <select id="gyozelemModSelect" class="arena-select" style="min-width: 270px;">
                         <option value="HANTEI">Bírói döntés - Hantei (1 pont)</option>
                         <option value="WAZAARI">1x Waza-ari előny (2 pont)</option>
@@ -427,7 +539,9 @@
                 </div>
             </div>
 
-            <button id="mentesGomb" class="arena-btn" style="background: #10b981; color: white; font-size: 1.15rem; padding: 16px 28px; flex: 1; min-width: 300px;" onclick="meccsMentese()">
+            <button id="mentesGomb" class="arena-btn"
+                style="background: #10b981; color: white; font-size: 1.15rem; padding: 16px 28px; flex: 1; min-width: 300px;"
+                onclick="meccsMentese()">
                 💾 Mérkőzés Lezárása & Következő Meccs Betöltése ➔
             </button>
         </div>
@@ -438,4 +552,5 @@
     <script src="../JS/auth.js"></script>
     <script src="../JS/biroi_panel.js"></script>
 </body>
+
 </html>

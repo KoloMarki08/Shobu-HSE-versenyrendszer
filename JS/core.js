@@ -11,10 +11,35 @@ const TatamiMaster = {
         'KIKEN':   { kod: 'KIKEN',   rovid: 'KIK', cimke: 'Nem jelent meg / Feladta (Kiken)',    pont: 3 }
     },
 
-    // Automatikusan betölti az új Design System CSS-t minden oldalra!
+    // --- HACKER ELLENI VÉDELEM: XSS TISZTÍTÓ ---
+    escapeHtml: function(str) {
+        if (typeof str !== 'string') return str;
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
+
+    sanitizePayload: function(obj) {
+        if (!obj || typeof obj !== 'object') return obj;
+        const tiszta = Array.isArray(obj) ? [] : {};
+        for (let k in obj) {
+            if (typeof obj[k] === 'string') {
+                tiszta[k] = obj[k].replace(/<\/?[^>]+(>|$)/g, "").trim();
+            } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+                tiszta[k] = this.sanitizePayload(obj[k]);
+            } else {
+                tiszta[k] = obj[k];
+            }
+        }
+        return tiszta;
+    },
+
     injectDesignSystem: function() {
         const utvonal = window.location.pathname.toLowerCase();
-        if (utvonal.includes('tv_kijelzo.html')) return; // A TV kijelzőnek saját teljes képernyős stílusa van
+        if (utvonal.includes('tv_kijelzo.html') || utvonal.includes('obs_overlay.html')) return;
         if (document.getElementById('tmDesignSystemCss')) return;
 
         const isViews = utvonal.includes('/views/');
@@ -37,7 +62,6 @@ const TatamiMaster = {
         }
     },
 
-    // Modern animált Toast értesítés a régi alert() helyett
     toast: function(uzenet, tipus = 'siker') {
         let cont = document.getElementById('tmToastContainer');
         if (!cont) {
@@ -45,18 +69,15 @@ const TatamiMaster = {
             cont.id = 'tmToastContainer';
             document.body.appendChild(cont);
         }
-
         if (uzenet.includes('❌') || uzenet.includes('⛔') || uzenet.toLowerCase().includes('hiba')) tipus = 'hiba';
         else if (uzenet.includes('⚠️')) tipus = 'figyelem';
 
         const item = document.createElement('div');
         item.className = 'tm-toast ' + tipus;
-        item.innerHTML = `<span>${uzenet}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#888;">✕</button>`;
+        item.innerHTML = `<span>${this.escapeHtml(uzenet)}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#888;">✕</button>`;
         cont.appendChild(item);
 
-        setTimeout(() => {
-            if (item.parentElement) item.remove();
-        }, 4200);
+        setTimeout(() => { if (item.parentElement) item.remove(); }, 4200);
     },
 
     mutatRendszerUzenet: function(uzenet, tipus = 'hiba') {
@@ -76,31 +97,37 @@ const TatamiMaster = {
         }
     },
 
+    // Tiszta, gyors GET lekérdezés (egyedi CORS fejlécek nélkül!)
     apiGet: async function(vegpont) {
         try {
             const res = await fetch(this.API_URL + '/' + vegpont);
-            if (!res.ok) return [];
+            if (!res.ok) {
+                console.warn(`API GET hiba (${vegpont}): HTTP ${res.status}`);
+                return [];
+            }
             const text = await res.text();
             return text ? JSON.parse(text) : [];
         } catch (err) {
-            this.toast(`⚠️ Nem érhető el a C# szerver (${vegpont}).`, 'hiba');
+            console.error(`Hálózati hiba (${vegpont}):`, err);
             return [];
         }
     },
 
+    // Tiszta POST / PUT / DELETE küldés XSS szűréssel
     apiSend: async function(vegpont, method, adat) {
         try {
+            const tisztaAdat = adat ? this.sanitizePayload(adat) : null;
             const res = await fetch(this.API_URL + '/' + vegpont, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: adat ? JSON.stringify(adat) : null
+                body: tisztaAdat ? JSON.stringify(tisztaAdat) : null
             });
             if (!res.ok) {
                 this.toast(`⚠️ Szerver hiba (${method} ${vegpont}): HTTP ${res.status}`, 'hiba');
             }
             return res;
         } catch (err) {
-            this.toast(`❌ Hálózati hiba! A C# backend nem válaszol.`, 'hiba');
+            this.toast(`❌ Hálózati hiba! Ellenőrizd, hogy fut-e a C# szerver.`, 'hiba');
             return { ok: false, status: 0, json: async () => ({}) };
         }
     },
@@ -132,6 +159,24 @@ const TatamiMaster = {
                 window.location.href = '../index.html';
             }
         }
+    },
+
+    mentVersenyMelleklet: function(versenyNev, plakatBase64, kiirasBase64, kiirasFajlNev) {
+        let tarolo = this.safeJsonParse('versenyMellekletek', {});
+        tarolo[versenyNev] = {
+            plakat: plakatBase64 || null,
+            kiiras: kiirasBase64 || null,
+            kiirasNev: kiirasFajlNev || 'Versenykiiras.pdf'
+        };
+        try {
+            localStorage.setItem('versenyMellekletek', JSON.stringify(tarolo));
+        } catch (e) {
+            this.toast("⚠️ A csatolt fájl mérete túl nagy a böngésző tárolójához!", "figyelem");
+        }
+    },
+
+    lekerVersenyMellekletek: function() {
+        return this.safeJsonParse('versenyMellekletek', {});
     },
 
     szamolKataErtekeles: function(pontokTomb) {
@@ -209,8 +254,4 @@ const TatamiMaster = {
 
 TatamiMaster.injectDesignSystem();
 TatamiMaster.ellenorizJogosultsag();
-
-// Lecseréljük a böngésző alapértelmezett alert() függvényét a szép Toast értesítőre!
-window.alert = function(msg) {
-    TatamiMaster.toast(msg);
-};
+window.alert = function(msg) { TatamiMaster.toast(msg); };
