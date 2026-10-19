@@ -8,38 +8,59 @@ const TatamiMaster = {
         'WAZAARI': { kod: 'WAZAARI', rovid: 'WAZ', cimke: '1x Waza-ari előny',                   pont: 2 },
         'HANTEI':  { kod: 'HANTEI',  rovid: 'HAN', cimke: 'Bírói döntés (Döntetlen után)',       pont: 1 },
         'SIKAKU':  { kod: 'SIKAKU',  rovid: 'SIK', cimke: 'Leléptetés (2 Genten / Kizárás)',     pont: 3 },
-        'KIKEN':   { kod: 'KIKEN',   rovid: 'KIK', cimke: 'Nem jelent meg / Feladta (Kiken)',    pont: 3 },
-        'BYE':     { kod: 'BYE',     rovid: 'BYE', cimke: 'Erőnyerő (Mérkőzés nélkül)',          pont: 0 }
+        'KIKEN':   { kod: 'KIKEN',   rovid: 'KIK', cimke: 'Nem jelent meg / Feladta (Kiken)',    pont: 3 }
     },
 
-    // Biztonságos JSON olvasó (Sérült localStorage esetén sem fagy le az oldal)
+    // Automatikusan betölti az új Design System CSS-t minden oldalra!
+    injectDesignSystem: function() {
+        const utvonal = window.location.pathname.toLowerCase();
+        if (utvonal.includes('tv_kijelzo.html')) return; // A TV kijelzőnek saját teljes képernyős stílusa van
+        if (document.getElementById('tmDesignSystemCss')) return;
+
+        const isViews = utvonal.includes('/views/');
+        const prefix = isViews ? '../CSS/' : 'CSS/';
+
+        const link = document.createElement('link');
+        link.id = 'tmDesignSystemCss';
+        link.rel = 'stylesheet';
+        link.href = prefix + 'design_system.css';
+        document.head.appendChild(link);
+    },
+
     safeJsonParse: function(kulcs, alapErtek) {
         try {
             const nyers = localStorage.getItem(kulcs);
             return nyers ? JSON.parse(nyers) : alapErtek;
         } catch (e) {
-            console.warn(`Sérült localStorage kulcs visszaállítva (${kulcs}):`, e);
             localStorage.removeItem(kulcs);
             return alapErtek;
         }
     },
 
-    // Vizuális értesítő sáv (ha leáll a backend vagy hálózati hiba történik)
-    mutatRendszerUzenet: function(uzenet, tipus = 'hiba') {
-        let banner = document.getElementById('tmSystemBanner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'tmSystemBanner';
-            banner.style.cssText = 'position:fixed;bottom:15px;right:15px;z-index:9999;padding:12px 20px;border-radius:6px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:0.3s;max-width:420px;';
-            document.body.appendChild(banner);
+    // Modern animált Toast értesítés a régi alert() helyett
+    toast: function(uzenet, tipus = 'siker') {
+        let cont = document.getElementById('tmToastContainer');
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.id = 'tmToastContainer';
+            document.body.appendChild(cont);
         }
-        banner.style.background = (tipus === 'hiba') ? '#dc3545' : (tipus === 'figyelem' ? '#ffc107' : '#28a745');
-        banner.style.color = (tipus === 'figyelem') ? '#111' : '#fff';
-        banner.innerText = uzenet;
-        banner.style.display = 'block';
 
-        clearTimeout(this._bannerTimer);
-        this._bannerTimer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
+        if (uzenet.includes('❌') || uzenet.includes('⛔') || uzenet.toLowerCase().includes('hiba')) tipus = 'hiba';
+        else if (uzenet.includes('⚠️')) tipus = 'figyelem';
+
+        const item = document.createElement('div');
+        item.className = 'tm-toast ' + tipus;
+        item.innerHTML = `<span>${uzenet}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:1.1rem;cursor:pointer;color:#888;">✕</button>`;
+        cont.appendChild(item);
+
+        setTimeout(() => {
+            if (item.parentElement) item.remove();
+        }, 4200);
+    },
+
+    mutatRendszerUzenet: function(uzenet, tipus = 'hiba') {
+        this.toast(uzenet, tipus);
     },
 
     on: function(esemenyNev, fv) {
@@ -50,29 +71,23 @@ const TatamiMaster = {
     trigger: async function(esemenyNev, adat) {
         if (this.hooks[esemenyNev]) {
             for (let fv of this.hooks[esemenyNev]) {
-                try { await fv(adat); } catch (e) { console.error(`Hook hiba (${esemenyNev}):`, e); }
+                try { await fv(adat); } catch (e) { console.error(e); }
             }
         }
     },
 
-    // Hibatűrő GET lekérdezés
     apiGet: async function(vegpont) {
         try {
             const res = await fetch(this.API_URL + '/' + vegpont);
-            if (!res.ok) {
-                console.warn(`API GET figyelmeztetés (${vegpont}): HTTP ${res.status}`);
-                return [];
-            }
+            if (!res.ok) return [];
             const text = await res.text();
             return text ? JSON.parse(text) : [];
         } catch (err) {
-            console.error(`Hálózati hiba a(z) ${vegpont} lekérésekor:`, err);
-            this.mutatRendszerUzenet(`⚠️ Nem érhető el a C# szerver (${vegpont}). Ellenőrizd, hogy fut-e a backend!`, 'hiba');
+            this.toast(`⚠️ Nem érhető el a C# szerver (${vegpont}).`, 'hiba');
             return [];
         }
     },
 
-    // Hibatűrő POST / PUT / DELETE küldés
     apiSend: async function(vegpont, method, adat) {
         try {
             const res = await fetch(this.API_URL + '/' + vegpont, {
@@ -81,17 +96,15 @@ const TatamiMaster = {
                 body: adat ? JSON.stringify(adat) : null
             });
             if (!res.ok) {
-                this.mutatRendszerUzenet(`⚠️ Szerver hiba (${method} ${vegpont}): HTTP ${res.status}`, 'hiba');
+                this.toast(`⚠️ Szerver hiba (${method} ${vegpont}): HTTP ${res.status}`, 'hiba');
             }
             return res;
         } catch (err) {
-            console.error(`Hálózati hiba (${method} ${vegpont}):`, err);
-            this.mutatRendszerUzenet(`❌ Sikertelen művelet! A C# backend nem válaszol.`, 'hiba');
+            this.toast(`❌ Hálózati hiba! A C# backend nem válaszol.`, 'hiba');
             return { ok: false, status: 0, json: async () => ({}) };
         }
     },
 
-    // --- BELÉPÉSVÉDELEM (AUTH) ---
     mentBejelentkezes: function(userObj) {
         localStorage.setItem('tatamiUser', JSON.stringify(userObj));
     },
@@ -112,61 +125,49 @@ const TatamiMaster = {
 
         if (utvonal.includes('admin.html') || utvonal.includes('kategoriak.html') || utvonal.includes('kiemeles.html')) {
             if (!user || user.role.toUpperCase() !== 'ADMIN') {
-                alert("⛔ Hozzáférés megtagadva! Ehhez a modulhoz Adminisztrátori bejelentkezés szükséges.");
                 window.location.href = '../index.html';
             }
         } else if (utvonal.includes('biroi_panel.html')) {
             if (!user || (user.role.toUpperCase() !== 'ADMIN' && user.role.toUpperCase() !== 'JUDGE' && user.role.toUpperCase() !== 'BIRO')) {
-                alert("⛔ Hozzáférés megtagadva! A Vezérlőpult használatához Bírói vagy Admin bejelentkezés szükséges!");
                 window.location.href = '../index.html';
             }
         }
     },
 
-    // --- KATA PONTSZÁMÍTÓ ÉS 4 LÉPCSŐS HOLTVERSENY MOTOR ---
     szamolKataErtekeles: function(pontokTomb) {
         let ervenyes = pontokTomb.map((p, idx) => ({
-            ertek: Math.min(10, Math.max(0, parseFloat(p))), // 0.0 és 10.0 közé szorítjuk!
+            ertek: Math.min(10, Math.max(0, parseFloat(p))),
             idx: idx
         })).filter(x => !isNaN(x.ertek) && x.ertek > 0);
 
         if (ervenyes.length < 5) {
             let reszOsszeg = ervenyes.reduce((sum, x) => sum + x.ertek, 0);
             return {
-                kesz: false,
-                osszeg: Math.round(reszOsszeg * 10) / 10,
+                kesz: false, osszeg: Math.round(reszOsszeg * 10) / 10,
                 minErtek: 0, maxErtek: 0, vezetoBiro: pontokTomb[0] || 0,
                 minIdx: -1, maxIdx: -1, pontok: pontokTomb
             };
         }
 
         let minObj = ervenyes[0];
-        for (let x of ervenyes) {
-            if (x.ertek < minObj.ertek) minObj = x;
-        }
+        for (let x of ervenyes) { if (x.ertek < minObj.ertek) minObj = x; }
 
         let maxObj = null;
         for (let x of ervenyes) {
-            if (x.idx !== minObj.idx && (!maxObj || x.ertek >= maxObj.ertek)) {
-                maxObj = x;
-            }
+            if (x.idx !== minObj.idx && (!maxObj || x.ertek >= maxObj.ertek)) maxObj = x;
         }
 
         let kozepOsszeg = 0;
         for (let x of ervenyes) {
-            if (x.idx !== minObj.idx && x.idx !== maxObj.idx) {
-                kozepOsszeg += x.ertek;
-            }
+            if (x.idx !== minObj.idx && x.idx !== maxObj.idx) kozepOsszeg += x.ertek;
         }
 
         return {
             kesz: true,
             osszeg: Math.round(kozepOsszeg * 10) / 10,
-            minErtek: minObj.ertek,
-            maxErtek: maxObj.ertek,
+            minErtek: minObj.ertek, maxErtek: maxObj.ertek,
             vezetoBiro: ervenyes[0].ertek,
-            minIdx: minObj.idx,
-            maxIdx: maxObj.idx,
+            minIdx: minObj.idx, maxIdx: maxObj.idx,
             pontok: ervenyes.map(x => x.ertek)
         };
     },
@@ -185,21 +186,16 @@ const TatamiMaster = {
         localStorage.setItem('kataEredmenyek', JSON.stringify(tarolo));
     },
 
-    lekerKataEredmenyek: function() {
-        return this.safeJsonParse('kataEredmenyek', {});
-    },
+    lekerKataEredmenyek: function() { return this.safeJsonParse('kataEredmenyek', {}); },
 
     megjelolKataDontoMeccsek: function(matchIdTomb) {
         let eddigiek = this.safeJsonParse('kataDontoMeccsIdk', []);
-        for (let id of matchIdTomb) {
-            if (!eddigiek.includes(id)) eddigiek.push(id);
-        }
+        for (let id of matchIdTomb) { if (!eddigiek.includes(id)) eddigiek.push(id); }
         localStorage.setItem('kataDontoMeccsIdk', JSON.stringify(eddigiek));
     },
 
     isKataDontoMeccs: function(matchId) {
-        let eddigiek = this.safeJsonParse('kataDontoMeccsIdk', []);
-        return eddigiek.includes(matchId);
+        return this.safeJsonParse('kataDontoMeccsIdk', []).includes(matchId);
     },
 
     mentKumiteReszletek: function(matchId, adatok) {
@@ -208,9 +204,13 @@ const TatamiMaster = {
         localStorage.setItem('kumiteReszletek', JSON.stringify(tarolo));
     },
 
-    lekerKumiteReszletek: function() {
-        return this.safeJsonParse('kumiteReszletek', {});
-    }
+    lekerKumiteReszletek: function() { return this.safeJsonParse('kumiteReszletek', {}); }
 };
 
+TatamiMaster.injectDesignSystem();
 TatamiMaster.ellenorizJogosultsag();
+
+// Lecseréljük a böngésző alapértelmezett alert() függvényét a szép Toast értesítőre!
+window.alert = function(msg) {
+    TatamiMaster.toast(msg);
+};

@@ -17,77 +17,110 @@ async function mindenAdatFrissitese() {
     await nevezesekBetoltese();
     await merkozesekBetoltese();
 }
+// 1. A mindenAdatFrissitese() függvény végére tedd be a KPI kártyák és a Checkboxok frissítését:
+function frissitAdminKpiEsCheckboxok() {
+    const elV = document.getElementById('kpiVersenyzok');
+    const elK = document.getElementById('kpiKategoriak');
+    const elN = document.getElementById('kpiNevezesek');
+    const elM = document.getElementById('kpiMeccsek');
+
+    if (elV) elV.innerText = globalVersenyzok.length;
+    if (elK) elK.innerText = globalKategoriak.length;
+    if (elN) elN.innerText = globalNevezesek.length;
+    if (elM) {
+        const keszDb = globalMerkozesek.filter(m => m.isFinished).length;
+        elM.innerText = `${keszDb} / ${globalMerkozesek.length}`;
+    }
+
+    const cbCont = document.getElementById('adminUjVersenyzoKatCheckboxes');
+    if (cbCont) {
+        const bepipalt = Array.from(cbCont.querySelectorAll('input:checked')).map(c => parseInt(c.value));
+        cbCont.innerHTML = globalKategoriak.map(k => `
+            <label class="kat-check-item">
+                <input type="checkbox" class="admin-uj-kat-cb" value="${k.id}" ${bepipalt.includes(k.id) ? 'checked' : ''}>
+                <span><strong>${k.name}</strong> <small style="color:#64748b;">[${k.matchType}]</small></span>
+            </label>
+        `).join('');
+    }
+}
+
+// Kösük rá a TatamiMaster hook-ra, vagy hívd meg a mindenAdatFrissitese() végén:
+setInterval(frissitAdminKpiEsCheckboxok, 1500);
 
 // ==========================================
 // 1. VERSENYZŐK ÉS MÉRLEGELÉS (Competitor.cs)
 // ==========================================
-async function versenyzokBetoltese() {
-    try {
-        const res = await fetch(API_URL + '/Competitors');
-        globalVersenyzok = await res.json();
+function versenyzokBetoltese() {
+    const tbody = document.getElementById('versenyzokTbody');
+    if (!tbody) return;
 
-        let html = '<table class="data-table">';
-        html += '<tr><th>ID</th><th>Név</th><th>Klub</th><th>Övfokozat</th><th>Szül. év</th><th>Mérlegelt Súly (kg)</th><th>Művelet</th></tr>';
+    const kereso = (document.getElementById('adminVersenyzoKereso')?.value || '').toLowerCase().trim();
+    const szurt = globalVersenyzok.filter(v =>
+        !kereso ||
+        (v.name && v.name.toLowerCase().includes(kereso)) ||
+        (v.club && v.club.toLowerCase().includes(kereso))
+    );
 
-        let selectHtml = '<option value="">Válassz versenyzőt...</option>';
+    let html = "";
+    for (let v of szurt) {
+        const nevezettKatNevek = globalNevezesek
+            .filter(n => n.competitorId === v.id)
+            .map(n => {
+                const kat = globalKategoriak.find(k => k.id === n.categoryId);
+                return kat ? `<span style="background:#e2e8f0;padding:2px 8px;border-radius:12px;font-size:0.8rem;font-weight:600;display:inline-block;margin:2px;">${kat.name}</span>` : '';
+            }).join(' ') || '<em style="color:#94a3b8;">Nincs nevezve</em>';
 
-        for (let i = 0; i < globalVersenyzok.length; i++) {
-            let v = globalVersenyzok[i];
-            html += '<tr>';
-            html += '<td>' + v.id + '</td>';
-            html += '<td><strong>' + v.name + '</strong></td>';
-            html += '<td>' + (v.club || '-') + '</td>';
-            html += '<td>' + (v.belt || '-') + '</td>';
-            html += '<td>' + (v.birthYear || '-') + '</td>';
-            html += '<td>';
-            html += '<input type="number" id="sulyInput_' + v.id + '" value="' + v.weight + '" style="width: 70px; padding: 4px;"> kg ';
-            html += '<button class="btn btn-outline-blue" style="padding: 4px 8px;" onclick="sulyFrissitese(' + v.id + ')">Mentés</button>';
-            html += '</td>';
-            html += '<td><button class="btn btn-outline" style="padding: 4px 8px;" onclick="torolVersenyzo(' + v.id + ')">Törlés</button></td>';
-            html += '</tr>';
-
-            selectHtml += '<option value="' + v.id + '">' + v.name + ' (' + v.club + ' - ' + v.weight + 'kg)</option>';
-        }
-        
-        html += '</table>';
-        document.getElementById('versenyzokTableContainer').innerHTML = html;
-        document.getElementById('ujNevezesVersenyzo').innerHTML = selectHtml;
-    } catch (e) {
-        console.error("Versenyző betöltési hiba:", e);
+        html += `<tr>
+            <td>#${v.id}</td>
+            <td><strong>${v.name}</strong></td>
+            <td>${v.club}</td>
+            <td><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-weight:600;font-size:0.85rem;">${v.belt || '-'}</span></td>
+            <td><strong>${v.weight} kg</strong></td>
+            <td>${v.birthYear}</td>
+            <td>${nevezettKatNevek}</td>
+            <td>
+                <button class="btn btn-outline-blue" style="padding:4px 10px;font-size:0.8rem;" onclick="szerkesztSuly(${v.id}, '${v.name.replace(/'/g, "")}', ${v.weight})">⚖️ Súly</button>
+                <button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem;" onclick="torolElem('Competitors', ${v.id})">🗑️</button>
+            </td>
+        </tr>`;
     }
+    tbody.innerHTML = html;
 }
 
-function hozzadVersenyzo() {
-    const nev = document.getElementById('ujVersenyzoNev').value;
-    const klub = document.getElementById('ujVersenyzoKlub').value;
-    const ov = document.getElementById('ujVersenyzoOv').value || "10. kyu";
+async function hozzadVersenyzo() {
+    const nev = document.getElementById('ujVersenyzoNev').value.trim();
+    const klub = document.getElementById('ujVersenyzoKlub').value.trim() || "Shobu HSE";
+    const ov = document.getElementById('ujVersenyzoOv').value.trim() || "10. kyu";
     const suly = parseInt(document.getElementById('ujVersenyzoSuly').value) || 60;
     const szulEv = parseInt(document.getElementById('ujVersenyzoSzulEv').value) || 2008;
 
-    if (!nev) { alert("A nevet kötelező megadni!"); return; }
+    if (!nev) {
+        TatamiMaster.toast("⚠️ Add meg a versenyző nevét!", "figyelem");
+        return;
+    }
 
-    const ujAdat = {
-        name: nev,
-        club: klub,
-        belt: ov,
-        weight: suly,
-        birthYear: szulEv
-    };
+    const kijeloltKatIdk = Array.from(document.querySelectorAll('.admin-uj-kat-cb:checked')).map(cb => parseInt(cb.value));
 
-    fetch(API_URL + '/Competitors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ujAdat)
-    }).then(res => {
-        if (res.ok) {
-            document.getElementById('ujVersenyzoNev').value = '';
-            document.getElementById('ujVersenyzoKlub').value = '';
-            document.getElementById('ujVersenyzoOv').value = '';
-            document.getElementById('ujVersenyzoSuly').value = '';
-            document.getElementById('ujVersenyzoSzulEv').value = '';
-            mindenAdatFrissitese();
-        }
+    const res = await TatamiMaster.apiSend('Competitors', 'POST', {
+        name: nev, club: klub, belt: ov, weight: suly, birthYear: szulEv
     });
+
+    if (res.ok) {
+        const mentett = await res.json();
+        for (let katId of kijeloltKatIdk) {
+            await TatamiMaster.apiSend('Registrations', 'POST', {
+                competitorId: mentett.id,
+                categoryId: katId
+            });
+        }
+
+        document.getElementById('ujVersenyzoNev').value = '';
+        document.getElementById('ujVersenyzoSuly').value = '';
+        document.querySelectorAll('.admin-uj-kat-cb').forEach(cb => cb.checked = false);
+
+        TatamiMaster.toast(`✔ ${nev} felvéve` + (kijeloltKatIdk.length > 0 ? ` és benevezve ${kijeloltKatIdk.length} kategóriába!` : '!'));
+        await mindenAdatFrissitese();
+    }
 }
 
 function sulyFrissitese(versenyzoId) {
