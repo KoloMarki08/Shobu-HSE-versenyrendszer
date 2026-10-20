@@ -59,9 +59,9 @@ namespace Versenyrendszer.Controllers
 
                 // 2. Felhasználók a JO_shobu_system_adatbazis.sql-ből (ID = 1..3)
                 _context.Users.AddRange(
-                    new User { Username = "KoloMarki", PasswordHash = "1234", Role = "ADMIN" },
-                    new User { Username = "A tatami", PasswordHash = "A-tatami", Role = "JUDGE" },
-                    new User { Username = "Balint.Tornai", PasswordHash = "1234", Role = "COACH" }
+                    new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" },
+                    new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" },
+                    new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" }
                 );
 
                 // 3. Verseny a JO_shobu_system_adatbazis.sql-ből (ID = 1)
