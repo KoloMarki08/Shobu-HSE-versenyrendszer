@@ -120,7 +120,7 @@ namespace Versenyrendszer.Controllers
                 await _context.SaveChangesAsync();
 
                 // 6. Versenyzők a JO_shobu_system_adatbazis.sql-ből ([K1]..[K84] mintával)
-                string[] alapNevek = { "Kovács Péter", "Nagy Zsófia", "Szabó Dávid", "Tóth Réka", "Varga Máté", "Kiss Dóra" };
+                string[] alapNevek = { "Kolonics Márk", "Minta Tamás", "Vicc Elek", "Fránki Károly", "Gót Mátyás", "Kalmár Ákos" };
                 string[] alapKlubok = { "Vácrátóti HSE", "Tatami SE", "Budo SE", "Honbu Dojo", "Karate Akadémia", "Sakura SE" };
                 string[] alapOvek = { "4. kyu", "6. kyu", "2. kyu", "5. kyu", "1. kyu", "3. kyu", "1. dan", "8. kyu" };
                 int[] alapSulyok = { 72, 32, 48, 45, 78, 74, 88, 36, 57, 63, 84, 49, 73, 61, 44, 39, 95, 33, 65, 81 };
