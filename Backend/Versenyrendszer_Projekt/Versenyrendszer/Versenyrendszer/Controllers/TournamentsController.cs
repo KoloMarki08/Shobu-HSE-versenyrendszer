@@ -41,30 +41,46 @@ namespace Versenyrendszer.Controllers
         // POST: api/Tournaments/reset-seed
         // Töröl minden adatot, visszaállítja az ID-kat 1-re, és a C# Backenden keresztül
         // feltölti a JO_shobu_system_adatbazis.sql összes adatát!
+        // POST: api/Tournaments/reset-seed
         [HttpPost("reset-seed")]
         public async Task<IActionResult> ResetAndSeedDatabase()
         {
             try
             {
-                // 1. Minden tábla ürítése és az AUTO_INCREMENT ID-k visszaállítása 1-re
-                await _context.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 0;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Matches`;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Registrations`;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Competitors`;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Categories`;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Tatamis`;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Tournaments`;");
-                await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE `Users`;");
-                await _context.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 1;");
+                // 1. Minden rekord biztonságos törlése megfelelő sorrendben (Idegen kulcsok miatt!)
+                _context.Matches.RemoveRange(_context.Matches);
+                _context.Registrations.RemoveRange(_context.Registrations);
+                await _context.SaveChangesAsync();
 
-                // 2. Felhasználók a JO_shobu_system_adatbazis.sql-ből (ID = 1..3)
-                _context.Users.AddRange(
-                    new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" },
-                    new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" },
-                    new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" }
-                );
+                _context.Competitors.RemoveRange(_context.Competitors);
+                _context.Categories.RemoveRange(_context.Categories);
+                _context.Tatamis.RemoveRange(_context.Tatamis);
+                _context.Tournaments.RemoveRange(_context.Tournaments);
+                await _context.SaveChangesAsync();
 
-                // 3. Verseny a JO_shobu_system_adatbazis.sql-ből (ID = 1)
+                // 2. AUTO_INCREMENT ID-k visszaállítása 1-re (ez nem ütközik idegen kulcsba!)
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `matches` AUTO_INCREMENT = 1;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `registrations` AUTO_INCREMENT = 1;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `competitors` AUTO_INCREMENT = 1;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `categories` AUTO_INCREMENT = 1;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `tatamis` AUTO_INCREMENT = 1;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `tournaments` AUTO_INCREMENT = 1;");
+
+                // 3. Alap felhasználók biztosítása (ha még nincsenek benne)
+                if (!await _context.Users.AnyAsync(u => u.Username == "KoloMarki"))
+                {
+                    _context.Users.Add(new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" });
+                }
+                if (!await _context.Users.AnyAsync(u => u.Username == "A tatami"))
+                {
+                    _context.Users.Add(new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" });
+                }
+                if (!await _context.Users.AnyAsync(u => u.Username == "Balint.Tornai"))
+                {
+                    _context.Users.Add(new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" });
+                }
+
+                // 4. Verseny a JO_shobu_system_adatbazis.sql-ből (ID = 1)
                 _context.Tournaments.Add(new Tournament
                 {
                     Name = "Shobu HSE Országos Bajnokság 2026",
@@ -73,7 +89,7 @@ namespace Versenyrendszer.Controllers
                     Organizer = "Vácrátóti HSE - Tornai Bálint"
                 });
 
-                // 4. Tatamik a JO_shobu_system_adatbazis.sql-ből (ID = 1..3)
+                // 5. Tatamik (ID = 1..3)
                 _context.Tatamis.AddRange(
                     new Tatami { Name = "Tatami A" },
                     new Tatami { Name = "Tatami B" },
@@ -81,7 +97,7 @@ namespace Versenyrendszer.Controllers
                 );
                 await _context.SaveChangesAsync();
 
-                // 5. A 31 Kategória pontosan a JO_shobu_system_adatbazis.sql-ből (ID = 1..31)
+                // 6. A 31 Kategória a JO_shobu_system_adatbazis.sql-ből (ID = 1..31)
                 var kategoriak = new List<Category>
                 {
                     new Category { Name = "Kata Girls 8-9 y.o.",        MatchType = "KATA",   Gender = "Girls", MinAge = 8,  MaxAge = 9 },
@@ -119,8 +135,8 @@ namespace Versenyrendszer.Controllers
                 _context.Categories.AddRange(kategoriak);
                 await _context.SaveChangesAsync();
 
-                // 6. Versenyzők a JO_shobu_system_adatbazis.sql-ből ([K1]..[K84] mintával)
-                string[] alapNevek = { "Kolonics Márk", "Minta Tamás", "Vicc Elek", "Fránki Károly", "Gót Mátyás", "Kalmár Ákos" };
+                // 7. Versenyzők a JO_shobu_system_adatbazis.sql-ből ([K1]..[K84])
+                string[] alapNevek = { "Kovács Péter", "Nagy Zsófia", "Szabó Dávid", "Tóth Réka", "Varga Máté", "Kiss Dóra" };
                 string[] alapKlubok = { "Vácrátóti HSE", "Tatami SE", "Budo SE", "Honbu Dojo", "Karate Akadémia", "Sakura SE" };
                 string[] alapOvek = { "4. kyu", "6. kyu", "2. kyu", "5. kyu", "1. kyu", "3. kyu", "1. dan", "8. kyu" };
                 int[] alapSulyok = { 72, 32, 48, 45, 78, 74, 88, 36, 57, 63, 84, 49, 73, 61, 44, 39, 95, 33, 65, 81 };
@@ -131,8 +147,8 @@ namespace Versenyrendszer.Controllers
                 {
                     for (int n = 0; n < 6; n++)
                     {
-                        if (k == 1 && n == 5) continue; // Az SQL-ben a 6-os kimaradt [K1]-nél
-                        if (k == 84 && n == 5) continue; // Az SQL 503-nál ér véget
+                        if (k == 1 && n == 5) continue;
+                        if (k == 84 && n == 5) continue;
 
                         int katIndex = (idx % 31);
                         int kor = (kategoriak[katIndex].MinAge + kategoriak[katIndex].MaxAge) / 2;
@@ -152,15 +168,16 @@ namespace Versenyrendszer.Controllers
                 _context.Competitors.AddRange(versenyzok);
                 await _context.SaveChangesAsync();
 
-                // 7. Nevezések pontosan az SQL fájl képletével: ((versenyzo_id % 31) + 1)
+                // 8. Nevezések összekötése a valódi mentett Category ID-kkal!
                 var nevezesek = new List<Registration>();
-                foreach (var v in versenyzok)
+                for (int i = 0; i < versenyzok.Count; i++)
                 {
-                    int targetCatId = (v.Id % 31) + 1;
+                    var v = versenyzok[i];
+                    var celKat = kategoriak[i % kategoriak.Count];
                     nevezesek.Add(new Registration
                     {
                         CompetitorId = v.Id,
-                        CategoryId = targetCatId
+                        CategoryId = celKat.Id
                     });
                 }
                 _context.Registrations.AddRange(nevezesek);
@@ -168,12 +185,13 @@ namespace Versenyrendszer.Controllers
 
                 return Ok(new
                 {
-                    message = $"Sikeres Reset! {versenyzok.Count} versenyző, {kategoriak.Count} kategória és {nevezesek.Count} nevezés betöltve ID=1-től!"
+                    message = $"Sikeres Reset! {versenyzok.Count} versenyző, {kategoriak.Count} kategória és {nevezesek.Count} nevezés betöltve!"
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                Console.WriteLine("RESET-SEED HIBA: " + ex.ToString());
+                return StatusCode(500, new { error = ex.InnerException?.Message ?? ex.Message });
             }
         }
 
