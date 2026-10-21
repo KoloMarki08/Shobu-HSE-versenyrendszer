@@ -142,12 +142,29 @@
                 <button class="btn btn-outline-green" onclick="hozzadKategoria()">+ Kategória Hozzáadása</button>
             </div>
 
-            <div class="add-form-container" style="background: #eff6ff; border-color: #bfdbfe;">
-                <strong>⚖️ Gyors Kumite Súlybontó:</strong>
-                <select id="bontandoKategoriaSelect" class="input-field" style="min-width: 220px;"></select>
-                <input type="number" id="sulyHatarInput" placeholder="Súlyhatár (pl. 70 kg)" class="input-field"
-                    style="max-width: 170px;">
-                <button class="btn btn-outline-blue" onclick="sulycsoportBontas()">Kettébontás súly szerint</button>
+            <!-- TÖBBLÉPCSŐS KUMITE SÚLYCSOPORT-BONTÓ & EGYEDÜL MARADÓ DETEKTÁLÓ -->
+            <div class="pro-card" style="background: #eff6ff; border: 1.5px solid #93c5fd; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                    <strong style="font-size: 1.05rem; color: #1e3a8a;">⚖️ Többlépcsős Kumite Súlycsoport-bontó (Automatikus létszám- és árva-ellenőrzéssel)</strong>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline" style="background:#fff;color:#1e3a8a;border-color:#93c5fd;padding:4px 10px;font-size:0.78rem;" onclick="betoltSulySablon('30, 35, 40, 45, 50')">Gyerek sablon (30..50kg)</button>
+                        <button type="button" class="btn btn-outline" style="background:#fff;color:#1e3a8a;border-color:#93c5fd;padding:4px 10px;font-size:0.78rem;" onclick="betoltSulySablon('50, 55, 60, 65, 70, 75')">Ifi/Junior sablon (50..75kg)</button>
+                        <button type="button" class="btn btn-outline" style="background:#fff;color:#1e3a8a;border-color:#93c5fd;padding:4px 10px;font-size:0.78rem;" onclick="betoltSulySablon('60, 70, 80, 90')">Felnőtt sablon (-60,-70,-80,-90,+90kg)</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <select id="bontandoKategoriaSelect" class="input-field" style="flex: 1.5; min-width: 240px;" onchange="elonezetSulyBontas()"></select>
+                    <input type="text" id="sulyHatarInput" placeholder="Súlyhatárok vesszővel (pl. 50, 60, 70, 80, 90)" class="input-field" style="flex: 2; min-width: 260px;" value="50, 60, 70, 80, 90" oninput="elonezetSulyBontas()">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.88rem;font-weight:700;color:#1e3a8a;cursor:pointer;">
+                        <input type="checkbox" id="autoOsszevonasCheckbox" checked onchange="elonezetSulyBontas()" style="width:16px;height:16px;">
+                        Egyedül maradók (1 fő) automatikus feljebb léptetése
+                    </label>
+                    <button class="btn btn-outline-blue" onclick="sulycsoportBontas()">⚡ Súlycsoportok Létrehozása & Szétosztás</button>
+                </div>
+
+                <!-- ÉLŐ ELŐNÉZET: Ki melyik súlycsoportba kerül, és ki maradna egyedül! -->
+                <div id="sulyBontasElonezetContainer" style="margin-top: 14px;"></div>
             </div>
 
             <table class="data-table">
@@ -215,9 +232,22 @@
                 <div id="kiemelesContainer" style="width: 100%; margin-top: 8px;"></div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin: 0;">📋 Kisorsolt Mérkőzések Sorrendje (Húzd & Ejtsd a sorrendcseréhez!)</h3>
-                <button class="btn btn-danger" onclick="osszesMerkozesTorlese()">🗑️ Összes Mérkőzés Törlése</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; background: #f8fafc; padding: 14px 18px; border-radius: 10px; border: 1px solid #cbd5e1;">
+                <div>
+                    <h3 style="margin: 0; color: #0f172a;">📋 Tatami Menetrend & Intelligens Sorbarendezés</h3>
+                    <small style="color: #64748b;">Sorrend: 1. Kata (Korosztály: Lányok ➔ Fiúk) • 2. Kumite fordulónként rotálva (dupla meccs nélkül) • 3. Felnőtt (18+) döntők a legvégén!</small>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-outline-green" onclick="osszesKategoriaAutomatikusSorsolasa()">
+                        ⚡ Összes Kategória Sorsolása (A/B/C Tatamira) + Menetrend
+                    </button>
+                    <button class="btn btn-outline-blue" onclick="automatikusTatamiMenetrendRendezes()">
+                        🔄 Meglévő Meccsek Újrarendezése (Pihenőidős Rotáció)
+                    </button>
+                    <button class="btn btn-danger" onclick="osszesMerkozesTorlese()">
+                        🗑️ Összes Törlése
+                    </button>
+                </div>
             </div>
 
             <table class="data-table">
