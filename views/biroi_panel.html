@@ -4,17 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Aréna Bírói Vezérlőpult</title>
-    <link rel="stylesheet" href="../CSS/design_system.css">
+    <meta name="copyright" content="© 2026 TATAMI MASTER™ - Shobu HSE. Minden jog fenntartva (All Rights Reserved).">
+    <meta name="application-name" content="TATAMI MASTER™">
+    <title>TATAMI MASTER™ - Aréna Bírói Vezérlőpult</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261105_v4">
     <style>
         body {
-            background-color: #0b0f19;
-            color: #f8fafc;
+            background-color: #FAF8F5 !important;
+            color: #18181B;
         }
 
         .arena-toolbar {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: #FFFFFF;
+            border: 1px solid #E4E0D7;
             border-radius: 12px;
             padding: 16px 22px;
             display: flex;
@@ -23,13 +27,13 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 22px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 16px rgba(24, 24, 27, 0.05);
         }
 
         .arena-select {
-            background: #0f172a !important;
-            color: #f8fafc !important;
-            border: 1.5px solid #475569 !important;
+            background: #FFFFFF !important;
+            color: #18181B !important;
+            border: 1.5px solid #CFC9BC !important;
             font-weight: 700;
             padding: 10px 14px;
             border-radius: 8px;
@@ -54,44 +58,48 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 8px 24px rgba(24, 24, 27, 0.07);
         }
 
         .fighter-panel.aka-side {
-            background: linear-gradient(160deg, #450a0a 0%, #7f1d1d 100%);
-            border: 2px solid #ef4444;
+            background: #18181B;
+            color: #FAF8F5;
+            border: 2px solid #991B1B;
         }
 
         .fighter-panel.shiro-side {
-            background: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%);
-            color: #0f172a;
-            border: 2px solid #cbd5e1;
+            background: #FFFFFF;
+            color: #18181B;
+            border: 2px solid #CFC9BC;
         }
 
         .fighter-header-badge {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
             font-weight: 800;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .aka-side .fighter-header-badge {
-            background: #ef4444;
-            color: white;
+            background: #991B1B;
+            color: #FAF8F5;
         }
 
         .shiro-side .fighter-header-badge {
-            background: #0f172a;
-            color: white;
+            background: #F3F0EA;
+            color: #18181B;
+            border: 1px solid #CFC9BC;
         }
 
         .fighter-name-input {
             width: 100%;
-            font-size: 1.45rem !important;
+            font-size: 1.4rem !important;
             font-weight: 800 !important;
             padding: 10px 14px !important;
             border-radius: 8px !important;
@@ -99,15 +107,15 @@
         }
 
         .aka-side .fighter-name-input {
-            background: rgba(0, 0, 0, 0.35) !important;
-            color: #fff !important;
-            border: 1px solid #f87171 !important;
+            background: #27272A !important;
+            color: #FAF8F5 !important;
+            border: 1.5px solid #52525B !important;
         }
 
         .shiro-side .fighter-name-input {
-            background: #fff !important;
-            color: #0f172a !important;
-            border: 1.5px solid #94a3b8 !important;
+            background: #FAF8F5 !important;
+            color: #18181B !important;
+            border: 1.5px solid #CFC9BC !important;
         }
 
         .score-box-row {
@@ -118,25 +126,27 @@
         }
 
         .metric-card {
-            background: rgba(0, 0, 0, 0.28);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 10px;
             padding: 14px;
             text-align: center;
         }
 
         .shiro-side .metric-card {
-            background: rgba(15, 23, 42, 0.08);
+            background: #FAF8F5;
+            border: 1px solid #E4E0D7;
         }
 
         .metric-label {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 700;
             text-transform: uppercase;
-            opacity: 0.85;
+            opacity: 0.8;
         }
 
         .metric-val {
-            font-size: 3.4rem;
+            font-size: 3.3rem;
             font-weight: 900;
             line-height: 1.05;
             margin-top: 4px;
@@ -149,13 +159,13 @@
         }
 
         .arena-btn {
-            padding: 14px 12px;
-            border-radius: 10px;
-            font-weight: 800;
-            font-size: 0.95rem;
-            border: none;
+            padding: 13px 12px;
+            border-radius: 9px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            border: 1.5px solid transparent;
             cursor: pointer;
-            transition: transform 0.12s, filter 0.15s;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -163,8 +173,8 @@
         }
 
         .arena-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
         }
 
         .arena-btn:active {
@@ -172,36 +182,50 @@
         }
 
         .btn-waza {
-            background: #10b981;
-            color: white;
+            background: #27272A;
+            color: #FAF8F5;
+            border-color: #52525B;
+        }
+        .shiro-side .btn-waza {
+            background: #18181B;
+            color: #FAF8F5;
+            border-color: #18181B;
         }
 
         .btn-ippon {
-            background: #f59e0b;
-            color: #111;
+            background: #FAF8F5;
+            color: #18181B;
+            border-color: #CFC9BC;
+        }
+        .shiro-side .btn-ippon {
+            background: #27272A;
+            color: #FAF8F5;
+            border-color: #27272A;
         }
 
         .btn-chui {
-            background: #fbbf24;
-            color: #111;
+            background: #F3F0EA;
+            color: #18181B;
+            border-color: #CFC9BC;
         }
 
         .btn-genten {
-            background: #e11d48;
-            color: white;
+            background: #991B1B;
+            color: #FFFFFF;
+            border-color: #991B1B;
         }
 
         .btn-undo {
             grid-column: span 2;
-            background: rgba(255, 255, 255, 0.15);
+            background: transparent;
             color: inherit;
-            border: 1px solid rgba(150, 150, 150, 0.4);
+            border: 1.5px solid rgba(150, 150, 150, 0.45);
             margin-top: 6px;
         }
 
         .center-tower {
-            background: #1e293b;
-            border: 2px solid #334155;
+            background: #FFFFFF;
+            border: 1px solid #E4E0D7;
             border-radius: 14px;
             padding: 22px;
             display: flex;
@@ -209,29 +233,29 @@
             align-items: center;
             justify-content: space-between;
             text-align: center;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 8px 24px rgba(24, 24, 27, 0.06);
         }
 
         .timer-digits {
-            font-size: 4.8rem;
+            font-size: 4.6rem;
             font-weight: 900;
             font-variant-numeric: tabular-nums;
-            color: #38bdf8;
-            background: #0f172a;
+            color: #18181B;
+            background: #FAF8F5;
             width: 100%;
             padding: 14px 0;
             border-radius: 12px;
-            border: 2px solid #0284c7;
+            border: 1.5px solid #CFC9BC;
             margin: 12px 0;
             letter-spacing: 2px;
         }
 
         .kata-arena-card {
-            background: #1e293b;
-            border: 2px solid #f59e0b;
+            background: #FFFFFF;
+            border: 1px solid #E4E0D7;
             border-radius: 14px;
             padding: 28px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 8px 24px rgba(24, 24, 27, 0.06);
         }
 
         .judge-score-grid {
@@ -248,38 +272,37 @@
         }
 
         .judge-box {
-            background: #0f172a;
-            border: 1.5px solid #475569;
+            background: #FAF8F5;
+            border: 1.5px solid #E4E0D7;
             border-radius: 12px;
             padding: 16px;
             text-align: center;
         }
 
         .judge-box.chief {
-            border-color: #f59e0b;
-            background: rgba(245, 158, 11, 0.08);
+            border-color: #18181B;
+            background: #F3F0EA;
         }
 
         .judge-input {
             width: 100%;
-            font-size: 2.3rem !important;
+            font-size: 2.2rem !important;
             font-weight: 900 !important;
             text-align: center;
-            background: #1e293b !important;
-            color: #fff !important;
-            border: 2px solid #64748b !important;
+            background: #FFFFFF !important;
+            color: #18181B !important;
+            border: 1.5px solid #CFC9BC !important;
             border-radius: 8px !important;
             margin-top: 8px;
         }
 
         .judge-input:focus {
-            border-color: #f59e0b !important;
-            background: #0f172a !important;
+            border-color: #18181B !important;
         }
 
         .finish-dock {
-            background: #1e293b;
-            border: 2px solid #334155;
+            background: #FFFFFF;
+            border: 1px solid #E4E0D7;
             border-radius: 14px;
             padding: 22px 28px;
             margin-top: 22px;
@@ -288,6 +311,7 @@
             gap: 18px;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 8px 24px rgba(24, 24, 27, 0.06);
         }
     </style>
 </head>
@@ -295,16 +319,31 @@
 <body>
 
     <header class="top-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>🥋 <em>TATAMI MASTER</em> <span class="red-text">ARÉNA BÍRÓI VEZÉRLŐPULT</span></h1>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <button class="btn btn-outline-blue"
-                onclick="window.open('tv_kijelzo.html', '_blank', 'width=1280,height=720')">
-                📺 Élő TV Kijelző Megnyitása (2. monitorra)
+        <h1>
+            <svg class="tm-brand-logo" width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TATAMI MASTER™ Hivatalos Védjegy Logó">
+                <polygon points="19,2 45,2 62,19 62,45 45,62 19,62 2,45 2,19" fill="#18181B" stroke="#FAF8F5" stroke-width="2.5" stroke-linejoin="round"/>
+                <polygon points="21.5,6.5 42.5,6.5 57.5,21.5 57.5,42.5 42.5,57.5 21.5,57.5 6.5,42.5 6.5,21.5" fill="none" stroke="#FAF8F5" stroke-width="1.2" stroke-opacity="0.45" stroke-linejoin="round"/>
+                <polygon points="32,10.5 51,32 32,53.5 13,32" fill="#18181B" stroke="#FAF8F5" stroke-width="2.3" stroke-linejoin="round"/>
+                <circle cx="32" cy="17.5" r="2.3" fill="#FAF8F5"/>
+                <path d="M20 24.5H44" stroke="#FAF8F5" stroke-width="2.8" stroke-linecap="round"/>
+                <path d="M32 24.5V46" stroke="#FAF8F5" stroke-width="2.8" stroke-linecap="round"/>
+                <path d="M22.5 41.5V29.5L32 37.5L41.5 29.5V41.5" stroke="#FAF8F5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <em>TATAMI MASTER<sup class="tm-trademark" title="TATAMI MASTER™ – Védjegyoltalom alatt álló márkanév és logó">™</sup></em> <span class="red-text">ARÉNA BÍRÓI VEZÉRLŐPULT</span>
+        </h1>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-outline-blue" onclick="window.open('tv_kijelzo.html', '_blank', 'width=1280,height=720')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                Élő TV Kijelző Megnyitása (2. monitorra)
             </button>
-            <button class="btn btn-outline" style="border-color:#f59e0b;color:#f59e0b;" onclick="nyitObsOverlay()">
-                🎥 OBS Stream Overlay Megnyitása
+            <button class="btn btn-outline" onclick="nyitObsOverlay()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+                OBS Stream Overlay Megnyitása
             </button>
-            <a href="admin.html" class="btn btn-outline">⚙ Admin Központ</a>
+            <a href="admin.html" class="btn btn-outline">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Admin Központ
+            </a>
             <button class="btn btn-danger" onclick="TatamiMaster.kijelentkezes()">Kilépés</button>
         </div>
     </header>
@@ -315,32 +354,29 @@
         <div class="arena-toolbar">
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 2;">
                 <div>
-                    <label
-                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Aktív
-                        Tatami</label>
-                    <select id="panelTatamiSelect" class="arena-select" style="min-width: 170px;"
-                        onchange="tatamiMeccsekBetoltese()"></select>
+                    <label style="font-size: 0.75rem; text-transform: uppercase; color: #52525B; display: block; font-weight: 700; margin-bottom: 4px;">Aktív Tatami</label>
+                    <select id="panelTatamiSelect" class="arena-select" style="min-width: 170px;" onchange="tatamiMeccsekBetoltese()"></select>
                 </div>
                 <div style="flex: 1; min-width: 260px;">
-                    <label
-                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Mérkőzés
-                        / Katázó a Tatamin</label>
-                    <select id="panelMeccsSelect" class="arena-select" style="width: 100%;"
-                        onchange="meccsKivalasztva()"></select>
+                    <label style="font-size: 0.75rem; text-transform: uppercase; color: #52525B; display: block; font-weight: 700; margin-bottom: 4px;">Mérkőzés / Katázó a Tatamin</label>
+                    <select id="panelMeccsSelect" class="arena-select" style="width: 100%;" onchange="meccsKivalasztva()"></select>
                 </div>
                 <div style="flex: 1; min-width: 200px;">
-                    <label
-                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700;">Kategória
-                        Megnevezése (TV-n)</label>
-                    <input type="text" id="meccsKategoriaInput" class="arena-select" style="width: 100%;"
-                        oninput="adatokMentese()">
+                    <label style="font-size: 0.75rem; text-transform: uppercase; color: #52525B; display: block; font-weight: 700; margin-bottom: 4px;">Kategória Megnevezése (TV-n)</label>
+                    <input type="text" id="meccsKategoriaInput" class="arena-select" style="width: 100%;" oninput="adatokMentese()">
                 </div>
             </div>
 
             <div style="display: flex; gap: 8px; align-items: center;">
-                <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">Üzemmód:</span>
-                <button id="gombKumiteMod" class="btn btn-outline-blue" onclick="modValtas('KUMITE')">🥊 KUMITE</button>
-                <button id="gombKataMod" class="btn btn-outline" onclick="modValtas('KATA')">🧘 KATA</button>
+                <span style="font-size: 0.8rem; color: #52525B; font-weight: 700;">Üzemmód:</span>
+                <button id="gombKumiteMod" class="btn btn-outline-blue" onclick="modValtas('KUMITE')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    KUMITE
+                </button>
+                <button id="gombKataMod" class="btn btn-outline" onclick="modValtas('KATA')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                    KATA
+                </button>
             </div>
         </div>
 
@@ -351,9 +387,8 @@
                 <!-- BAL: AKA (PIROS) KÜZDŐ -->
                 <div class="fighter-panel aka-side">
                     <div>
-                        <span class="fighter-header-badge">🔴 AKA (Piros küzdő / Katázó)</span>
-                        <input type="text" id="akaNevInput" class="fighter-name-input" value="AKA Versenyző"
-                            oninput="adatokMentese()">
+                        <span class="fighter-header-badge">AKA (Piros küzdő / Katázó)</span>
+                        <input type="text" id="akaNevInput" class="fighter-name-input" value="AKA Versenyző" oninput="adatokMentese()">
 
                         <div class="score-box-row">
                             <div class="metric-card">
@@ -362,60 +397,55 @@
                             </div>
                             <div class="metric-card">
                                 <div class="metric-label">Chui / Genten (Büntetés)</div>
-                                <div class="metric-val" id="akaBuntetesDisplay" style="color: #fca5a5;">0</div>
+                                <div class="metric-val" id="akaBuntetesDisplay" style="color: #E4E0D7;">0</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="action-btn-grid">
-                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('aka', 1)">+1 Waza-ari (Fél
-                            pont)</button>
-                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes
-                            pont)</button>
-                        <button id="akaChuiBtn" class="arena-btn btn-chui"
-                            onclick="buntetesValtoztatas('aka', 'CHUI')">⚠️ +1 Chui (Figyelmeztetés)</button>
-                        <button id="akaGentenBtn" class="arena-btn btn-genten"
-                            onclick="buntetesValtoztatas('aka', 'GENTEN')">🚫 +1 Genten (Levonás)</button>
-                        <button class="arena-btn btn-undo" onclick="kumiteUndo('aka')">↩ Utolsó AKA művelet visszavonása
-                            (Undo)</button>
+                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('aka', 1)">+1 Waza-ari (Fél pont)</button>
+                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes pont)</button>
+                        <button id="akaChuiBtn" class="arena-btn btn-chui" onclick="buntetesValtoztatas('aka', 'CHUI')">+1 Chui (Figyelmeztetés)</button>
+                        <button id="akaGentenBtn" class="arena-btn btn-genten" onclick="buntetesValtoztatas('aka', 'GENTEN')">+1 Genten (Levonás)</button>
+                        <button class="arena-btn btn-undo" onclick="kumiteUndo('aka')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                            Utolsó AKA művelet visszavonása (Undo)
+                        </button>
                     </div>
                 </div>
 
                 <!-- KÖZÉP: IDŐMÉRŐ TORONY -->
                 <div class="center-tower">
                     <div style="width: 100%;">
-                        <span
-                            style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8;">⏱
-                            Küzdőidő Vezérlés</span>
+                        <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #52525B; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Küzdőidő Vezérlés
+                        </span>
                         <div id="panelTimerDisplay" class="timer-digits">02:00</div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
-                            <button class="arena-btn" style="background: #22c55e; color: #fff; font-size: 1.1rem;"
-                                onclick="idoInditas()">▶ INDÍT (Hajime)</button>
-                            <button class="arena-btn" style="background: #ef4444; color: #fff; font-size: 1.1rem;"
-                                onclick="idoMegallitas()">⏸ ÁLLJ (Yame)</button>
+                            <button class="arena-btn" style="background: #18181B; color: #FAF8F5; font-size: 1rem;" onclick="idoInditas()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                INDÍT (Hajime)
+                            </button>
+                            <button class="arena-btn" style="background: #F3F0EA; color: #18181B; border-color: #CFC9BC; font-size: 1rem;" onclick="idoMegallitas()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>
+                                ÁLLJ (Yame)
+                            </button>
                         </div>
 
-                        <div
-                            style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
-                                onclick="idoBeallitas(60)">1:00</button>
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
-                                onclick="idoBeallitas(90)">1:30</button>
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
-                                onclick="idoBeallitas(120)">2:00</button>
-                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;"
-                                onclick="idoBeallitas(180)">3:00</button>
+                        <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(60)">1:00</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(90)">1:30</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(120)">2:00</button>
+                            <button class="btn btn-outline" style="padding: 6px 10px; font-size: 0.8rem;" onclick="idoBeallitas(180)">3:00</button>
                         </div>
                     </div>
 
-                    <div style="width: 100%; border-top: 1px solid #334155; padding-top: 14px;">
-                        <label
-                            style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 6px;">Egyéni
-                            Idő (másodperc):</label>
+                    <div style="width: 100%; border-top: 1px solid #E4E0D7; padding-top: 14px;">
+                        <label style="font-size: 0.75rem; color: #52525B; font-weight: 700; display: block; margin-bottom: 6px;">Egyéni Idő (másodperc):</label>
                         <div style="display: flex; gap: 8px;">
-                            <input type="number" id="egyeniIdoInput" class="arena-select" placeholder="Mp (pl. 90)"
-                                style="width: 100%;">
+                            <input type="number" id="egyeniIdoInput" class="arena-select" placeholder="Mp (pl. 90)" style="width: 100%;">
                             <button class="btn btn-outline-blue" onclick="egyeniIdoBeallitas()">Beállít</button>
                         </div>
                     </div>
@@ -424,9 +454,8 @@
                 <!-- JOBB: SHIRO (FEHÉR) KÜZDŐ -->
                 <div class="fighter-panel shiro-side">
                     <div>
-                        <span class="fighter-header-badge">⚪ SHIRO (Fehér küzdő)</span>
-                        <input type="text" id="shiroNevInput" class="fighter-name-input" value="SHIRO Versenyző"
-                            oninput="adatokMentese()">
+                        <span class="fighter-header-badge">SHIRO (Fehér küzdő)</span>
+                        <input type="text" id="shiroNevInput" class="fighter-name-input" value="SHIRO Versenyző" oninput="adatokMentese()">
 
                         <div class="score-box-row">
                             <div class="metric-card">
@@ -435,22 +464,20 @@
                             </div>
                             <div class="metric-card">
                                 <div class="metric-label">Chui / Genten (Büntetés)</div>
-                                <div class="metric-val" id="shiroBuntetesDisplay" style="color: #dc2626;">0</div>
+                                <div class="metric-val" id="shiroBuntetesDisplay" style="color: #991B1B;">0</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="action-btn-grid">
-                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('shiro', 1)">+1 Waza-ari (Fél
-                            pont)</button>
-                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes
-                            pont)</button>
-                        <button id="shiroChuiBtn" class="arena-btn btn-chui"
-                            onclick="buntetesValtoztatas('shiro', 'CHUI')">⚠️ +1 Chui (Figyelmeztetés)</button>
-                        <button id="shiroGentenBtn" class="arena-btn btn-genten"
-                            onclick="buntetesValtoztatas('shiro', 'GENTEN')">🚫 +1 Genten (Levonás)</button>
-                        <button class="arena-btn btn-undo" onclick="kumiteUndo('shiro')">↩ Utolsó SHIRO művelet
-                            visszavonása (Undo)</button>
+                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('shiro', 1)">+1 Waza-ari (Fél pont)</button>
+                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes pont)</button>
+                        <button id="shiroChuiBtn" class="arena-btn btn-chui" onclick="buntetesValtoztatas('shiro', 'CHUI')">+1 Chui (Figyelmeztetés)</button>
+                        <button id="shiroGentenBtn" class="arena-btn btn-genten" onclick="buntetesValtoztatas('shiro', 'GENTEN')">+1 Genten (Levonás)</button>
+                        <button class="arena-btn btn-undo" onclick="kumiteUndo('shiro')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                            Utolsó SHIRO művelet visszavonása (Undo)
+                        </button>
                     </div>
                 </div>
 
@@ -460,54 +487,48 @@
         <!-- 2. KATA PONTOZÓ FELÜLET -->
         <section id="kataVezerlo" style="display: none;">
             <div class="kata-arena-card">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid #334155; padding-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid #E4E0D7; padding-bottom: 16px;">
                     <div>
-                        <span
-                            style="background: #f59e0b; color: #111; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">🧘
-                            KATA PONTOZÁS (5 BÍRÓ)</span>
-                        <h2 style="margin: 8px 0 0 0; color: #fff;">Katázó versenyző: <span id="kataAktivVersenyzoNev"
-                                style="color: #f59e0b;">-</span></h2>
+                        <span style="background: #18181B; color: #FAF8F5; padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                            KATA PONTOZÁS (5 BÍRÓ)
+                        </span>
+                        <h2 style="margin: 10px 0 0 0; color: #18181B;">Katázó versenyző: <span id="kataAktivVersenyzoNev" style="color: #52525B;">-</span></h2>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 700;">VÉGSŐ KATA ÖSSZPONTSZÁM</div>
-                        <div id="kataOsszpontDisplay"
-                            style="font-size: 3.8rem; font-weight: 900; color: #f59e0b; line-height: 1;">0.0</div>
+                        <div style="font-size: 0.78rem; color: #52525B; font-weight: 700;">VÉGSŐ KATA ÖSSZPONTSZÁM</div>
+                        <div id="kataOsszpontDisplay" style="font-size: 3.6rem; font-weight: 900; color: #18181B; line-height: 1;">0.0</div>
                     </div>
                 </div>
 
-                <div
-                    style="margin-top: 16px; background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; color: #a7f3d0;">
-                    ⚡ <strong>Villámgyors beütés:</strong> Csak gépeld be a 2 számjegyet tizedespont nélkül (pl.
-                    <code>75</code> ➔ automatikusan <code>7.5</code> lesz, és a kurzor azonnal átugrik a következő
-                    bíróra)!
+                <div style="margin-top: 16px; background: #FAF8F5; border: 1px solid #E4E0D7; padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; color: #3F3F46; display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span><strong>Villámgyors beütés:</strong> Csak gépeld be a 2 számjegyet tizedespont nélkül (pl. <code>75</code> -> automatikusan <code>7.5</code> lesz, és a kurzor azonnal átugrik a következő bíróra)!</span>
                 </div>
 
                 <div class="judge-score-grid">
                     <div class="judge-box chief">
-                        <label style="font-weight: 800; color: #f59e0b; font-size: 0.9rem;">👑 B1 - VEZETŐBÍRÓ</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
-                            oninput="kataPontSzamitas()">
+                        <label style="font-weight: 800; color: #18181B; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            B1 - VEZETŐBÍRÓ
+                        </label>
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
-                        <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B2 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
-                            oninput="kataPontSzamitas()">
+                        <label style="font-weight: 700; color: #52525B; font-size: 0.88rem;">B2 - Oldalbíró</label>
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
-                        <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B3 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
-                            oninput="kataPontSzamitas()">
+                        <label style="font-weight: 700; color: #52525B; font-size: 0.88rem;">B3 - Oldalbíró</label>
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
-                        <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B4 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
-                            oninput="kataPontSzamitas()">
+                        <label style="font-weight: 700; color: #52525B; font-size: 0.88rem;">B4 - Oldalbíró</label>
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
                     </div>
                     <div class="judge-box">
-                        <label style="font-weight: 700; color: #cbd5e1; font-size: 0.9rem;">B5 - Oldalbíró</label>
-                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0"
-                            oninput="kataPontSzamitas()">
+                        <label style="font-weight: 700; color: #52525B; font-size: 0.88rem;">B5 - Oldalbíró</label>
+                        <input type="number" step="0.1" min="0" max="10" class="judge-input kata-pont" placeholder="0.0" oninput="kataPontSzamitas()">
                     </div>
                 </div>
             </div>
@@ -515,21 +536,22 @@
 
         <!-- ALSÓ LEZÁRÓ ÉS TOVÁBBJUTTATÓ DOKK -->
         <div class="finish-dock">
-            <div id="kumiteGyoztesValaszto"
-                style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; flex: 2;">
+            <div id="kumiteGyoztesValaszto" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; flex: 2;">
                 <div>
-                    <label
-                        style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700; margin-bottom: 4px;">🏆
-                        Mérkőzés Győztese</label>
+                    <label style="font-size: 0.76rem; text-transform: uppercase; color: #52525B; display: flex; align-items: center; gap: 5px; font-weight: 700; margin-bottom: 4px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        Mérkőzés Győztese
+                    </label>
                     <select id="gyoztesSelect" class="arena-select" style="min-width: 230px;">
-                        <option value="aka">🔴 AKA (Piros győzött)</option>
-                        <option value="shiro">⚪ SHIRO (Fehér győzött)</option>
+                        <option value="aka">AKA (Piros győzött)</option>
+                        <option value="shiro">SHIRO (Fehér győzött)</option>
                     </select>
                 </div>
                 <div>
-                    <label
-                        style="font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 700; margin-bottom: 4px;">📌
-                        Győzelem Jogcíme (Súlyozás)</label>
+                    <label style="font-size: 0.76rem; text-transform: uppercase; color: #52525B; display: flex; align-items: center; gap: 5px; font-weight: 700; margin-bottom: 4px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                        Győzelem Jogcíme (Súlyozás)
+                    </label>
                     <select id="gyozelemModSelect" class="arena-select" style="min-width: 270px;">
                         <option value="HANTEI">Bírói döntés - Hantei (1 pont)</option>
                         <option value="WAZAARI">1x Waza-ari előny (2 pont)</option>
@@ -541,18 +563,18 @@
                 </div>
             </div>
 
-            <button id="mentesGomb" class="arena-btn"
-                style="background: #10b981; color: white; font-size: 1.15rem; padding: 16px 28px; flex: 1; min-width: 300px;"
-                onclick="meccsMentese()">
-                💾 Mérkőzés Lezárása & Következő Meccs Betöltése ➔
+            <button id="mentesGomb" class="btn btn-outline-green" style="font-size: 1.05rem; padding: 15px 26px; flex: 1; min-width: 300px;" onclick="meccsMentese()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span>Mérkőzés Lezárása & Következő Meccs Betöltése</span>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
         </div>
 
     </main>
 
-    <script src="../JS/core.js"></script>
-    <script src="../JS/auth.js"></script>
-    <script src="../JS/biroi_panel.js"></script>
+    <script src="../JS/core.js?v=20261105_v4"></script>
+    <script src="../JS/auth.js?v=20261105_v4"></script>
+    <script src="../JS/biroi_panel.js?v=20261105_v4"></script>
 </body>
 
 </html>

@@ -5,20 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tatami Master - Kategóriák & Kata Kyu-bontó Varázsló</title>
     <link rel="stylesheet" href="../CSS/stlye.css">
+    <link rel="stylesheet" href="../CSS/design_system.css">
 </head>
 <body id="pageKategoriak">
     <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">KATEGÓRIA- ÉS KYU-BONTÓ VARÁZSLÓ</span></h1>
-        <button class="btn btn-outline" onclick="window.location.href='admin.html'">⬅ Vissza az Admin Panelre</button>
+        <h1 style="display:flex;align-items:center;gap:10px;">
+            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <em>TATAMI MASTER</em> <span class="red-text">KATEGÓRIA- ÉS KYU-BONTÓ VARÁZSLÓ</span>
+        </h1>
+        <button class="btn btn-outline" onclick="window.location.href='admin.html'">
+            <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Vissza az Admin Panelre
+        </button>
     </header>
 
     <main class="admin-container">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 30px;">
             
             <!-- 1. KATA KYU-BONTÓ VARÁZSLÓ (KIS VERSENYEKRE: A / B / C KATEGÓRIA) -->
-            <div style="background: #fff8e6; border: 2px solid #ffc107; border-radius: 8px; padding: 20px;">
-                <h2 style="margin-top: 0; color: #b8860b;">🥋 Kata Kyu-bontó Varázsló (Kis versenyekre)</h2>
-                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+            <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 10px; padding: 22px; box-shadow: 0 2px 10px rgba(24,24,27,0.03);">
+                <h2 style="margin-top: 0; color: #18181B; display:flex; align-items:center; gap:8px;">
+                    <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                    Kata Kyu-bontó Varázsló (Kis versenyekre)
+                </h2>
+                <p style="font-size: 0.9rem; color: #52525B; margin-bottom: 15px;">
                     Nagy versenyen (EB, nemzetközi) egyben marad a korcsoport, kisebb versenyen viszont itt 1 kattintással szétoszthatod a Kata kategóriát a versenyzők övfokozata (<code>Belt</code>) alapján <strong>A / B / C kategóriákra</strong>!
                 </p>
                 <label style="font-weight:bold;display:block;margin-bottom:5px;">Bontandó Kata kategória:</label>
@@ -30,15 +40,19 @@
                     <option value="AB">2 csoportra: A (5. kyu - Dan) | B (10-6. kyu)</option>
                 </select>
 
-                <button class="btn btn-outline" style="width:100%;background:#ffc107;color:#111;border:none;font-weight:bold;padding:12px;" onclick="kataKyuBontasVegrehajtas()">
-                    ⚡ Kata Kategória Automatikus Szétbontása Kyu Szerint
+                <button class="btn btn-outline-blue" style="width:100%;font-weight:bold;padding:12px;" onclick="kataKyuBontasVegrehajtas()">
+                    <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Kata Kategória Automatikus Szétbontása Kyu Szerint
                 </button>
             </div>
 
             <!-- 2. KUMITE SÚLYCSOPORT-BONTÓ VARÁZSLÓ -->
-            <div style="background: #eef7ff; border: 2px solid #b8daff; border-radius: 8px; padding: 20px;">
-                <h2 style="margin-top: 0; color: #0056b3;">⚖️ Kumite Súlycsoport-bontó Varázsló</h2>
-                <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">
+            <div style="background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 10px; padding: 22px; box-shadow: 0 2px 10px rgba(24,24,27,0.03);">
+                <h2 style="margin-top: 0; color: #18181B; display:flex; align-items:center; gap:8px;">
+                    <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                    Kumite Súlycsoport-bontó Varázsló
+                </h2>
+                <p style="font-size: 0.9rem; color: #52525B; margin-bottom: 15px;">
                     Mérlegelés után egyetlen kattintással kettébonthatod a népes Kumite kategóriákat egy megadott súlyhatárnál (pl. 70 kg felettiek automatikus átsorolása új kategóriába).
                 </p>
                 <label style="font-weight:bold;display:block;margin-bottom:5px;">Bontandó Kumite kategória:</label>
@@ -47,14 +61,18 @@
                 <label style="font-weight:bold;display:block;margin-bottom:5px;">Súlyhatár (kg):</label>
                 <input type="number" id="extraSulyHatar" class="input-field" placeholder="Pl. 70" style="width:100%;margin-bottom:15px;">
 
-                <button class="btn btn-outline-blue" style="width:100%;background:#007bff;color:white;font-weight:bold;padding:12px;" onclick="extraSulyBontas()">
-                    ⚖️ Kumite Kategória Kettébontása Súly Szerint
+                <button class="btn btn-outline-blue" style="width:100%;font-weight:bold;padding:12px;" onclick="extraSulyBontas()">
+                    <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                    Kumite Kategória Kettébontása Súly Szerint
                 </button>
             </div>
 
         </div>
 
-        <h2>📋 Aktuális Kategóriák és Benevezett Versenyzők (Övfokozattal & Súllyal)</h2>
+        <h2 style="display:flex;align-items:center;gap:8px;color:#18181B;margin-bottom:15px;">
+            <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            Aktuális Kategóriák és Benevezett Versenyzők (Övfokozattal & Súllyal)
+        </h2>
         <div id="kategoriakOsszesitoContainer"></div>
     </main>
 

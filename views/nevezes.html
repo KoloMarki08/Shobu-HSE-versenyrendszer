@@ -5,19 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tatami Master - Mérlegelési & Regisztrációs Állomás</title>
     <link rel="stylesheet" href="../CSS/stlye.css">
+    <link rel="stylesheet" href="../CSS/design_system.css">
 </head>
 <body id="pageNevezes">
     <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">MÉRLEGELÉSI ÁLLOMÁS</span></h1>
-        <button class="btn btn-outline" onclick="window.location.href='admin.html'">⬅ Admin Panel</button>
+        <h1 style="display:flex;align-items:center;gap:10px;">
+            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+            <em>TATAMI MASTER</em> <span class="red-text">MÉRLEGELÉSI ÁLLOMÁS</span>
+        </h1>
+        <button class="btn btn-outline" onclick="window.location.href='admin.html'">
+            <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Admin Panel
+        </button>
     </header>
 
     <main class="admin-container">
-        <div style="background:white;padding:20px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:15px;">
-            <h2 style="margin:0;">⚖️ Gyors Mérlegelés (Keresés név vagy klub alapján):</h2>
-            <input type="text" id="merlegKeresoInput" class="input-field" style="min-width:300px;" placeholder="🔍 Írd be a versenyző vagy klub nevét..." oninput="initNevezesPage()">
+        <div style="background:#FFFFFF;padding:20px;border-radius:10px;border:1px solid #E4E0D7;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;">
+            <h2 style="margin:0;display:flex;align-items:center;gap:8px;color:#18181B;">
+                <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                Gyors Mérlegelés (Keresés név vagy klub alapján):
+            </h2>
+            <input type="text" id="merlegKeresoInput" class="input-field" style="min-width:300px;" placeholder="Írd be a versenyző vagy klub nevét..." oninput="initNevezesPage()">
         </div>
-        <div id="gyorsMerlegeloContainer" style="background:white;padding:20px;border-radius:8px;"></div>
+        <div id="gyorsMerlegeloContainer" style="background:#FFFFFF;padding:20px;border-radius:10px;border:1px solid #E4E0D7;"></div>
     </main>
 
     <script src="../JS/core.js"></script>

@@ -14,19 +14,35 @@ function initDedikaltKiemelesPage() {
 function dedikaltIndulokBetoltese() {
     const katId = parseInt(document.getElementById('dedSorsolasKatSelect').value);
     const listaDiv = document.getElementById('dedKiemelesLista');
+    const formatSel = document.getElementById('dedSorsolasFormatumSelect');
     if (!katId || !listaDiv) return;
+
+    const kivalasztottKat = exKategoriak.find(k => k.id === katId);
+    const isKata = (kivalasztottKat && kivalasztottKat.matchType && kivalasztottKat.matchType.toUpperCase() === 'KATA');
 
     const nevezettek = exNevezesek.filter(n => n.categoryId === katId)
                                   .map(n => exVersenyzok.find(v => v.id === n.competitorId))
                                   .filter(Boolean);
 
     if (nevezettek.length === 0) {
-        listaDiv.innerHTML = '<span style="color:#dc3545;font-weight:bold;">Ebben a kategóriában még nincs benevezett versenyző!</span>';
+        listaDiv.innerHTML = '<span style="color:#991B1B;font-weight:bold;">Ebben a kategóriában még nincs benevezett versenyző!</span>';
         return;
     }
 
-    listaDiv.innerHTML = nevezettek.map(v => `
-        <label style="background:white;padding:8px 14px;border:1px solid #ccc;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+    if (formatSel && !isKata) {
+        formatSel.value = TatamiMaster.isKumiteKormeccsLetszam(nevezettek.length) ? 'kormeccs' : 'egyenes';
+    }
+
+    const szabalySzoveg = isKata
+        ? `Kata rajtlista (${nevezettek.length} fő)`
+        : (TatamiMaster.isKumiteKormeccsLetszam(nevezettek.length)
+            ? `${nevezettek.length} fő (5 főig automatikus KÖRMÉRKŐZÉS)`
+            : `${nevezettek.length} fő (5 fő felett automatikus EGYENES KIESÉS)`);
+
+    listaDiv.innerHTML = `<div style="width:100%;margin-bottom:6px;padding:8px 12px;background:#FFFFFF;border:1px solid #CFC9BC;border-radius:6px;font-size:0.86rem;font-weight:700;color:#18181B;">
+        Létszám és hivatalos Kumite szabály: <strong>${szabalySzoveg}</strong>
+    </div>` + nevezettek.map(v => `
+        <label style="background:#FFFFFF;padding:8px 14px;border:1px solid #D4CFC5;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
             <input type="checkbox" class="ded-kiemelt-cb" value="${v.id}">
             <span><strong>${v.name}</strong> <small>(${v.club} - ${v.belt}, ${v.weight}kg)</small></span>
         </label>
@@ -73,7 +89,7 @@ async function dedikaltSorsolasInditasa() {
                 matchOrder: sorszam++, isFinished: false, winnerId: null
             });
         }
-    } else if (formatum === 'kormeccs') {
+    } else if (TatamiMaster.isKumiteKormeccsLetszam(rendezett.length) || formatum === 'kormeccs') {
         for (let i = 0; i < rendezett.length; i++) {
             for (let j = i + 1; j < rendezett.length; j++) {
                 generaltMeccsek.push({
@@ -139,6 +155,6 @@ async function dedikaltSorsolasInditasa() {
         await TatamiMaster.apiSend('Matches', 'POST', m);
     }
 
-    alert(`✔ Sorsolás kész! (${generaltMeccsek.length} tétel létrehozva). Átirányítás az ágrajzhoz / ranglistához...`);
+    alert(`Sorsolás kész! (${generaltMeccsek.length} tétel létrehozva). Átirányítás az ágrajzhoz / ranglistához...`);
     window.location.href = isKata ? 'kata.html' : 'kumite.html';
 }

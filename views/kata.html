@@ -2,16 +2,21 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tatami Master - Kata Ranglista Központ</title>
     <link rel="stylesheet" href="../CSS/stlye.css">
+    <link rel="stylesheet" href="../CSS/design_system.css">
 </head>
 <body id="pageKata">
     <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">KATA RANGLISTA KÖZPONT</span></h1>
+        <h1 style="display:flex;align-items:center;gap:10px;">
+            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+            <em>TATAMI MASTER</em> <span class="red-text">KATA RANGLISTA KÖZPONT</span>
+        </h1>
         <select id="kataHubSelect" class="input-field" style="min-width:260px;" onchange="rajzolDedikaltKataTabla()"></select>
     </header>
     <main class="admin-container">
-        <div id="kataHubContainer" style="background:white;padding:20px;border-radius:8px;"></div>
+        <div id="kataHubContainer" style="background:#FFFFFF;padding:24px;border-radius:10px;border:1px solid #E4E0D7;"></div>
     </main>
     <script src="../JS/core.js"></script>
     <script src="../JS/auth.js"></script>

@@ -26,7 +26,7 @@ function tvKijelzoFrissites() {
     // 2. Alsó "Felkészül" sáv
     const nextBarEl = document.getElementById('tvNextMatchBar');
     if (nextBarEl) {
-        nextBarEl.innerText = adatok.nextMatchInfo || '⏳ FELKÉSZÜL: Várakozás a következő mérkőzésre...';
+        nextBarEl.innerText = adatok.nextMatchInfo || 'FELKÉSZÜL: Várakozás a következő mérkőzésre...';
     }
 
     // 3. Üzemmód váltás (KUMITE vs. KATA)
@@ -78,7 +78,6 @@ function tvKijelzoFrissites() {
         if (bEl) {
             const ertek = (kataScores[i] !== undefined && kataScores[i] !== '') ? kataScores[i] : '-';
             bEl.innerText = ertek;
-            // A kieső legkisebb és legnagyobb pontszámot áthúzzuk és elhalványítjuk a TV-n is!
             if (i === minIdx || i === maxIdx) {
                 bEl.style.textDecoration = 'line-through';
                 bEl.style.opacity = '0.4';
@@ -93,8 +92,8 @@ function tvKijelzoFrissites() {
 function formazBuntetesSzoveg(buntetesSzam) {
     const b = parseInt(buntetesSzam) || 0;
     if (b === 0) return 'Büntetés: Nincs (0)';
-    if (b === 1) return '⚠️ 1x Chui (Figyelmeztetés)';
-    if (b === 2) return '⚠️ 2x Chui (Figyelmeztetés)';
-    if (b === 3) return '🚫 1x GENTEN (3. Chui)';
-    return '❌ SIKAKU (2x Genten - Kizárás!)';
+    if (b === 1) return '1x Chui (Figyelmeztetés)';
+    if (b === 2) return '2x Chui (Figyelmeztetés)';
+    if (b === 3) return '1x GENTEN (3. Chui)';
+    return 'SIKAKU (2x Genten - Kizárás!)';
 }

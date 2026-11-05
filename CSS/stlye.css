@@ -1,15 +1,14 @@
-/* Alapbeállítások és betűtípus */
-* {
+/* Alapbeállítások és betűtípus: Bahnschrift mindenhol */
+*, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Segoe UI', sans-serif !important;
 }
 
 body {
-    background-color: #55555c;
-    /* A képen látható sötétszürke árnyalat */
-    color: #333;
+    background-color: #FAF8F5 !important;
+    color: #18181B;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -17,21 +16,25 @@ body {
 
 /* Fejléc formázása */
 .top-header {
-    background-color: #111;
-    color: white;
+    background-color: #18181B;
+    color: #FAF8F5;
     text-align: center;
-    padding: 15px 0;
-    border-bottom: 4px solid #111;
+    padding: 15px 30px;
+    border-bottom: 1px solid #27272A;
 }
 
 .top-header h1 {
-    font-size: 1.8rem;
-    font-style: italic;
-    letter-spacing: 1px;
+    font-size: 1.4rem;
+    font-style: normal;
+    letter-spacing: 0.8px;
 }
 
 .top-header .red-text {
-    color: #dc3545;
+    color: #FAF8F5;
+    background: rgba(250, 248, 245, 0.12);
+    border: 1px solid rgba(250, 248, 245, 0.22);
+    padding: 3px 10px;
+    border-radius: 6px;
     font-style: normal;
 }
 
@@ -40,42 +43,43 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 40px;
-    padding: 60px 20px;
+    gap: 36px;
+    padding: 50px 20px;
     flex: 1;
     flex-wrap: wrap;
 }
 
-/* --- BAL OLDAL: Versenyek --- */
+/* --- Versenyek --- */
 .tournaments-section {
     flex: 1;
     max-width: 750px;
 }
 
 .tournaments-section h2 {
-    color: white;
+    color: #18181B;
     margin-bottom: 20px;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
 }
 
 .tournament-card {
-    background-color: white;
-    border-radius: 6px;
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    border: 1px solid #E4E0D7;
     display: flex;
-    padding: 25px;
-    gap: 25px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    gap: 24px;
+    box-shadow: 0 4px 16px rgba(24, 24, 27, 0.05);
 }
 
 .tournament-logo {
-    width: 150px;
+    width: 140px;
     height: auto;
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 .card-right h3 {
-    font-size: 1.3rem;
-    margin-bottom: 15px;
+    font-size: 1.25rem;
+    margin-bottom: 14px;
 }
 
 .status-row {
@@ -83,85 +87,109 @@ body {
     align-items: center;
     gap: 15px;
     font-size: 0.9rem;
-    margin-bottom: 25px;
+    margin-bottom: 22px;
     font-weight: 600;
 }
 
 .badge-green {
-    background-color: #28a745;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
+    background-color: #18181B;
+    color: #FAF8F5;
+    padding: 4px 10px;
+    border-radius: 5px;
 }
 
 .organizer {
-    color: #666;
+    color: #52525B;
     font-weight: normal;
 }
 
-/* Gombok */
+/* Gombok szép kiemelésekkel */
 .action-buttons {
     display: flex;
     gap: 12px;
 }
 
 .btn {
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 9px 18px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: bold;
-    background: white;
-    transition: 0.2s;
+    font-weight: 600;
+    background: #FFFFFF;
+    color: #18181B;
+    border: 1.5px solid #CFC9BC;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(24, 24, 27, 0.05);
+}
+
+.btn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px rgba(24, 24, 27, 0.12), 0 0 0 2px rgba(24, 24, 27, 0.06);
+    border-color: #18181B;
+}
+
+.btn:active {
+    transform: translateY(0);
 }
 
 .btn-outline {
-    border: 1px solid #777;
-    color: #333;
+    border: 1.5px solid #CFC9BC;
+    color: #18181B;
+    background: #FFFFFF;
 }
 
 .btn-outline:hover {
-    background-color: #f4f4f4;
+    background-color: #F3F0EA;
+    border-color: #18181B;
 }
 
 .btn-outline-blue {
-    border: 1px solid #007bff;
-    color: #007bff;
+    border: 1.5px solid #27272A;
+    background-color: #27272A;
+    color: #FAF8F5;
 }
 
 .btn-outline-blue:hover {
-    background-color: #007bff;
-    color: white;
+    background-color: #09090B;
+    border-color: #09090B;
+    color: #FFFFFF;
 }
 
 .btn-outline-green {
-    border: 1px solid #28a745;
-    color: #28a745;
+    border: 1.5px solid #18181B;
+    background-color: #18181B;
+    color: #FAF8F5;
 }
 
 .btn-outline-green:hover {
-    background-color: #28a745;
-    color: white;
+    background-color: #27272A;
+    border-color: #27272A;
+    color: #FFFFFF;
 }
 
-/* --- JOBB OLDAL: Belépés --- */
+/* --- Belépés --- */
 .login-section {
     width: 100%;
-    max-width: 350px;
+    max-width: 440px;
 }
 
 .login-card {
-    background-color: white;
-    border-radius: 6px;
-    padding: 30px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E4E0D7;
+    padding: 32px;
+    box-shadow: 0 8px 28px rgba(24, 24, 27, 0.06);
 }
 
 .login-title {
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #E4E0D7;
 }
 
 .input-group {
@@ -173,38 +201,51 @@ body {
     display: block;
     margin-bottom: 6px;
     font-size: 0.85rem;
-    font-weight: bold;
-    color: #555;
+    font-weight: 700;
+    color: #3F3F46;
 }
 
 .input-group input {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: 10px 14px;
+    border: 1.5px solid #CFC9BC;
+    border-radius: 8px;
+    font-size: 0.96rem;
+    background: #FFFFFF;
+    color: #18181B;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-group input:hover {
+    border-color: #71717A;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #18181B;
+    box-shadow: 0 0 0 3.5px rgba(24, 24, 27, 0.09);
 }
 
 .toggle-password {
     position: absolute;
-    right: 10px;
-    top: 32px;
+    right: 12px;
+    top: 34px;
     width: 20px;
     cursor: pointer;
-    opacity: 0.6;
+    opacity: 0.65;
 }
 
 .btn-red {
-    background-color: #dc3545;
-    color: white;
-    border: none;
+    background-color: #18181B;
+    color: #FAF8F5;
+    border: 1.5px solid #18181B;
     padding: 12px;
     font-size: 1rem;
     margin-top: 10px;
 }
 
 .btn-red:hover {
-    background-color: #c82333;
+    background-color: #27272A;
 }
 
 .btn-full {
@@ -213,13 +254,13 @@ body {
 
 /* Teszt adatok doboza */
 .test-data-box {
-    margin-top: 25px;
+    margin-top: 24px;
     padding: 15px;
-    background-color: #f8f9fa;
-    border: 1px dashed #b1c7dc;
-    border-radius: 4px;
+    background-color: #FAF8F5;
+    border: 1px dashed #CFC9BC;
+    border-radius: 8px;
     font-size: 0.85rem;
-    color: #555;
+    color: #52525B;
 }
 
 .test-data-box p {
@@ -234,8 +275,8 @@ body {
 
 /* Lábléc */
 .bottom-footer {
-    background-color: #111;
-    color: #777;
+    background-color: #18181B;
+    color: #A1A1AA;
     text-align: center;
     padding: 20px;
     font-size: 0.85rem;
@@ -248,51 +289,51 @@ body {
 
 /* --- ADMIN PANEL: Fülek (Tabs) dizájn --- */
 .admin-container {
-    padding: 30px;
+    padding: 28px 24px 48px 24px;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1260px;
     margin: 0 auto;
     flex: 1;
 }
 
 .tabs {
     display: flex;
-    background-color: #222;
-    border-radius: 6px 6px 0 0;
+    background-color: #FFFFFF;
+    border: 1px solid #E4E0D7;
+    border-radius: 10px 10px 0 0;
     overflow: hidden;
     margin-bottom: 0;
 }
 
 .tab-button {
     background-color: inherit;
-    color: #ccc;
+    color: #52525B;
     border: none;
     outline: none;
     cursor: pointer;
     padding: 14px 24px;
-    transition: 0.3s;
-    font-size: 1rem;
-    font-weight: bold;
+    transition: 0.2s;
+    font-size: 0.95rem;
+    font-weight: 700;
 }
 
 .tab-button:hover {
-    background-color: #444;
-    color: white;
+    background-color: #F3F0EA;
+    color: #18181B;
 }
 
 .tab-button.active {
-    background-color: white;
-    color: #dc3545;
-    /* A piros színed */
-    border-top: 3px solid #dc3545;
+    background-color: #18181B;
+    color: #FAF8F5;
 }
 
 .tab-content {
     display: none;
-    padding: 30px;
-    background-color: white;
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 28px;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E4E0D7;
+    box-shadow: 0 4px 16px rgba(24, 24, 27, 0.05);
     min-height: 400px;
 }
 
@@ -301,51 +342,72 @@ body {
 }
 
 .tab-content h2 {
-    margin-bottom: 15px;
-    color: #333;
-    border-bottom: 2px solid #eee;
+    margin-bottom: 16px;
+    color: #18181B;
+    border-bottom: 1px solid #E4E0D7;
     padding-bottom: 10px;
 }
 
 /* --- ADMIN PANEL: Táblázatok és Űrlapok --- */
 .add-form-container {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 4px;
+    background-color: #FAF8F5;
+    padding: 18px;
+    border-radius: 10px;
     margin-bottom: 20px;
     display: flex;
     gap: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #E4E0D7;
 }
 
 .input-field {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 10px 14px;
+    border: 1.5px solid #CFC9BC;
+    border-radius: 8px;
     flex: 1;
+    background: #FFFFFF;
+    color: #18181B;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:hover {
+    border-color: #71717A;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #18181B;
+    box-shadow: 0 0 0 3.5px rgba(24, 24, 27, 0.09);
 }
 
 .data-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin-top: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E4E0D7;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 .data-table th,
 .data-table td {
-    border: 1px solid #ddd;
-    padding: 12px;
+    border-bottom: 1px solid #E4E0D7;
+    padding: 13px 16px;
     text-align: left;
 }
 
 .data-table th {
-    background-color: #f2f2f2;
-    color: #333;
-    font-weight: bold;
+    background-color: #F3F0EA;
+    color: #18181B;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
 }
 
 .data-table tr:hover {
-    background-color: #f9f9f9;
+    background-color: #FAF8F5;
 }
 
 /* --- BÍRÓI PANEL / EREDMÉNYJELZŐ --- */
@@ -360,7 +422,7 @@ body {
 
 .fighter-card {
     flex: 1;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -369,15 +431,15 @@ body {
 }
 
 .aka-card {
-    background-color: #dc3545;
-    color: white;
-    border: 5px solid #a71d2a;
+    background-color: #7F1D1D;
+    color: #FAF8F5;
+    border: 2px solid #991B1B;
 }
 
 .shiro-card {
-    background-color: #f8f9fa;
-    color: #111;
-    border: 5px solid #ccc;
+    background-color: #FFFFFF;
+    color: #18181B;
+    border: 2px solid #CFC9BC;
 }
 
 .fighter-title {
@@ -412,28 +474,26 @@ body {
 
 .center-console {
     flex: 0.8;
-    background-color: #222;
-    border-radius: 10px;
+    background-color: #18181B;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    color: white;
+    color: #FAF8F5;
 }
 
 .match-info h3 {
     text-align: center;
     margin-bottom: 30px;
-    color: #aaa;
+    color: #A1A1AA;
 }
 
 .timer-display {
     font-size: 6rem;
-    font-family: monospace;
     font-weight: bold;
-    color: #ffc107;
-    /* Sárgás szín az órának */
+    color: #FAF8F5;
     margin-bottom: 30px;
 }
 
@@ -463,20 +523,19 @@ body {
     font-weight: bold;
     text-align: center;
     min-width: 140px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .chui-box {
-    background-color: #ffc107;
-    /* Sárga figyelmeztetés */
-    color: #111;
+    background-color: #F3F0EA;
+    color: #18181B;
+    border: 1px solid #CFC9BC;
 }
 
 .genten-box {
-    background-color: #222;
-    /* Sötét/fekete intés */
-    color: #fff;
-    border: 2px solid #ffc107;
+    background-color: #18181B;
+    color: #FAF8F5;
+    border: 1px solid #3F3F46;
 }
 
 .penalty-buttons {
@@ -503,22 +562,22 @@ body {
 
 .draggable-row.dragging {
     opacity: 0.5;
-    background-color: #cce5ff !important;
+    background-color: #ECE8DF !important;
 }
 
 .draggable-row.drag-over {
-    border-top: 3px solid #007bff;
+    border-top: 3px solid #18181B;
 }
 
-/* --- VIZUÁLIS ÁGRAJZ (BRACKET) --- */
+/* --- VIZUÁLIS ÁGRAJZ (BRACKET - MONOKRÓM, BAL OLDALI SZÍNES CSÍK NÉLKÜL) --- */
 .bracket-wrapper {
     display: flex;
-    gap: 40px;
+    gap: 32px;
     overflow-x: auto;
     padding: 20px;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    background: #FAF8F5;
+    border: 1px solid #E4E0D7;
+    border-radius: 10px;
     margin-top: 20px;
 }
 
@@ -526,51 +585,55 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    min-width: 240px;
+    min-width: 250px;
     gap: 15px;
 }
 
 .bracket-round h4 {
     text-align: center;
-    background: #222;
-    color: white;
-    padding: 8px;
-    border-radius: 4px;
+    background: #F3F0EA;
+    color: #18181B;
+    border: 1px solid #CFC9BC;
+    padding: 9px;
+    border-radius: 8px;
     margin-bottom: 10px;
 }
 
 .bracket-match {
-    background: white;
-    border: 2px solid #ccc;
-    border-radius: 6px;
+    background: #FFFFFF;
+    border: 1px solid #CFC9BC;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(24, 24, 27, 0.04);
 }
 
 .bracket-match.finished {
-    border-color: #28a745;
+    border-color: #3F3F46;
 }
 
 .bracket-fighter {
-    padding: 10px 12px;
+    padding: 10px 14px;
     display: flex;
     justify-content: space-between;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #eee;
+    align-items: center;
+    font-size: 0.94rem;
+    border-bottom: 1px solid #E4E0D7;
+    border-left: none !important;
 }
 
 .bracket-fighter.aka {
-    border-left: 5px solid #dc3545;
+    border-left: none !important;
 }
 
 .bracket-fighter.shiro {
-    border-left: 5px solid #999;
+    border-left: none !important;
     border-bottom: none;
 }
 
 .bracket-fighter.winner {
-    background-color: #d4edda;
-    font-weight: bold;
+    background-color: #F3F0EA !important;
+    color: #18181B !important;
+    font-weight: 700;
 }
 
 /* --- KATA ZÁSZLÓK (BÍRÓI PANEL & TV) --- */
@@ -588,63 +651,64 @@ body {
     font-weight: bold;
     font-size: 1.1rem;
     cursor: pointer;
-    border: 4px solid #555;
+    border: 2px solid #3F3F46;
     transition: transform 0.15s;
 }
 
 .flag-btn:hover {
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .flag-aka {
-    background-color: #dc3545;
+    background-color: #991B1B;
     color: white;
     border-color: white;
 }
 
 .flag-shiro {
     background-color: white;
-    color: #111;
-    border-color: #ccc;
+    color: #18181B;
+    border-color: #CFC9BC;
 }
 
 .flag-draw {
-    background-color: #6c757d;
+    background-color: #52525B;
     color: white;
 }
 
-/* --- KÖZÖNSÉG PANEL KÁRTYÁK --- */
+/* --- KÖZÖNSÉG PANEL KÁRTYÁK (MONOKRÓM) --- */
 .tatami-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
 
 .tatami-live-card {
-    background: white;
-    border-radius: 8px;
+    background: #FFFFFF;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-top: 5px solid #dc3545;
+    box-shadow: 0 4px 14px rgba(24, 24, 27, 0.05);
+    border: 1px solid #E4E0D7 !important;
 }
 
 .live-badge {
-    background: #dc3545;
-    color: white;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
+    background: #18181B;
+    color: #FAF8F5;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .prep-badge {
-    background: #ffc107;
-    color: #111;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
+    background: #F3F0EA;
+    color: #27272A;
+    border: 1px solid #CFC9BC;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 /* --- KATA PONTOZÁS (5 BÍRÓ + MIN/MAX KIEJTÉS) --- */
@@ -661,14 +725,14 @@ body {
     font-size: 1.2rem;
     font-weight: bold;
     text-align: center;
-    border: 2px solid #555;
+    border: 1.5px solid #3F3F46;
     border-radius: 6px;
 }
 
 .tv-judge-box {
-    background: #222;
-    color: #fff;
-    border: 2px solid #ffc107;
+    background: #18181B;
+    color: #FAF8F5;
+    border: 1.5px solid #52525B;
     border-radius: 8px;
     padding: 8px 14px;
     font-size: 1.5rem;
@@ -677,10 +741,9 @@ body {
     text-align: center;
 }
 
-/* A kieső (legkisebb és legnagyobb) pontszámok stílusa a TV-n */
 .tv-judge-box.dropped {
     opacity: 0.45;
     text-decoration: line-through;
-    border-color: #666;
-    color: #aaa;
+    border-color: #3F3F46;
+    color: #A1A1AA;
 }

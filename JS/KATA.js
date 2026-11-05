@@ -30,20 +30,20 @@ function rajzolDedikaltKataTabla() {
         }));
         let sorrend = lista.filter(x => x.kesz).sort(TatamiMaster.kataSorrendHasonlito).concat(lista.filter(x => !x.kesz));
 
-        let h = `<h3 style="margin:20px 0 10px 0;">${cim}</h3><table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>B1 (Vez.)</th><th>B2</th><th>B3</th><th>B4</th><th>B5</th><th>Min</th><th>Max</th><th>ÖSSZESEN</th></tr>`;
+        let h = `<h3 style="margin:20px 0 10px 0;display:flex;align-items:center;gap:8px;color:#18181B;">${cim}</h3><table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>B1 (Vez.)</th><th>B2</th><th>B3</th><th>B4</th><th>B5</th><th>Min</th><th>Max</th><th>ÖSSZESEN</th></tr>`;
         sorrend.forEach((it, idx) => {
-            let pCols = [0,1,2,3,4].map(b => `<td style="${(b===it.minIdx||b===it.maxIdx)?'text-decoration:line-through;color:#999;':'font-weight:bold;'}">${it.pontok[b] ?? '-'}</td>`).join('');
-            h += `<tr style="${isSel && it.kesz && idx < 6 ? 'background:#e8f5e9;' : ''}">
+            let pCols = [0,1,2,3,4].map(b => `<td style="${(b===it.minIdx||b===it.maxIdx)?'text-decoration:line-through;color:#8E8A82;':'font-weight:bold;'}">${it.pontok[b] ?? '-'}</td>`).join('');
+            h += `<tr style="${isSel && it.kesz && idx < 6 ? 'background:#FAF8F5;' : ''}">
                 <td><strong>${it.kesz ? (idx+1)+'.' : '#' + it.m.matchOrder}</strong></td>
-                <td><strong>${it.v ? it.v.name + ' (' + it.v.club + ' - ' + it.v.belt + ')' : '-'}</strong> ${isSel && it.kesz && idx < 6 ? '<span style="background:#28a745;color:white;padding:2px 6px;border-radius:4px;font-size:0.75rem;">TOP 6</span>' : ''}</td>
+                <td><strong>${it.v ? it.v.name + ' (' + it.v.club + ' - ' + it.v.belt + ')' : '-'}</strong> ${isSel && it.kesz && idx < 6 ? '<span style="background:#18181B;color:white;padding:2px 7px;border-radius:4px;font-size:0.74rem;font-weight:bold;">TOP 6</span>' : ''}</td>
                 ${pCols}
                 <td>${it.kesz ? it.minErtek.toFixed(1) : '-'}</td>
                 <td>${it.kesz ? it.maxErtek.toFixed(1) : '-'}</td>
-                <td style="color:#dc3545;font-weight:bold;font-size:1.2rem;">${it.kesz ? it.osszeg.toFixed(1) : '-'}</td>
+                <td style="color:#18181B;font-weight:bold;font-size:1.2rem;">${it.kesz ? it.osszeg.toFixed(1) : '-'}</td>
             </tr>`;
         });
         return h + '</table>';
     }
 
-    cont.innerHTML = (donto.length > 0 ? epitsTabla(donto, '🏆 TOP 6 DÖNTŐ', false) : '') + epitsTabla(selejtezo, '📋 1. Kör: Selejtező Ranglista', true);
+    cont.innerHTML = (donto.length > 0 ? epitsTabla(donto, `${TatamiMaster.icon('trophy', 18)} TOP 6 DÖNTŐ`, false) : '') + epitsTabla(selejtezo, `${TatamiMaster.icon('clipboard', 18)} 1. Kör: Selejtező Ranglista`, true);
 }

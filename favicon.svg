@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TATAMI MASTER™ Browser Tab Favicon (High-Contrast 32x32 Vector)
+  Copyright (c) 2026 Shobu HSE - TATAMI MASTER™. All Rights Reserved.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" fill="none">
+    <polygon points="18,2 46,2 62,18 62,46 46,62 18,62 2,46 2,18" fill="#18181B" stroke="#FAF8F5" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="32,9 53,32 32,55 11,32" fill="#18181B" stroke="#FAF8F5" stroke-width="2.8" stroke-linejoin="round"/>
+    <circle cx="32" cy="17" r="2.6" fill="#FAF8F5"/>
+    <path d="M19 24.5H45" stroke="#FAF8F5" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M32 24.5V46.5" stroke="#FAF8F5" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M22 42V29.5L32 38L42 29.5V42" stroke="#FAF8F5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

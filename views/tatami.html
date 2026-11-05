@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tatami Master - Pástszéli Felvezető Lista</title>
     <link rel="stylesheet" href="../CSS/stlye.css">
+    <link rel="stylesheet" href="../CSS/design_system.css">
 </head>
 <body id="pageTatami">
     <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1><em>TATAMI MASTER</em> <span class="red-text">PÁSTSZÉLI FELVEZETŐ (SZÓLÍTÓ LISTA)</span></h1>
+        <h1 style="display:flex;align-items:center;gap:10px;">
+            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+            <em>TATAMI MASTER</em> <span class="red-text">PÁSTSZÉLI FELVEZETŐ (SZÓLÍTÓ LISTA)</span>
+        </h1>
         <select id="pastTatamiSelect" class="input-field" style="min-width:180px;font-weight:bold;" onchange="initTatamiPage()"></select>
     </header>
 
     <main class="admin-container">
-        <div id="pastListaContainer" style="background:white;padding:20px;border-radius:8px;"></div>
+        <div id="pastListaContainer" style="background:#FFFFFF;padding:20px;border-radius:10px;border:1px solid #E4E0D7;"></div>
     </main>
 
     <script src="../JS/core.js"></script>

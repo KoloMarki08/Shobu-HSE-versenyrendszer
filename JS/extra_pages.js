@@ -1,4 +1,4 @@
-// Központi vezérlő a 8 dedikált HTML oldalhoz + Kata Kyu-bontó varázsló
+// Központi vezérlő a dedikált HTML oldalakhoz + Kata Kyu-bontó varázsló
 let exVersenyzok = [];
 let exKategoriak = [];
 let exNevezesek = [];
@@ -24,22 +24,18 @@ async function extraAdatokBetoltese() {
         exTatamik = t;
         exMeccsek = m.sort((a, b) => (a.tatamiId - b.tatamiId) || (a.matchOrder - b.matchOrder));
 
-        // Automatikusan felismeri, melyik HTML oldalon vagyunk:
         if (document.getElementById('pageKategoriak')) initKategoriakPage();
         if (document.getElementById('pageEredmenyek')) initEredmenyekPage();
         if (document.getElementById('pageNevezes')) initNevezesPage();
-        if (document.getElementById('pageKiemeles')) initKiemelesPage();
+        if (document.getElementById('pageKiemeles') && typeof initKiemelesPage === 'function') initKiemelesPage();
         if (document.getElementById('pageTatami')) initTatamiPage();
-        if (document.getElementById('pageKata')) initKataPage();
-        if (document.getElementById('pageKumite')) initKumitePage();
-        if (document.getElementById('pageReferee')) initRefereePage();
+        if (document.getElementById('pageKata') && typeof initKataPage === 'function') initKataPage();
+        if (document.getElementById('pageKumite') && typeof initKumitePage === 'function') initKumitePage();
     } catch (e) {
         console.error("Hiba az adatok betöltésekor:", e);
     }
 }
 
-// Segédfüggvény: Övfokozat szövegből (pl. "4. kyu", "1. dan") numerikus kyu-számot csinál
-// Dan fokozat = 0 (legerősebb), 1. kyu = 1, ..., 10. kyu = 10
 function parseKyuSzam(beltStr) {
     if (!beltStr) return 10;
     let s = beltStr.toLowerCase().trim();
@@ -48,9 +44,6 @@ function parseKyuSzam(beltStr) {
     return isNaN(szam) ? 10 : szam;
 }
 
-// =========================================================
-// 1. KATEGORIAK.HTML - KATA KYU-BONTÓ (A/B/C) & SÚLYBONTÓ
-// =========================================================
 function initKategoriakPage() {
     const kataKatok = exKategoriak.filter(k => k.matchType && k.matchType.toUpperCase() === 'KATA');
     const kumiteKatok = exKategoriak.filter(k => !k.matchType || k.matchType.toUpperCase() === 'KUMITE');
@@ -75,10 +68,11 @@ function initKategoriakPage() {
                                     .map(n => exVersenyzok.find(v => v.id === n.competitorId))
                                     .filter(Boolean);
         let indulokInfo = nevezettek.map(v => `${v.name} <small>(${v.belt || '-'}, ${v.weight}kg)</small>`).join(', ') || '<em>Még nincs induló</em>';
+        let isKata = k.matchType === 'KATA';
         tablaHtml += `<tr>
             <td>${k.id}</td>
             <td><strong>${k.name}</strong></td>
-            <td><span style="background:${k.matchType === 'KATA' ? '#ffc107' : '#dc3545'};color:${k.matchType === 'KATA' ? '#111' : '#fff'};padding:2px 8px;border-radius:4px;font-weight:bold;">${k.matchType}</span></td>
+            <td><span style="background:${isKata ? '#F3F0EA' : '#18181B'};color:${isKata ? '#18181B' : '#FFFFFF'};border:1px solid #D4CFC5;padding:2px 8px;border-radius:4px;font-weight:bold;font-size:0.78rem;">${k.matchType}</span></td>
             <td>${k.gender}</td>
             <td>${k.minAge} - ${k.maxAge} év</td>
             <td><strong>${nevezettek.length} fő:</strong> ${indulokInfo}</td>
@@ -88,7 +82,6 @@ function initKategoriakPage() {
     document.getElementById('kategoriakOsszesitoContainer').innerHTML = tablaHtml;
 }
 
-// KATA KYU-BONTÓ VARÁZSLÓ (Kis versenyekre: A / B / C kategória vagy 2 felé bontás)
 async function kataKyuBontasVegrehajtas() {
     const katId = parseInt(document.getElementById('kyuBontoKatSelect').value);
     const bontasMod = document.getElementById('kyuBontasModSelect').value;
@@ -106,30 +99,21 @@ async function kataKyuBontasVegrehajtas() {
         return;
     }
 
-    let csoportok = [];
-    if (bontasMod === 'ABC') {
-        // 3 csoport: C (10-7. kyu), B (6-3. kyu), A (2. kyu - Dan)
-        csoportok = [
-            { utotag: ' - A kategória (2. kyu - Dan)', minKyu: 0, maxKyu: 2, ujKat: false }, // Az eredeti kategória lesz az A!
-            { utotag: ' - B kategória (6-3. kyu)',     minKyu: 3, maxKyu: 6, ujKat: true },
-            { utotag: ' - C kategória (10-7. kyu)',    minKyu: 7, maxKyu: 12, ujKat: true }
-        ];
-    } else {
-        // 2 csoport: Haladó A (5. kyu - Dan) és Kezdő B (10-6. kyu)
-        csoportok = [
-            { utotag: ' - A kategória (5. kyu - Dan)', minKyu: 0, maxKyu: 5, ujKat: false },
-            { utotag: ' - B kategória (10-6. kyu)',    minKyu: 6, maxKyu: 12, ujKat: true }
-        ];
-    }
+    let csoportok = (bontasMod === 'ABC') ? [
+        { utotag: ' - A kategória (2. kyu - Dan)', minKyu: 0, maxKyu: 2, ujKat: false },
+        { utotag: ' - B kategória (6-3. kyu)',     minKyu: 3, maxKyu: 6, ujKat: true },
+        { utotag: ' - C kategória (10-7. kyu)',    minKyu: 7, maxKyu: 12, ujKat: true }
+    ] : [
+        { utotag: ' - A kategória (5. kyu - Dan)', minKyu: 0, maxKyu: 5, ujKat: false },
+        { utotag: ' - B kategória (10-6. kyu)',    minKyu: 6, maxKyu: 12, ujKat: true }
+    ];
 
-    // Átnevezzük az eredeti kategóriát "A kategóriára"
     const alapNev = eredetiKat.name.split(' - ')[0];
     eredetiKat.name = alapNev + csoportok[0].utotag;
     await TatamiMaster.apiSend('Categories/' + eredetiKat.id, 'PUT', eredetiKat);
 
     let atsorolvaOsszesen = 0;
 
-    // Létrehozzuk a B (és C) kategóriákat, és átsoroljuk a megfelelő övfokozatú versenyzőket!
     for (let i = 1; i < csoportok.length; i++) {
         let cs = csoportok[i];
         let erintettNevezesek = katNevezesek.filter(n => {
@@ -138,7 +122,6 @@ async function kataKyuBontasVegrehajtas() {
             return kyu >= cs.minKyu && kyu <= cs.maxKyu;
         });
 
-        // Csak akkor hozzuk létre az alkategóriát, ha van is benne versenyző (vagy ha kifejezetten kérik)
         const res = await TatamiMaster.apiSend('Categories', 'POST', {
             name: alapNev + cs.utotag,
             matchType: 'KATA',
@@ -160,7 +143,7 @@ async function kataKyuBontasVegrehajtas() {
         }
     }
 
-    alert(`✔ Kata Kyu-bontás kész! A kategória szétbontva (A/B/C), és ${atsorolvaOsszesen} versenyző automatikusan átsorolva az övfokozata alapján!`);
+    alert(`Kata Kyu-bontás kész! A kategória szétbontva (A/B/C), és ${atsorolvaOsszesen} versenyző automatikusan átsorolva az övfokozata alapján!`);
     await extraAdatokBetoltese();
 }
 
@@ -189,18 +172,15 @@ async function extraSulyBontas() {
                 db++;
             }
         }
-        alert(`✔ Súlybontás kész! ${db} versenyző átsorolva a +${hatar}kg kategóriába.`);
+        alert(`Súlybontás kész! ${db} versenyző átsorolva a +${hatar}kg kategóriába.`);
         await extraAdatokBetoltese();
     }
 }
 
-// =========================================================
-// 2. EREDMENYEK.HTML - DOBOGÓSOK, KLUBRANGLISTA & OKLEVÉL
-// =========================================================
 function initEredmenyekPage() {
     const kataTarolo = TatamiMaster.lekerKataEredmenyek();
     const kumiteAdatok = TatamiMaster.lekerKumiteReszletek();
-    let klubPontok = {}; // { 'Shobu HSE': { arany: 0, ezust: 0, bronz: 0, pont: 0 } }
+    let klubPontok = {};
 
     function adKlubErem(versenyzo, helyezes) {
         if (!versenyzo || !versenyzo.club) return;
@@ -217,11 +197,10 @@ function initEredmenyekPage() {
         let katMeccsek = exMeccsek.filter(m => m.categoryId === kat.id);
         if (katMeccsek.length === 0) continue;
 
-        let dobogosok = []; // [{ hely: 1, v: versenyzoObj }, ...]
+        let dobogosok = [];
         let isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
 
         if (isKata) {
-            // Ha van Top 6 Döntő, annak a sorrendje adja a dobogót, különben a selejtező
             let dontoMeccsek = katMeccsek.filter(m => TatamiMaster.isKataDontoMeccs(m.id));
             let ertekeltMeccsek = (dontoMeccsek.length > 0 ? dontoMeccsek : katMeccsek)
                 .map(m => kataTarolo[m.id] && kataTarolo[m.id].kesz ? { m: m, ...kataTarolo[m.id] } : null)
@@ -234,7 +213,7 @@ function initEredmenyekPage() {
         } else {
             let sorted = [...katMeccsek].sort((a, b) => a.id - b.id);
             let n = sorted.length;
-            let isAgrajz = (n === 3 || n === 7 || n === 15 || n === 31);
+            let isAgrajz = TatamiMaster.isKumiteAgrajz(sorted);
 
             if (isAgrajz) {
                 let donto = sorted[n - 1];
@@ -244,11 +223,8 @@ function initEredmenyekPage() {
                     dobogosok.push({ hely: 1, v: exVersenyzok.find(x => x.id === elsoId), extra: 'Döntő győztese' });
                     if (masodikId) dobogosok.push({ hely: 2, v: exVersenyzok.find(x => x.id === masodikId), extra: 'Döntős' });
 
-                    // Elődöntők vesztesei (3. helyezettek)
                     if (n >= 3) {
-                        let ed1 = sorted[n - 3];
-                        let ed2 = sorted[n - 2];
-                        [ed1, ed2].forEach(ed => {
+                        [sorted[n - 3], sorted[n - 2]].forEach(ed => {
                             if (ed && ed.isFinished && ed.competitor1Id && ed.competitor2Id) {
                                 let vesztesId = (ed.winnerId === ed.competitor1Id) ? ed.competitor2Id : ed.competitor1Id;
                                 dobogosok.push({ hely: 3, v: exVersenyzok.find(x => x.id === vesztesId), extra: 'Elődöntős' });
@@ -257,7 +233,6 @@ function initEredmenyekPage() {
                     }
                 }
             } else {
-                // Körmérkőzés dobogó
                 let stat = {};
                 for (let m of katMeccsek) {
                     if (m.competitor1Id && !stat[m.competitor1Id]) stat[m.competitor1Id] = { id: m.competitor1Id, gy: 0, p: 0 };
@@ -277,19 +252,19 @@ function initEredmenyekPage() {
         }
 
         if (dobogosok.length > 0) {
-            dobogoHtml += `<div style="background:white;border:1px solid #ddd;border-left:5px solid #dc3545;border-radius:6px;padding:15px;margin-bottom:15px;">
-                <h3 style="margin:0 0 10px 0;">🏆 ${kat.name} (${kat.matchType})</h3>
+            dobogoHtml += `<div style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:18px;margin-bottom:15px;">
+                <h3 style="margin:0 0 12px 0;display:flex;align-items:center;gap:8px;color:#18181B;">${TatamiMaster.icon('trophy', 18)} ${kat.name} (${kat.matchType})</h3>
                 <table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>Klub</th><th>Eredmény</th><th>Oklevél</th></tr>`;
             for (let d of dobogosok) {
                 if (!d.v) continue;
                 adKlubErem(d.v, d.hely);
-                let ikon = d.hely === 1 ? '🥇 1. hely' : (d.hely === 2 ? '🥈 2. hely' : '🥉 3. hely');
+                let ikon = `${TatamiMaster.icon('medal', 15)} ${d.hely}. hely`;
                 dobogoHtml += `<tr>
                     <td><strong>${ikon}</strong></td>
                     <td><strong>${d.v.name}</strong></td>
                     <td>${d.v.club}</td>
                     <td>${d.extra}</td>
-                    <td><button class="btn btn-outline-blue" style="padding:4px 10px;" onclick="nyomtatOklevel('${d.v.name}', '${d.v.club}', '${kat.name}', ${d.hely})">🖨️ Oklevél nyomtatása</button></td>
+                    <td><button class="btn btn-outline-blue" style="padding:5px 12px;" onclick="nyomtatOklevel('${d.v.name}', '${d.v.club}', '${kat.name}', ${d.hely})">${TatamiMaster.icon('print', 14)} Oklevél nyomtatása</button></td>
                 </tr>`;
             }
             dobogoHtml += `</table></div>`;
@@ -298,9 +273,8 @@ function initEredmenyekPage() {
 
     document.getElementById('dobogosokContainer').innerHTML = dobogoHtml || '<p>Még nincs lezárt kategória.</p>';
 
-    // Klubranglista kirajzolása
     let klubLista = Object.values(klubPontok).sort((a, b) => (b.pont - a.pont) || (b.arany - a.arany));
-    let kHtml = '<table class="data-table"><tr><th>Helyezés</th><th>Klub / Egyesület</th><th>🥇 Arany (5p)</th><th>🥈 Ezüst (3p)</th><th>🥉 Bronz (1p)</th><th>Összpontszám</th></tr>';
+    let kHtml = `<table class="data-table"><tr><th>Helyezés</th><th>Klub / Egyesület</th><th>${TatamiMaster.icon('medal', 14)} Arany (5p)</th><th>${TatamiMaster.icon('medal', 14)} Ezüst (3p)</th><th>${TatamiMaster.icon('medal', 14)} Bronz (1p)</th><th>Összpontszám</th></tr>`;
     for (let i = 0; i < klubLista.length; i++) {
         let k = klubLista[i];
         kHtml += `<tr>
@@ -309,7 +283,7 @@ function initEredmenyekPage() {
             <td>${k.arany} db</td>
             <td>${k.ezust} db</td>
             <td>${k.bronz} db</td>
-            <td style="color:#dc3545;font-weight:bold;font-size:1.15rem;">${k.pont} pont</td>
+            <td style="color:#18181B;font-weight:bold;font-size:1.15rem;">${k.pont} pont</td>
         </tr>`;
     }
     kHtml += '</table>';
@@ -317,22 +291,28 @@ function initEredmenyekPage() {
 }
 
 function nyomtatOklevel(nev, klub, kategoria, helyezes) {
-    const versenyNev = localStorage.getItem('aktualisVersenyNev') || 'TATAMI MASTER KYOKUSHIN KARATE KUPA';
+    const versenyNev = localStorage.getItem('aktualisVersenyNev') || 'TATAMI MASTER™ KYOKUSHIN KARATE KUPA';
+    const logoSvg = TatamiMaster.brandLogoSvg(64);
     const w = window.open('', '_blank');
     w.document.write(`
-        <html><head><title>Oklevél - ${nev}</title></head>
-        <body style="font-family: Georgia, serif; text-align: center; padding: 60px; border: 12px double #dc3545; margin: 20px;">
-            <h1 style="font-size: 3.2rem; letter-spacing: 4px; color: #dc3545; margin-bottom: 10px;">OKLEVÉL</h1>
-            <h3 style="font-size: 1.5rem; color: #333; margin-bottom: 40px;">${versenyNev}</h3>
+        <html><head><title>Oklevél - ${nev} | TATAMI MASTER™</title></head>
+        <body style="font-family: 'Bahnschrift', 'DIN Alternate', sans-serif; text-align: center; padding: 50px 60px; border: 10px double #18181B; margin: 20px; background: #FAF8F5; color: #18181B;">
+            <div style="margin-bottom: 14px;">${logoSvg}</div>
+            <div style="font-size: 0.85rem; font-weight: 800; letter-spacing: 2px; color: #52525B; margin-bottom: 6px;">TATAMI MASTER&trade; HIVATALOS VERSENYRENDSZER</div>
+            <h1 style="font-size: 3.2rem; letter-spacing: 4px; color: #18181B; margin: 0 0 10px 0;">OKLEVÉL</h1>
+            <h3 style="font-size: 1.5rem; color: #52525B; margin-bottom: 36px;">${versenyNev}</h3>
             <p style="font-size: 1.3rem;">Igazoljuk, hogy</p>
-            <h2 style="font-size: 2.8rem; margin: 15px 0; border-bottom: 2px solid #222; display: inline-block; padding: 0 30px;">${nev}</h2>
-            <p style="font-size: 1.4rem; color: #555; margin-top: 5px;">(${klub})</p>
-            <p style="font-size: 1.4rem; margin-top: 35px;">a(z) <strong>${kategoria}</strong> kategóriában</p>
-            <h1 style="font-size: 3rem; color: #222; margin: 20px 0;">🏆 ${helyezes}. HELYEZÉST</h1>
+            <h2 style="font-size: 2.8rem; margin: 15px 0; border-bottom: 2px solid #18181B; display: inline-block; padding: 0 30px;">${nev}</h2>
+            <p style="font-size: 1.4rem; color: #52525B; margin-top: 5px;">(${klub})</p>
+            <p style="font-size: 1.4rem; margin-top: 32px;">a(z) <strong>${kategoria}</strong> kategóriában</p>
+            <h1 style="font-size: 3rem; color: #18181B; margin: 20px 0;">${helyezes}. HELYEZÉST</h1>
             <p style="font-size: 1.3rem;">ért el.</p>
-            <div style="margin-top: 80px; display: flex; justify-content: space-around; font-size: 1.1rem;">
-                <div style="border-top: 1px solid #333; padding-top: 8px; width: 220px;">Főbíró</div>
-                <div style="border-top: 1px solid #333; padding-top: 8px; width: 220px;">Versenyigazgató</div>
+            <div style="margin-top: 70px; display: flex; justify-content: space-around; font-size: 1.1rem;">
+                <div style="border-top: 1px solid #18181B; padding-top: 8px; width: 220px;">Főbíró</div>
+                <div style="border-top: 1px solid #18181B; padding-top: 8px; width: 220px;">Versenyigazgató</div>
+            </div>
+            <div style="margin-top: 40px; font-size: 0.75rem; color: #71717A; letter-spacing: 0.5px;">
+                &copy; 2026 TATAMI MASTER&trade; &bull; Hitelesített versenydokumentum &bull; Minden jog fenntartva.
             </div>
             <script>window.onload = function() { window.print(); }</script>
         </body></html>
@@ -340,9 +320,6 @@ function nyomtatOklevel(nev, klub, kategoria, helyezes) {
     w.document.close();
 }
 
-// =========================================================
-// 3. NEVEZES.HTML - GYORS MÉRLEGELŐ ÉS NEVEZŐ ÁLLOMÁS
-// =========================================================
 function initNevezesPage() {
     const kereso = (document.getElementById('merlegKeresoInput')?.value || '').toLowerCase();
     let szurt = exVersenyzok.filter(v => v.name.toLowerCase().includes(kereso) || (v.club && v.club.toLowerCase().includes(kereso)));
@@ -359,7 +336,7 @@ function initNevezesPage() {
             <td>${v.birthYear}</td>
             <td>
                 <input type="number" id="gyorsSuly_${v.id}" value="${v.weight}" style="width:75px;padding:5px;font-weight:bold;"> kg
-                <button class="btn btn-outline-green" style="padding:4px 10px;" onclick="gyorsSulyMentes(${v.id})">✔ Mentés</button>
+                <button class="btn btn-outline-green" style="padding:4px 10px;" onclick="gyorsSulyMentes(${v.id})">${TatamiMaster.icon('check', 14)} Mentés</button>
             </td>
             <td>${katNevLista}</td>
         </tr>`;
@@ -374,13 +351,10 @@ async function gyorsSulyMentes(id) {
     if (!v || isNaN(ujSuly)) return;
     v.weight = ujSuly;
     await TatamiMaster.apiSend('Competitors/' + id, 'PUT', v);
-    alert(`✔ ${v.name} mérlegelt súlya (${ujSuly} kg) elmentve!`);
+    alert(`${v.name} mérlegelt súlya (${ujSuly} kg) elmentve!`);
     await extraAdatokBetoltese();
 }
 
-// =========================================================
-// 4. TATAMI.HTML - PÁSTSZÉLI FELVEZETŐ (CALL ROOM) NÉZET
-// =========================================================
 function initTatamiPage() {
     const sel = document.getElementById('pastTatamiSelect');
     if (sel && sel.options.length === 0) {
@@ -393,48 +367,21 @@ function initTatamiPage() {
     for (let m of meccsek) {
         let kat = exKategoriak.find(k => k.id === m.categoryId);
         let isKata = (kat && kat.matchType && kat.matchType.toUpperCase() === 'KATA');
-        if (!isKata && m.isFinished && !m.competitor2Id) continue; // Erőnyerőt nem kell szólítani
+        if (!isKata && m.isFinished && !m.competitor2Id) continue;
 
         let v1 = exVersenyzok.find(v => v.id === m.competitor1Id);
         let v2 = exVersenyzok.find(v => v.id === m.competitor2Id);
         let parositas = isKata
-            ? `🥋 <strong>${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</strong>`
-            : `<span style="color:#dc3545;font-weight:bold;">🔴 ${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</span> vs. <strong>⚪ ${v2 ? v2.name + ' (' + v2.club + ')' : 'Várakozik...'}</strong>`;
+            ? `${TatamiMaster.icon('award', 15)} <strong>${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</strong>`
+            : `<span style="color:#991B1B;font-weight:bold;"><span class="fighter-tag aka-tag">AKA</span> ${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</span> vs. <strong><span class="fighter-tag shiro-tag">SHIRO</span> ${v2 ? v2.name + ' (' + v2.club + ')' : 'Várakozik...'}</strong>`;
 
-        html += `<tr style="${m.isFinished ? 'opacity:0.55;background:#f8f9fa;' : ''}">
+        html += `<tr style="${m.isFinished ? 'opacity:0.55;background:#F3F0EA;' : ''}">
             <td><strong>#${m.matchOrder}</strong></td>
             <td>${kat ? kat.name : ''}</td>
             <td>${parositas}</td>
-            <td>${m.isFinished ? '<span style="color:green;font-weight:bold;">✔ Lezajlott</span>' : '<span style="background:#ffc107;padding:3px 8px;border-radius:4px;font-weight:bold;">📢 Szólítandó</span>'}</td>
+            <td>${m.isFinished ? `<span style="color:#52525B;font-weight:bold;">${TatamiMaster.icon('check', 14)} Lezajlott</span>` : `<span style="background:#18181B;color:#FFFFFF;padding:3px 9px;border-radius:4px;font-weight:bold;font-size:0.8rem;">${TatamiMaster.icon('megaphone', 13)} Szólítandó</span>`}</td>
         </tr>`;
     }
     html += '</table>';
     document.getElementById('pastListaContainer').innerHTML = html;
-}
-
-// =========================================================
-// 5. REFEREE.HTML - OLDALBÍRÓI MOBIL PONTOZÓ PAD (B1-B5)
-// =========================================================
-function initRefereePage() {
-    // Az oldalbíró a telefonján beüti a Kata pontszámot, ami bekerül a localStorage-ba
-    setInterval(() => {
-        const tvAdat = JSON.parse(localStorage.getItem('tatamiAdatok') || '{}');
-        const infoElem = document.getElementById('refAktMeccsInfo');
-        if (infoElem) {
-            infoElem.innerText = tvAdat.akaName ? `${tvAdat.matchInfo} — ${tvAdat.akaName}` : 'Várakozás az asztalbíróra...';
-        }
-    }, 1000);
-}
-
-function kuldOldalbiroiPont() {
-    const biroIndex = parseInt(document.getElementById('refBiroSzamSelect').value);
-    const pont = parseFloat(document.getElementById('refPontInput').value);
-    if (isNaN(pont) || pont < 0 || pont > 10) {
-        alert("Kérlek adj meg egy érvényes pontszámot (0.0 - 10.0)!");
-        return;
-    }
-    let mobilPontok = JSON.parse(localStorage.getItem('mobilKataPontok') || '{}');
-    mobilPontok['B' + biroIndex] = pont.toFixed(1);
-    localStorage.setItem('mobilKataPontok', JSON.stringify(mobilPontok));
-    alert(`✔ B${biroIndex + 1} bírói pontszám (${pont.toFixed(1)}) elküldve az asztalbírónak!`);
 }

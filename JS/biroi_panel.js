@@ -104,10 +104,10 @@ function tatamiMeccsekBetoltese() {
 
         if (!m.isFinished && elsoAktivId === null) elsoAktivId = m.id;
 
-        let statusz = m.isFinished ? "✔ [KÉSZ] " : "🔥 [AKTÍV] ";
+        let statusz = m.isFinished ? "[KÉSZ] " : "[AKTÍV] ";
         let dontoCimke = (isKata && TatamiMaster.isKataDontoMeccs(m.id)) ? " [TOP 6 DÖNTŐ]" : "";
         let parositasSzoveg = isKata
-            ? `🥋 ${v1 ? v1.name : '?'}${dontoCimke} (${kat ? kat.name : ''})`
+            ? `[KATA] ${v1 ? v1.name : '?'}${dontoCimke} (${kat ? kat.name : ''})`
             : `${v1 ? v1.name : '?'} vs. ${v2 ? v2.name : '?'} (${kat ? kat.name : ''})`;
 
         html += `<option value="${m.id}">${statusz}#${m.matchOrder}: ${parositasSzoveg}</option>`;
@@ -157,10 +157,10 @@ function meccsKivalasztva() {
         let kIsKata = (kKat && kKat.matchType && kKat.matchType.toUpperCase() === 'KATA');
 
         kovetkezoMeccsSzoveg = kIsKata
-            ? `⏳ FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): 🥋 ${kv1 ? kv1.name + ' (' + kv1.club + ')' : '?'}`
-            : `⏳ FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): 🔴 ${kv1 ? kv1.name : '?'} vs. ⚪ ${kv2 ? kv2.name : '?'}`;
+            ? `FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): [KATA] ${kv1 ? kv1.name + ' (' + kv1.club + ')' : '?'}`
+            : `FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): [AKA] ${kv1 ? kv1.name : '?'} vs. [SHIRO] ${kv2 ? kv2.name : '?'}`;
     } else {
-        kovetkezoMeccsSzoveg = "⏳ FELKÉSZÜL: Nincs több várakozó mérkőzés ezen a tatamin.";
+        kovetkezoMeccsSzoveg = "FELKÉSZÜL: Nincs több várakozó mérkőzés ezen a tatamin.";
     }
 
     modValtas(isKata ? 'KATA' : 'KUMITE');
@@ -220,7 +220,9 @@ function frissitBuntetesGombokEsKijelzo() {
         akaChuiBtn.disabled = (akaBuntetes >= 3);
         akaChuiBtn.style.opacity = (akaBuntetes >= 3) ? '0.35' : '1';
         akaChuiBtn.style.cursor = (akaBuntetes >= 3) ? 'not-allowed' : 'pointer';
-        akaChuiBtn.innerText = (akaBuntetes >= 3) ? '🔒 Chui lezárva (1G után)' : '⚠️ +1 Chui (Figyelmeztetés)';
+        akaChuiBtn.innerHTML = (akaBuntetes >= 3)
+            ? `${TatamiMaster.icon('lock', 14)} Chui lezárva (1G után)`
+            : `${TatamiMaster.icon('alert', 14)} +1 Chui (Figyelmeztetés)`;
     }
 
     const shiroChuiBtn = document.getElementById('shiroChuiBtn');
@@ -228,7 +230,9 @@ function frissitBuntetesGombokEsKijelzo() {
         shiroChuiBtn.disabled = (shiroBuntetes >= 3);
         shiroChuiBtn.style.opacity = (shiroBuntetes >= 3) ? '0.35' : '1';
         shiroChuiBtn.style.cursor = (shiroBuntetes >= 3) ? 'not-allowed' : 'pointer';
-        shiroChuiBtn.innerText = (shiroBuntetes >= 3) ? '🔒 Chui lezárva (1G után)' : '⚠️ +1 Chui (Figyelmeztetés)';
+        shiroChuiBtn.innerHTML = (shiroBuntetes >= 3)
+            ? `${TatamiMaster.icon('lock', 14)} Chui lezárva (1G után)`
+            : `${TatamiMaster.icon('alert', 14)} +1 Chui (Figyelmeztetés)`;
     }
 }
 
@@ -242,7 +246,7 @@ function buntetesValtoztatas(kuzdo, tipus) {
         if (aktualis < 3) {
             aktualis++;
             if (aktualis === 3) {
-                TatamiMaster.toast(`🚫 3. Chui = 1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
+                TatamiMaster.toast(`3. Chui = 1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
             }
         }
     } else if (tipus === 'GENTEN' || tipus >= 2) {
@@ -250,7 +254,7 @@ function buntetesValtoztatas(kuzdo, tipus) {
         // Ha már volt 1 Gentenje (3-as szint) és kap még egy Gentent -> 2 Genten = SIKAKU (4-es szint)!
         if (aktualis < 3) {
             aktualis = 3;
-            TatamiMaster.toast(`🚫 1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
+            TatamiMaster.toast(`1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
         } else {
             aktualis = 4;
         }
@@ -266,7 +270,7 @@ function buntetesValtoztatas(kuzdo, tipus) {
 
 function kumiteUndo(kuzdo) {
     if (!kumiteHistory[kuzdo] || kumiteHistory[kuzdo].length === 0) {
-        TatamiMaster.toast("ℹ️ Nincs visszavonható művelet ennél a küzdőnél!", "figyelem");
+        TatamiMaster.toast("Nincs visszavonható művelet ennél a küzdőnél!", "figyelem");
         return;
     }
     const elozo = kumiteHistory[kuzdo].pop();
@@ -293,14 +297,14 @@ function ellenorizAutomatikusGyozelem() {
         idoMegallitas();
         gyoztesSel.value = 'shiro';
         modSel.value = 'SIKAKU';
-        TatamiMaster.toast("❌ SIKAKU! AKA elérte a 2 Gentent — SHIRO győzött leléptetéssel!", "hiba");
+        TatamiMaster.toast("SIKAKU! AKA elérte a 2 Gentent — SHIRO győzött leléptetéssel!", "hiba");
         return;
     }
     if (shiroBuntetes >= 4) {
         idoMegallitas();
         gyoztesSel.value = 'aka';
         modSel.value = 'SIKAKU';
-        TatamiMaster.toast("❌ SIKAKU! SHIRO elérte a 2 Gentent — AKA győzött leléptetéssel!", "hiba");
+        TatamiMaster.toast("SIKAKU! SHIRO elérte a 2 Gentent — AKA győzött leléptetéssel!", "hiba");
         return;
     }
 
@@ -416,7 +420,7 @@ function adatokMentese() {
 async function meccsMentese() {
     if (mentesFolyamatban) return;
     if (!aktualisMeccs) {
-        TatamiMaster.toast("⚠️ Először válassz ki egy tatamit és egy mérkőzést!", "figyelem");
+        TatamiMaster.toast("Először válassz ki egy tatamit és egy mérkőzést!", "figyelem");
         return;
     }
 
@@ -433,7 +437,7 @@ async function meccsMentese() {
             const ertekeles = TatamiMaster.szamolKataErtekeles(nyersPontok);
 
             if (!ertekeles.kesz) {
-                TatamiMaster.toast("⚠️ Kérlek adj meg mind az 5 bírónál érvényes pontszámot!", "figyelem");
+                TatamiMaster.toast("Kérlek adj meg mind az 5 bírónál érvényes pontszámot!", "figyelem");
                 return;
             }
 
@@ -467,7 +471,7 @@ async function meccsMentese() {
         await tovabbjuttatasKovetkezoForduloba(aktualisMeccs, gyoztesId);
         await TatamiMaster.trigger('afterMatchSave', { match: aktualisMeccs, winnerId: gyoztesId, winType: gyozelemMod });
 
-        TatamiMaster.toast("✔ Mérkőzés lezárva, győztes továbbjuttatva!");
+        TatamiMaster.toast("Mérkőzés lezárva, győztes továbbjuttatva!");
         await biroiAdatokFrissitese();
     } finally {
         mentesFolyamatban = false;
@@ -514,16 +518,16 @@ async function ellenorizKataSelejtezoEsTop6Donto(categoryId, tatamiId) {
         }
 
         TatamiMaster.megjelolKataDontoMeccsek(ujDontoMeccsIdk);
-        TatamiMaster.toast(`🏆 A Kata selejtező véget ért! A legjobb ${top6.length} versenyző (Top 6) bekerült a Döntőbe!`);
+        TatamiMaster.toast(`A Kata selejtező véget ért! A legjobb ${top6.length} versenyző (Top 6) bekerült a Döntőbe!`);
     } else {
-        TatamiMaster.toast("✔ Kata pontszám rögzítve!");
+        TatamiMaster.toast("Kata pontszám rögzítve!");
     }
 }
 
 async function tovabbjuttatasKovetkezoForduloba(lezartMeccs, gyoztesId) {
     let katMeccsek = panelMeccsek.filter(m => m.categoryId === lezartMeccs.categoryId).sort((a, b) => a.id - b.id);
     let n = katMeccsek.length;
-    if (n !== 3 && n !== 7 && n !== 15 && n !== 31) return;
+    if (!TatamiMaster.isKumiteAgrajz(katMeccsek)) return;
 
     let fordulok = [];
     let korMeret = (n + 1) / 2;
@@ -560,5 +564,5 @@ function nyitObsOverlay() {
     const tatamiId = document.getElementById('panelTatamiSelect')?.value || 1;
     const url = `obs_overlay.html?tatami=${tatamiId}`;
     window.open(url, '_blank', 'width=1280,height=720');
-    TatamiMaster.toast(`🎥 OBS Overlay megnyitva a(z) ${tatamiId}. Tatamihoz!`);
+    TatamiMaster.toast(`OBS Overlay megnyitva a(z) ${tatamiId}. Tatamihoz!`);
 }

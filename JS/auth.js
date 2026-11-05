@@ -8,30 +8,51 @@ const Auth = {
         this.renderQuickNav();
     },
 
-    // Ha ADMIN van belépve, a views/ mappában lévő oldalakon kirajzol egy gyors ugrómenüt az összes HTML fájlhoz!
+    // Ha ADMIN van belépve, a views/ mappában lévő oldalakon kirajzol egy letisztult,
+    // bal oldali lebegő monokróm dokkot (vonalrajzos ikonokkal) a régi felső sáv helyett!
     renderQuickNav: function() {
         const user = this.getUser();
-        const isViewsFolder = window.location.pathname.toLowerCase().includes('/views/');
+        const path = window.location.pathname.toLowerCase();
+        const isViewsFolder = path.includes('/views/');
         if (!isViewsFolder || !user || user.role.toUpperCase() !== 'ADMIN') return;
         if (document.getElementById('tatamiQuickNavBar')) return;
 
-        const nav = document.createElement('div');
+        const items = [
+            { href: 'admin.html',      icon: 'home',       label: 'Admin Főpanel' },
+            { href: 'kategoriak.html', icon: 'shield',     label: 'Kyu- & Súlybontó' },
+            { href: 'nevezes.html',    icon: 'scale',      label: 'Mérlegelő' },
+            { href: 'kiemeles.html',   icon: 'shuffle',    label: 'Sorsolás & Kiemelés' },
+            { href: 'kata.html',       icon: 'award',      label: 'Kata Hub' },
+            { href: 'kumite.html',     icon: 'git-branch', label: 'Kumite Ágrajzok' },
+            { href: 'tatami.html',     icon: 'megaphone',  label: 'Pástszéli Szólító' },
+            { href: 'eredmenyek.html', icon: 'trophy',     label: 'Eredmények & Oklevél' },
+            { href: 'biroi_panel.html',icon: 'monitor',    label: 'Bírói Vezérlő' }
+        ];
+
+        const nav = document.createElement('nav');
         nav.id = 'tatamiQuickNavBar';
-        nav.style.cssText = 'background:#222;padding:8px 25px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:2px solid #dc3545;font-size:0.85rem;';
-        nav.innerHTML = `
-            <strong style="color:#ffc107;margin-right:8px;">⚡ Gyorsmenü:</strong>
-            <a href="admin.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">🏠 Admin Főpanel</a>
-            <a href="kategoriak.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">🥋 Kyu- & Súlybontó</a>
-            <a href="nevezes.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">⚖️ Mérlegelő</a>
-            <a href="kiemeles.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">🎲 Sorsolás & Kiemelés</a>
-            <a href="kata.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">🧘 Kata Hub</a>
-            <a href="kumite.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">🥊 Kumite Ágrajzok</a>
-            <a href="tatami.html" style="color:white;text-decoration:none;padding:4px 8px;background:#444;border-radius:4px;">📢 Pástszéli Szólító</a>
-            <a href="eredmenyek.html" style="color:#111;font-weight:bold;text-decoration:none;padding:4px 8px;background:#ffc107;border-radius:4px;">🏆 Eredmények & Oklevél</a>
-            <a href="biroi_panel.html" style="color:white;text-decoration:none;padding:4px 8px;background:#dc3545;border-radius:4px;">🖥️ Bírói Vezérlő</a>
-            <a href="referee.html" target="_blank" style="color:white;text-decoration:none;padding:4px 8px;background:#28a745;border-radius:4px;">📱 Oldalbírói Pad</a>
+        nav.setAttribute('aria-label', 'Gyorsmenü');
+
+        let html = `
+            <div class="qnav-header" onclick="document.getElementById('tatamiQuickNavBar').classList.toggle('expanded')" style="cursor:pointer;" title="Gyorsmenü kinyitása / bezárása">
+                ${TatamiMaster.icon('grid', 18)}
+                <span class="qnav-label">Gyorsmenü</span>
+            </div>
         `;
-        document.body.insertBefore(nav, document.body.firstChild);
+
+        for (let it of items) {
+            const isActive = path.endsWith('/' + it.href.toLowerCase());
+            const targetAttr = it.blank ? ' target="_blank"' : '';
+            html += `
+                <a href="${it.href}"${targetAttr} class="qnav-link${isActive ? ' active' : ''}" title="${it.label}">
+                    ${TatamiMaster.icon(it.icon, 18)}
+                    <span class="qnav-label">${it.label}</span>
+                </a>
+            `;
+        }
+
+        nav.innerHTML = html;
+        document.body.appendChild(nav);
     }
 };
 
