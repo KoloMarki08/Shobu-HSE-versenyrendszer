@@ -7,10 +7,10 @@ A **TATAMI MASTER™** a Shobu HSE Kyokushin Karate bajnokságainak teljes kör�
 ## Technológiai Stack
 
 ### Backend (REST API és Adatbázis)
-* **Keretrendszer:** C# ASP.NET Core Web API (`.NET 10.0`)
+* **Keretrendszer:** C# ASP.NET Core Web API (`.NET 10.0`) + SignalR / Server-Sent Events (`LiveArena`) valós idejű szinkronizáció
 * **Adatbázis:** MySQL / MariaDB (XAMPP)
 * **ORM:** Entity Framework Core (`Pomelo.EntityFrameworkCore.MySql`)
-* **Alapértelmezett API cím:** `https://localhost:7045/api`
+* **Alapértelmezett API cím:** `https://localhost:7045/api` (helyi csarnok Wi-Fi / LAN hálózaton automatikusan `http://<szerver-ip>:5008/api`)
 
 ### Frontend (Kliens)
 * **Felépítés:** HTML5, CSS3 (`Bahnschrift` monokróm és krém dizájnrendszer), moduláris JavaScript (`ES6+`)
@@ -124,10 +124,10 @@ Amikor a konzolon megjelenik a `Now listening on: https://localhost:7045` üzene
 
 * **Főoldal & Belépés:** `http://localhost/Shobu-HSE-versenyrendszer/index.html`
 * **Adminisztrációs Központ (0–5. lépéses lenyitható menükkel):** `http://localhost/Shobu-HSE-versenyrendszer/views/admin.html`
-* **Aréna Bírói Vezérlőpult (Kumite & Kata pontozás):** `http://localhost/Shobu-HSE-versenyrendszer/views/biroi_panel.html`
-* **Élő TV Kijelző (2. monitorra / projektorra):** `http://localhost/Shobu-HSE-versenyrendszer/views/tv_kijelzo.html`
+* **Aréna Bírói Vezérlőpult (Kumite korcsoport szerinti hosszabbításokkal, gonggal & Kata pontozással):** `http://localhost/Shobu-HSE-versenyrendszer/views/biroi_panel.html`
+* **Élő TV Kijelző (2. monitorra / projektorra, valós idejű szinkronnal):** `http://localhost/Shobu-HSE-versenyrendszer/views/tv_kijelzo.html`
 * **OBS Stream Overlay:** `http://localhost/Shobu-HSE-versenyrendszer/views/obs_overlay.html`
-* **Élő Nézői & Edzői Követő Oldal:** `http://localhost/Shobu-HSE-versenyrendszer/views/audience.html`
+* **Élő Nézői & Edzői Követő Oldal („Mikor küzdök?” időbecslővel és A4 Csarnok QR-Plakáttal):** `http://localhost/Shobu-HSE-versenyrendszer/views/audience.html`
 * **Eredményhirdetés, Klubranglista & Oklevélnyomtató:** `http://localhost/Shobu-HSE-versenyrendszer/views/eredmenyek.html`
 
 ---

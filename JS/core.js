@@ -1,6 +1,32 @@
 const TatamiMaster = {
-    API_URL: 'https://localhost:7045/api',
+    API_URL: (function() {
+        try {
+            let overrideApi = null;
+            try {
+                const params = new URLSearchParams(window.location.search || '');
+                overrideApi = params.get('api') || (window.sessionStorage && sessionStorage.getItem('tatamiApiUrlOverride'));
+                if (overrideApi && window.sessionStorage) {
+                    sessionStorage.setItem('tatamiApiUrlOverride', overrideApi);
+                }
+            } catch (storageErr) {}
+            if (overrideApi) {
+                return overrideApi.replace(/\/+$/, '');
+            }
+            const host = window.location.hostname;
+            if (host && host !== 'localhost' && host !== '127.0.0.1') {
+                const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                const port = proto === 'https:' ? '7045' : '5008';
+                return `${proto}//${host}:${port}/api`;
+            }
+        } catch (e) {}
+        return 'https://localhost:7045/api';
+    })(),
     hooks: {},
+    _liveEventSource: null,
+    _liveVersion: 0,
+    _liveDataVersion: 0,
+    _liveConnected: false,
+    _audioCtx: null,
 
     WIN_TYPES: {
         'IPPON':   { kod: 'IPPON',   rovid: 'IPP', cimke: 'Egyből Ippon',                        pont: 3 },
@@ -9,6 +35,133 @@ const TatamiMaster = {
         'HANTEI':  { kod: 'HANTEI',  rovid: 'HAN', cimke: 'Bírói döntés (Döntetlen után)',       pont: 1 },
         'SIKAKU':  { kod: 'SIKAKU',  rovid: 'SIK', cimke: 'Leléptetés (2 Genten / Kizárás)',     pont: 3 },
         'KIKEN':   { kod: 'KIKEN',   rovid: 'KIK', cimke: 'Nem jelent meg / Feladta (Kiken)',    pont: 3 }
+    },
+
+    // --- HIVATALOS KYOKUSHIN KUMITE KÜZDŐIDŐ ÉS HOSSZABBÍTÁSI SZABÁLYTÁBLA ---
+    // Pontosan a korcsoport-táblázat szerint:
+    // Gyerek 3,2,1: 1+1 perc | Serdülő: 1,5+1 perc | Ifjúsági: 2+1 perc | Junior: 2+2+1 perc | Felnőtt: 2+2+mérlegelés*+2 perc | Senior: 1,5+1,5 perc
+    KUMITE_IDO_SZABALYOK: {
+        'GYEREK': {
+            kulcs: 'GYEREK',
+            korcsoportNev: 'Gyerek 3,2,1',
+            keplet: '1 + 1 perc',
+            teljesCimke: 'Gyerek 3,2,1 (1 + 1 perc)',
+            fazisok: [
+                { kod: 'ALAP',    nev: 'Alapidő (1 perc)',      rovid: 'ALAPIDŐ',        mp: 60, isMerlegeles: false },
+                { kod: 'HOSSZ_1', nev: 'Hosszabbítás (1 perc)', rovid: 'HOSSZABBÍTÁS',   mp: 60, isMerlegeles: false }
+            ]
+        },
+        'SERDULO': {
+            kulcs: 'SERDULO',
+            korcsoportNev: 'Serdülő',
+            keplet: '1,5 + 1 perc',
+            teljesCimke: 'Serdülő (1,5 + 1 perc)',
+            fazisok: [
+                { kod: 'ALAP',    nev: 'Alapidő (1,5 perc)',    rovid: 'ALAPIDŐ',        mp: 90, isMerlegeles: false },
+                { kod: 'HOSSZ_1', nev: 'Hosszabbítás (1 perc)', rovid: 'HOSSZABBÍTÁS',   mp: 60, isMerlegeles: false }
+            ]
+        },
+        'IFJUSAGI': {
+            kulcs: 'IFJUSAGI',
+            korcsoportNev: 'Ifjúsági',
+            keplet: '2 + 1 perc',
+            teljesCimke: 'Ifjúsági (2 + 1 perc)',
+            fazisok: [
+                { kod: 'ALAP',    nev: 'Alapidő (2 perc)',      rovid: 'ALAPIDŐ',        mp: 120, isMerlegeles: false },
+                { kod: 'HOSSZ_1', nev: 'Hosszabbítás (1 perc)', rovid: 'HOSSZABBÍTÁS',   mp: 60,  isMerlegeles: false }
+            ]
+        },
+        'JUNIOR': {
+            kulcs: 'JUNIOR',
+            korcsoportNev: 'Junior',
+            keplet: '2 + 2 + 1 perc',
+            teljesCimke: 'Junior (2 + 2 + 1 perc)',
+            fazisok: [
+                { kod: 'ALAP',    nev: 'Alapidő (2 perc)',         rovid: 'ALAPIDŐ',         mp: 120, isMerlegeles: false },
+                { kod: 'HOSSZ_1', nev: '1. Hosszabbítás (2 perc)', rovid: '1. HOSSZABBÍTÁS', mp: 120, isMerlegeles: false },
+                { kod: 'HOSSZ_2', nev: '2. Hosszabbítás (1 perc)', rovid: '2. HOSSZABBÍTÁS', mp: 60,  isMerlegeles: false }
+            ]
+        },
+        'FELNOTT': {
+            kulcs: 'FELNOTT',
+            korcsoportNev: 'Felnőtt',
+            keplet: '2 + 2 + mérlegelés* + 2 perc',
+            teljesCimke: 'Felnőtt (2 + 2 + mérlegelés* + 2 perc)',
+            fazisok: [
+                { kod: 'ALAP',       nev: 'Alapidő (2 perc)',            rovid: 'ALAPIDŐ',            mp: 120, isMerlegeles: false },
+                { kod: 'HOSSZ_1',    nev: '1. Hosszabbítás (2 perc)',    rovid: '1. HOSSZABBÍTÁS',    mp: 120, isMerlegeles: false },
+                { kod: 'MERLEGELES', nev: 'Mérlegelés* (Súlyellenőrzés)', rovid: 'MÉRLEGELÉS*',       mp: 0,   isMerlegeles: true  },
+                { kod: 'HOSSZ_2',    nev: 'Végső Hosszabbítás (2 perc)', rovid: 'VÉGSŐ HOSSZABBÍTÁS', mp: 120, isMerlegeles: false }
+            ]
+        },
+        'SENIOR': {
+            kulcs: 'SENIOR',
+            korcsoportNev: 'Senior',
+            keplet: '1,5 + 1,5 perc',
+            teljesCimke: 'Senior (1,5 + 1,5 perc)',
+            fazisok: [
+                { kod: 'ALAP',    nev: 'Alapidő (1,5 perc)',      rovid: 'ALAPIDŐ',      mp: 90, isMerlegeles: false },
+                { kod: 'HOSSZ_1', nev: 'Hosszabbítás (1,5 perc)', rovid: 'HOSSZABBÍTÁS', mp: 90, isMerlegeles: false }
+            ]
+        }
+    },
+
+    lekerKumiteIdoSzabaly: function(kategoria, overrideKulcs = null) {
+        if (overrideKulcs && this.KUMITE_IDO_SZABALYOK[overrideKulcs]) {
+            return this.KUMITE_IDO_SZABALYOK[overrideKulcs];
+        }
+        if (!kategoria) {
+            return this.KUMITE_IDO_SZABALYOK['FELNOTT'];
+        }
+
+        const nyersNev = String(kategoria.name || '').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const minAge = parseInt(kategoria.minAge) || 0;
+        const maxAge = parseInt(kategoria.maxAge) || 0;
+
+        // 1. Név alapú kulcsszó-felismerés (magyar és nemzetközi megnevezésekre is)
+        if (nyersNev.includes('senior') || nyersNev.includes('veteran') || nyersNev.includes('masters') ||
+            nyersNev.includes('35+') || nyersNev.includes('35-') || nyersNev.includes('40+') || nyersNev.includes('45+') || nyersNev.includes('50+')) {
+            return this.KUMITE_IDO_SZABALYOK['SENIOR'];
+        }
+        if (nyersNev.includes('gyerek') || nyersNev.includes('gyermek') || nyersNev.includes('kids') || nyersNev.includes('child') ||
+            /\b(u8|u9|u10|u11|6-7|8-9|10-11)\b/.test(nyersNev)) {
+            return this.KUMITE_IDO_SZABALYOK['GYEREK'];
+        }
+        if (nyersNev.includes('serdulo') || /\b(u12|u13|12-13)\b/.test(nyersNev)) {
+            return this.KUMITE_IDO_SZABALYOK['SERDULO'];
+        }
+        if (nyersNev.includes('ifjusagi') || /\b(ifi|kadet|cadet|u14|u15|14-15)\b/.test(nyersNev)) {
+            return this.KUMITE_IDO_SZABALYOK['IFJUSAGI'];
+        }
+        if (nyersNev.includes('junior') || /\b(u16|u17|u18|16-17)\b/.test(nyersNev)) {
+            return this.KUMITE_IDO_SZABALYOK['JUNIOR'];
+        }
+        if (nyersNev.includes('felnott') || nyersNev.includes('adult') || /\b(18-34|18\+|u21|u22)\b/.test(nyersNev)) {
+            return this.KUMITE_IDO_SZABALYOK['FELNOTT'];
+        }
+
+        // 2. Életkor-határ (minAge / maxAge) alapú pontos besorolás
+        if (minAge >= 35) return this.KUMITE_IDO_SZABALYOK['SENIOR'];
+        if (maxAge > 0 && maxAge <= 11) return this.KUMITE_IDO_SZABALYOK['GYEREK'];
+        if ((minAge >= 12 && maxAge > 0 && maxAge <= 13) || maxAge === 13) return this.KUMITE_IDO_SZABALYOK['SERDULO'];
+        if ((minAge >= 14 && maxAge > 0 && maxAge <= 15) || maxAge === 15) return this.KUMITE_IDO_SZABALYOK['IFJUSAGI'];
+        if ((minAge >= 16 && maxAge > 0 && maxAge <= 17) || maxAge === 17) return this.KUMITE_IDO_SZABALYOK['JUNIOR'];
+
+        return this.KUMITE_IDO_SZABALYOK['FELNOTT'];
+    },
+
+    // Átlagos mérkőzés-időtartam becslés (mp) a "Mikor küzdök?" élő várakozási idő kalkulátorhoz
+    becsulMeccsIdotartamMp: function(kategoria) {
+        if (!kategoria) return 150;
+        const isKata = (kategoria.matchType && kategoria.matchType.toUpperCase() === 'KATA');
+        if (isKata) {
+            return 90; // Kata bemutatás + bírói pontozás átlagosan ~1,5 perc
+        }
+        const szabaly = this.lekerKumiteIdoSzabaly(kategoria);
+        const alapMp = (szabaly.fazisok && szabaly.fazisok[0]) ? szabaly.fazisok[0].mp : 120;
+        // Alapidő + tatamira lépés, bírói döntés és átlagos hosszabbítási ráhagyás (+45 mp)
+        return alapMp + 45;
     },
 
     // --- VONALRAJZOS (LINE-ART) SVG IKON KÖNYVTÁR ---
@@ -57,7 +210,7 @@ const TatamiMaster = {
         'pause': '<rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/>',
         'eye': '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
         'eye-off': '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>',
-        'pin': '<line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>',
+        'pin': '<line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0-4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>',
         'chevron-down': '<polyline points="6 9 12 15 18 9"/>',
         'chevron-up': '<polyline points="18 15 12 9 6 15"/>',
         'chevron-right': '<polyline points="9 18 15 12 9 6"/>',
@@ -67,7 +220,12 @@ const TatamiMaster = {
         'bolt': '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
         'clipboard': '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
         'circle': '<circle cx="12" cy="12" r="8"/>',
-        'circle-dot': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>'
+        'circle-dot': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>',
+        'qr': '<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',
+        'volume': '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+        'volume-x': '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>',
+        'bell': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+        'wifi': '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>'
     },
 
     icon: function(name, size = 16, extraClass = '') {
@@ -88,6 +246,277 @@ const TatamiMaster = {
         </svg>`;
     },
 
+    // --- WEB AUDIO API TATAMI HANGJELZÉS (100% OFFLINE: 15 MP HYOSHIGI KOPPANÁS, 0:00 GONG, SZÓLÍTÁS) ---
+    lejatszGongHang: function(tipus = 'gong') {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!this._audioCtx) this._audioCtx = new AudioCtx();
+            if (this._audioCtx.state === 'suspended') {
+                this._audioCtx.resume();
+            }
+            const ctx = this._audioCtx;
+            const now = ctx.currentTime;
+
+            if (tipus === 'figyelmeztetes') {
+                // 15 másodperces figyelmeztetés (Shibaraku): dupla fa-csattanó (Hyoshigi) hang
+                [0, 0.22].forEach(offset => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1040, now + offset);
+                    osc.frequency.exponentialRampToValueAtTime(620, now + offset + 0.09);
+                    gain.gain.setValueAtTime(0.45, now + offset);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.11);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + offset);
+                    osc.stop(now + offset + 0.12);
+                });
+            } else if (tipus === 'szolitas') {
+                // "Mikor küzdök?" szólítási értesítő dallam a telefonon
+                [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const t = now + idx * 0.14;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.32, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.36);
+                });
+            } else {
+                // 00:00 Menet vége (Yame): mély, felharmonikus tatami gong
+                const frekvenciak = [
+                    { f: 196.0, a: 0.55, d: 1.8 },
+                    { f: 293.7, a: 0.32, d: 1.4 },
+                    { f: 493.9, a: 0.20, d: 0.9 },
+                    { f: 784.0, a: 0.10, d: 0.5 }
+                ];
+                frekvenciak.forEach(h => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(h.f, now);
+                    gain.gain.setValueAtTime(h.a, now);
+                    gain.gain.exponentialRampToValueAtTime(0.0008, now + h.d);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + h.d + 0.05);
+                });
+            }
+        } catch (e) {}
+    },
+
+    // --- VALÓS IDEJŰ (LIVE) ESZKÖZÖK KÖZÖTTI SZINKRONIZÁCIÓ (SSE + POLLING TARTALÉK + LOCALSTORAGE) ---
+    initLiveSync: function() {
+        if (this._liveSyncInditva) return;
+        this._liveSyncInditva = true;
+
+        // 1. Azonos gépen belüli azonnali szinkronizáció
+        window.addEventListener('storage', (ev) => {
+            if (!ev.key) return;
+            if (ev.key === 'tatamiAdatok' || ev.key.startsWith('tatamiAdatok_')) {
+                try {
+                    const parsed = ev.newValue ? JSON.parse(ev.newValue) : null;
+                    if (parsed) this.trigger('liveTatamiFrissult', parsed);
+                } catch (e) {}
+            } else if (['kataEredmenyek', 'kataDontoMeccsIdk', 'kumiteReszletek', 'tatamiVersenyAdatMap'].includes(ev.key) || ev.key.startsWith('tatamiNevezesLezarva_')) {
+                this.trigger('liveAdatValtozott', { key: ev.key });
+            }
+        });
+
+        // 2. Szerveroldali valós idejű (külön gépek, telefonok, TV-k, OBS közötti) szinkronizáció
+        this._csatlakozzLiveStreamhez();
+
+        // 3. Könnyűsúlyú biztonsági ellenőrzés arra az esetre, ha a Wi-Fi ideiglenesen bontaná az EventSource kapcsolatot
+        setInterval(() => {
+            if (!this._liveConnected) {
+                this.szinkronizalLiveSnapshotCsendben();
+            }
+        }, 2000);
+    },
+
+    _alkalmazBejovoSnapshot: function(snap) {
+        if (!snap || typeof snap !== 'object') return;
+        const prevDataVer = this._liveDataVersion;
+        if (snap.version) this._liveVersion = snap.version;
+        if (snap.dataVersion) this._liveDataVersion = snap.dataVersion;
+
+        // Megosztott állapotok szinkronizálása localStorage-ba (hogy minden meglévő lekérdező függvény azonnal lássa külön gépen is)
+        if (snap.shared && typeof snap.shared === 'object') {
+            this._alkalmazMegosztottAllapotHelyben('kataEredmenyek', snap.shared.kataEredmenyek);
+            this._alkalmazMegosztottAllapotHelyben('kataDontoMeccsIdk', snap.shared.kataDontoMeccsIdk);
+            this._alkalmazMegosztottAllapotHelyben('kumiteReszletek', snap.shared.kumiteReszletek);
+            this._alkalmazMegosztottAllapotHelyben('versenyAdatMap', snap.shared.versenyAdatMap);
+            this._alkalmazMegosztottAllapotHelyben('nevezesLezarva', snap.shared.nevezesLezarva);
+        }
+
+        // Élő Tatami eredményjelzők szinkronizálása
+        if (snap.tatamik && typeof snap.tatamik === 'object') {
+            for (const tKey of Object.keys(snap.tatamik)) {
+                const tAdat = snap.tatamik[tKey];
+                if (tAdat && typeof tAdat === 'object') {
+                    try {
+                        localStorage.setItem('tatamiAdatok_' + tKey, JSON.stringify(tAdat));
+                    } catch (e) {}
+                }
+            }
+        }
+        if (snap.latestTatami && typeof snap.latestTatami === 'object') {
+            try {
+                localStorage.setItem('tatamiAdatok', JSON.stringify(snap.latestTatami));
+            } catch (e) {}
+            this.trigger('liveTatamiFrissult', snap.latestTatami);
+        }
+
+        if (prevDataVer > 0 && snap.dataVersion && snap.dataVersion !== prevDataVer) {
+            this.trigger('liveAdatValtozott', { type: 'data_changed', dataVersion: snap.dataVersion });
+        }
+    },
+
+    _alkalmazMegosztottAllapotHelyben: function(key, val) {
+        if (val === undefined || val === null) return;
+        try {
+            if (key === 'kataEredmenyek' || key === 'kataDontoMeccsIdk' || key === 'kumiteReszletek') {
+                localStorage.setItem(key, JSON.stringify(val));
+            } else if (key === 'versenyAdatMap') {
+                localStorage.setItem('tatamiVersenyAdatMap', JSON.stringify(val));
+            } else if (key === 'nevezesLezarva' && typeof val === 'object') {
+                for (const vId of Object.keys(val)) {
+                    localStorage.setItem('tatamiNevezesLezarva_' + vId, val[vId] ? 'true' : 'false');
+                }
+            }
+        } catch (e) {}
+    },
+
+    _csatlakozzLiveStreamhez: function() {
+        if (typeof EventSource === 'undefined') {
+            this.szinkronizalLiveSnapshotCsendben();
+            return;
+        }
+        try {
+            if (this._liveEventSource) {
+                this._liveEventSource.close();
+            }
+            const es = new EventSource(this.API_URL + '/LiveArena/stream');
+            this._liveEventSource = es;
+
+            es.onopen = () => {
+                this._liveConnected = true;
+                this.trigger('liveKapcsolatValtozott', { connected: true });
+            };
+
+            es.addEventListener('snapshot', (e) => {
+                this._liveConnected = true;
+                try {
+                    const snap = JSON.parse(e.data);
+                    this._alkalmazBejovoSnapshot(snap);
+                } catch (err) {}
+            });
+
+            es.addEventListener('tatami_updated', (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (msg.version) this._liveVersion = msg.version;
+                    if (msg.tatami) {
+                        const tKey = msg.tatamiKey || msg.tatami.tatamiId || 'default';
+                        localStorage.setItem('tatamiAdatok_' + tKey, JSON.stringify(msg.tatami));
+                        localStorage.setItem('tatamiAdatok', JSON.stringify(msg.tatami));
+                        this.trigger('liveTatamiFrissult', msg.tatami);
+                    }
+                } catch (err) {}
+            });
+
+            es.addEventListener('shared_updated', (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (msg.version) this._liveVersion = msg.version;
+                    this._alkalmazMegosztottAllapotHelyben(msg.key, msg.value);
+                    this.trigger('liveAdatValtozott', { type: 'shared_updated', key: msg.key });
+                } catch (err) {}
+            });
+
+            es.addEventListener('data_changed', (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (msg.version) this._liveVersion = msg.version;
+                    if (msg.dataVersion) this._liveDataVersion = msg.dataVersion;
+                    this.trigger('liveAdatValtozott', msg);
+                } catch (err) {}
+            });
+
+            es.addEventListener('reset_all', () => {
+                try {
+                    localStorage.removeItem('kataEredmenyek');
+                    localStorage.removeItem('kataDontoMeccsIdk');
+                    localStorage.removeItem('kumiteReszletek');
+                    localStorage.removeItem('tatamiVersenyAdatMap');
+                    Object.keys(localStorage).forEach(k => {
+                        if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok')) {
+                            localStorage.removeItem(k);
+                        }
+                    });
+                } catch (err) {}
+                this.trigger('liveAdatValtozott', { type: 'reset_all' });
+            });
+
+            es.onerror = () => {
+                this._liveConnected = false;
+                this.trigger('liveKapcsolatValtozott', { connected: false });
+            };
+        } catch (e) {
+            this._liveConnected = false;
+        }
+    },
+
+    szinkronizalLiveSnapshotCsendben: async function() {
+        try {
+            const res = await fetch(`${this.API_URL}/LiveArena/snapshot?sinceVersion=${this._liveVersion || 0}`);
+            if (!res.ok) return;
+            const snap = await res.json();
+            if (snap && snap.changed) {
+                this._alkalmazBejovoSnapshot(snap);
+            }
+        } catch (e) {}
+    },
+
+    kuldesLiveTatamiAllapot: function(tatamiAdatok) {
+        if (!tatamiAdatok || typeof tatamiAdatok !== 'object') return;
+        const tKey = String(tatamiAdatok.tatamiId || 'default');
+        try {
+            const jsonStr = JSON.stringify(tatamiAdatok);
+            localStorage.setItem('tatamiAdatok', jsonStr);
+            localStorage.setItem('tatamiAdatok_' + tKey, jsonStr);
+        } catch (e) {}
+
+        fetch(this.API_URL + '/LiveArena/tatami', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tatamiAdatok)
+        }).catch(() => {});
+    },
+
+    kuldesLiveMegosztottAllapot: function(kulcs, ertek, merge = false) {
+        fetch(this.API_URL + '/LiveArena/shared', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: kulcs, value: ertek, merge: merge })
+        }).catch(() => {});
+    },
+
+    lekerLiveTatamiAllapot: function(tatamiId = null) {
+        if (tatamiId) {
+            const specifikus = this.safeJsonParse('tatamiAdatok_' + tatamiId, null);
+            if (specifikus) return specifikus;
+        }
+        return this.safeJsonParse('tatamiAdatok', null);
+    },
+
     // --- AKTÍV VERSENY (MULTI-TOURNAMENT) KONTEXTUS ÉS AUTOMATIKUS KIVÁLASZTÁS ---
     initVersenyKontextus: function() {
         try {
@@ -100,11 +529,6 @@ const TatamiMaster = {
         } catch (e) {}
     },
 
-    // Intelligens algoritmus: automatikusan kiválasztja az éppen aktuális versenyt
-    // (1. ÉLŐ / NYITVA vagy NEVEZÉS ALATT státusz előnyben a LEZÁRULT-tal szemben,
-    //  2. Mai napi verseny > Közelgő jövőbeli verseny > Legutóbbi múltbeli verseny,
-    //  3. Mai naphoz időben legközelebb eső dátum,
-    //  4. Azonos dátum esetén a legutóbb létrehozott verseny)
     keresLegaktualisabbVerseny: function(versenyek) {
         if (!Array.isArray(versenyek) || versenyek.length === 0) return null;
         if (versenyek.length === 1) return versenyek[0];
@@ -137,11 +561,11 @@ const TatamiMaster = {
             const kulonbsegNap = Math.round((vNap - maNap) / egyNapMs);
             let idoKategoria = 2;
             if (Math.abs(kulonbsegNap) <= 1) {
-                idoKategoria = 3; // Mai (vagy tegnapi/holnapi) élő verseny
+                idoKategoria = 3;
             } else if (kulonbsegNap > 1) {
-                idoKategoria = 2; // Közelgő jövőbeli verseny
+                idoKategoria = 2;
             } else {
-                idoKategoria = 1; // Már múltbeli dátumú verseny
+                idoKategoria = 1;
             }
 
             return {
@@ -269,6 +693,7 @@ const TatamiMaster = {
     mentVersenyAdatMap: function(map) {
         try {
             localStorage.setItem('tatamiVersenyAdatMap', JSON.stringify(map));
+            this.kuldesLiveMegosztottAllapot('versenyAdatMap', map, false);
         } catch (e) {}
     },
 
@@ -290,7 +715,7 @@ const TatamiMaster = {
         return alapId;
     },
 
-    // --- NEVEZÉS LEZÁRÁSA / MEGNYITÁSA ÁLLAPOTKEZELŐ (VERSENYENKÉNT SZEPARÁLVA) ---
+    // --- NEVEZÉS LEZÁRÁSA / MEGNYITÁSA ÁLLAPOTKEZELŐ (VERSENYENKÉNT SZEPARÁLVA + KÜLÖN GÉPEKRE SZINKRONIZÁLVA) ---
     isNevezesLezarva: function(versenyId = null) {
         const vId = parseInt(versenyId) || this.lekerAktualisVersenyId();
         const perVerseny = localStorage.getItem('tatamiNevezesLezarva_' + vId);
@@ -303,6 +728,9 @@ const TatamiMaster = {
     setNevezesLezarva: function(lezarva, versenyId = null) {
         const vId = parseInt(versenyId) || this.lekerAktualisVersenyId();
         localStorage.setItem('tatamiNevezesLezarva_' + vId, lezarva ? 'true' : 'false');
+        const payload = {};
+        payload[String(vId)] = !!lezarva;
+        this.kuldesLiveMegosztottAllapot('nevezesLezarva', payload, true);
     },
 
     // --- KYOKUSHIN KUMITE FORMÁTUM SZABÁLY (<= 5 FŐ: KÖRMÉRKŐZÉS, > 5 FŐ: EGYENES KIESÉS) ---
@@ -313,8 +741,6 @@ const TatamiMaster = {
     isKumiteAgrajz: function(katMeccsek) {
         if (!Array.isArray(katMeccsek) || katMeccsek.length === 0) return false;
         const n = katMeccsek.length;
-        // 5 főig (2..5 fő) körmérkőzés van: meccsszámok = 1 (2 fő), 3 (3 fő), 6 (4 fő), 10 (5 fő).
-        // 6 főtől egyenes kieséses ágrajz van: meccsszámok = 7 (8-as tábla), 15 (16-os tábla), 31 (32-es tábla), 63 (64-es tábla).
         return (n === 7 || n === 15 || n === 31 || n === 63);
     },
 
@@ -350,12 +776,456 @@ const TatamiMaster = {
         return tiszta;
     },
 
+    // --- ISO/IEC 18004 SZABVÁNYÚ, 100% OFFLINE VEKTOROS (SVG) QR-KÓD GENERÁTOR ---
+    generalQrSvg: function(szoveg, pixelMeret = 240) {
+        const utf8Bytes = Array.from(new TextEncoder().encode(String(szoveg || '')));
+        // Verziók 1..10 (ECC Level L: gyors és távolról is könnyen olvasható csarnokplakátokhoz)
+        const VERZIO_TABLA = [
+            null,
+            { ver: 1,  total: 26,  ecPerBlock: 7,  b1: 1, d1: 19,  b2: 0, d2: 0,   align: [] },
+            { ver: 2,  total: 44,  ecPerBlock: 10, b1: 1, d1: 34,  b2: 0, d2: 0,   align: [6, 18] },
+            { ver: 3,  total: 70,  ecPerBlock: 15, b1: 1, d1: 55,  b2: 0, d2: 0,   align: [6, 22] },
+            { ver: 4,  total: 100, ecPerBlock: 20, b1: 1, d1: 80,  b2: 0, d2: 0,   align: [6, 26] },
+            { ver: 5,  total: 134, ecPerBlock: 26, b1: 1, d1: 108, b2: 0, d2: 0,   align: [6, 30] },
+            { ver: 6,  total: 172, ecPerBlock: 18, b1: 2, d1: 68,  b2: 0, d2: 0,   align: [6, 34] },
+            { ver: 7,  total: 196, ecPerBlock: 20, b1: 2, d1: 78,  b2: 0, d2: 0,   align: [6, 22, 38] },
+            { ver: 8,  total: 242, ecPerBlock: 24, b1: 2, d1: 97,  b2: 0, d2: 0,   align: [6, 24, 42] },
+            { ver: 9,  total: 292, ecPerBlock: 30, b1: 2, d1: 116, b2: 0, d2: 0,   align: [6, 26, 46] },
+            { ver: 10, total: 346, ecPerBlock: 18, b1: 2, d1: 68,  b2: 2, d2: 69,  align: [6, 28, 50] }
+        ];
+
+        let cfg = VERZIO_TABLA[10];
+        for (let v = 1; v <= 10; v++) {
+            const c = VERZIO_TABLA[v];
+            const dataCap = c.b1 * c.d1 + c.b2 * c.d2;
+            const lenBits = v <= 9 ? 8 : 16;
+            const maxBytes = Math.floor((dataCap * 8 - 4 - lenBits) / 8);
+            if (utf8Bytes.length <= maxBytes) {
+                cfg = c;
+                break;
+            }
+        }
+
+        const ver = cfg.ver;
+        const dataCapacity = cfg.b1 * cfg.d1 + cfg.b2 * cfg.d2;
+        const countBits = ver <= 9 ? 8 : 16;
+        const maxAllowed = Math.floor((dataCapacity * 8 - 4 - countBits) / 8);
+        const payloadBytes = utf8Bytes.slice(0, maxAllowed);
+
+        // 1. Bitfolyam előállítása (Byte mode = 0100)
+        const bits = [];
+        const pushBits = (val, len) => {
+            for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1);
+        };
+        pushBits(0b0100, 4);
+        pushBits(payloadBytes.length, countBits);
+        for (const b of payloadBytes) pushBits(b, 8);
+        pushBits(0, Math.min(4, dataCapacity * 8 - bits.length));
+        while (bits.length % 8 !== 0) bits.push(0);
+
+        const dataWords = [];
+        for (let i = 0; i < bits.length; i += 8) {
+            let byteVal = 0;
+            for (let j = 0; j < 8; j++) byteVal = (byteVal << 1) | bits[i + j];
+            dataWords.push(byteVal);
+        }
+        let padToggle = 0;
+        while (dataWords.length < dataCapacity) {
+            dataWords.push(padToggle % 2 === 0 ? 0xEC : 0x11);
+            padToggle++;
+        }
+
+        // 2. Reed-Solomon GF(256) hibajavító kódolás (0x11D polinom)
+        const gfMultiply = (x, y) => {
+            let z = 0;
+            for (let i = 7; i >= 0; i--) {
+                z = (z << 1) ^ ((z >>> 7) * 0x11D);
+                z ^= ((y >>> i) & 1) * x;
+            }
+            return z;
+        };
+
+        const rsDivisor = (deg) => {
+            const res = new Array(deg).fill(0);
+            res[deg - 1] = 1;
+            let root = 1;
+            for (let i = 0; i < deg; i++) {
+                for (let j = 0; j < deg; j++) {
+                    res[j] = gfMultiply(res[j], root);
+                    if (j + 1 < deg) res[j] ^= res[j + 1];
+                }
+                root = gfMultiply(root, 0x02);
+            }
+            return res;
+        };
+
+        const rsRemainder = (data, divisor) => {
+            const rem = new Array(divisor.length).fill(0);
+            for (const b of data) {
+                const factor = b ^ rem.shift();
+                rem.push(0);
+                divisor.forEach((coef, idx) => {
+                    rem[idx] ^= gfMultiply(coef, factor);
+                });
+            }
+            return rem;
+        };
+
+        const divisor = rsDivisor(cfg.ecPerBlock);
+        const blocksData = [];
+        const blocksEc = [];
+        let offset = 0;
+        for (let i = 0; i < cfg.b1 + cfg.b2; i++) {
+            const dLen = i < cfg.b1 ? cfg.d1 : cfg.d2;
+            const block = dataWords.slice(offset, offset + dLen);
+            offset += dLen;
+            blocksData.push(block);
+            blocksEc.push(rsRemainder(block, divisor));
+        }
+
+        const allCodewords = [];
+        const maxDataLen = Math.max(cfg.d1, cfg.d2);
+        for (let col = 0; col < maxDataLen; col++) {
+            for (let b = 0; b < blocksData.length; b++) {
+                if (col < blocksData[b].length) allCodewords.push(blocksData[b][col]);
+            }
+        }
+        for (let col = 0; col < cfg.ecPerBlock; col++) {
+            for (let b = 0; b < blocksEc.length; b++) {
+                allCodewords.push(blocksEc[b][col]);
+            }
+        }
+
+        // 3. Modul-mátrix felépítése
+        const size = ver * 4 + 17;
+        const modules = Array.from({ length: size }, () => new Array(size).fill(false));
+        const isFunc = Array.from({ length: size }, () => new Array(size).fill(false));
+
+        const setFunc = (col, row, dark) => {
+            if (col < 0 || col >= size || row < 0 || row >= size) return;
+            modules[row][col] = !!dark;
+            isFunc[row][col] = true;
+        };
+
+        const drawFinder = (cx, cy) => {
+            for (let dy = -4; dy <= 4; dy++) {
+                for (let dx = -4; dx <= 4; dx++) {
+                    const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                    const xx = cx + dx, yy = cy + dy;
+                    if (xx >= 0 && xx < size && yy >= 0 && yy < size) {
+                        setFunc(xx, yy, dist !== 2 && dist !== 4);
+                    }
+                }
+            }
+        };
+
+        drawFinder(3, 3);
+        drawFinder(size - 4, 3);
+        drawFinder(3, size - 4);
+
+        for (let i = 0; i < size; i++) {
+            if (!isFunc[6][i]) setFunc(i, 6, i % 2 === 0);
+            if (!isFunc[i][6]) setFunc(6, i, i % 2 === 0);
+        }
+
+        const alignPos = cfg.align;
+        for (let i = 0; i < alignPos.length; i++) {
+            for (let j = 0; j < alignPos.length; j++) {
+                if ((i === 0 && j === 0) || (i === 0 && j === alignPos.length - 1) || (i === alignPos.length - 1 && j === 0)) continue;
+                const cx = alignPos[i], cy = alignPos[j];
+                for (let dy = -2; dy <= 2; dy++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                        setFunc(cx + dx, cy + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+                    }
+                }
+            }
+        }
+
+        const drawFormatBits = (mask) => {
+            const data5 = (0b01 << 3) | mask; // ECC Level L = 01
+            let rem = data5;
+            for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+            const fmtBits = ((data5 << 10) | rem) ^ 0x5412;
+            const getBit = (idx) => ((fmtBits >>> idx) & 1) !== 0;
+
+            for (let i = 0; i <= 5; i++) setFunc(8, i, getBit(i));
+            setFunc(8, 7, getBit(6));
+            setFunc(8, 8, getBit(7));
+            setFunc(7, 8, getBit(8));
+            for (let i = 9; i < 15; i++) setFunc(14 - i, 8, getBit(i));
+
+            for (let i = 0; i < 8; i++) setFunc(size - 1 - i, 8, getBit(i));
+            for (let i = 8; i < 15; i++) setFunc(8, size - 15 + i, getBit(i));
+            setFunc(8, size - 8, true);
+        };
+
+        drawFormatBits(0);
+
+        if (ver >= 7) {
+            let rem = ver;
+            for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+            const verBits = (ver << 12) | rem;
+            for (let i = 0; i < 18; i++) {
+                const bit = ((verBits >>> i) & 1) !== 0;
+                const a = size - 11 + (i % 3);
+                const b = Math.floor(i / 3);
+                setFunc(a, b, bit);
+                setFunc(b, a, bit);
+            }
+        }
+
+        // 4. Zig-zag adatbitek elhelyezése
+        let bitIdx = 0;
+        for (let right = size - 1; right >= 1; right -= 2) {
+            if (right === 6) right = 5;
+            for (let vert = 0; vert < size; vert++) {
+                for (let j = 0; j < 2; j++) {
+                    const col = right - j;
+                    const upward = ((right + 1) & 2) === 0;
+                    const row = upward ? (size - 1 - vert) : vert;
+                    if (!isFunc[row][col] && bitIdx < allCodewords.length * 8) {
+                        const byteVal = allCodewords[bitIdx >>> 3];
+                        modules[row][col] = ((byteVal >>> (7 - (bitIdx & 7))) & 1) !== 0;
+                        bitIdx++;
+                    }
+                }
+            }
+        }
+
+        // 5. Maszkolás (0-s maszk: sakktábla minta a maximális kontrasztért)
+        const chosenMask = 0;
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                if (!isFunc[r][c] && (r + c) % 2 === 0) {
+                    modules[r][c] = !modules[r][c];
+                }
+            }
+        }
+        drawFormatBits(chosenMask);
+
+        // 6. Tiszta SVG előállítása 4 modulos fehér csendes zónával (Quiet Zone)
+        const quiet = 4;
+        const totalMods = size + quiet * 2;
+        let pathD = '';
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                if (modules[r][c]) {
+                    pathD += `M${c + quiet},${r + quiet}h1v1h-1z`;
+                }
+            }
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${pixelMeret}" height="${pixelMeret}" viewBox="0 0 ${totalMods} ${totalMods}" shape-rendering="crispEdges" role="img" aria-label="QR-kód">
+            <rect width="100%" height="100%" fill="#FFFFFF"/>
+            <path d="${pathD}" fill="#18181B"/>
+        </svg>`;
+    },
+
+    // --- NYOMTATHATÓ A4 CSARNOK QR-PLAKÁT MODAL („MIKOR KÜZDÖK?” ÉS ÉLŐ KÖVETÉS) ---
+    nyitQrPlakatModal: async function(versenyObj = null) {
+        let modal = document.getElementById('tmQrPosterModal');
+        if (modal) modal.remove();
+
+        const aktId = (versenyObj && versenyObj.id) ? versenyObj.id : this.lekerAktualisVersenyId();
+        const cache = this.safeJsonParse('tatamiVersenyekCache', []);
+        const vAdat = versenyObj || cache.find(v => v.id === aktId) || {
+            id: aktId,
+            name: this.lekerAktualisVersenyNev(),
+            organizer: 'Shobu HSE',
+            date: new Date().toISOString()
+        };
+
+        // Alap URL összeállítása az audience.html oldalhoz
+        const utvonal = window.location.pathname;
+        const basePath = utvonal.toLowerCase().includes('/views/')
+            ? utvonal.substring(0, utvonal.toLowerCase().indexOf('/views/'))
+            : utvonal.replace(/\/[^\/]*$/, '');
+        let defaultHost = window.location.host || 'localhost';
+        let lanIpLista = [];
+
+        try {
+            const netRes = await fetch(this.API_URL + '/LiveArena/network-info');
+            if (netRes.ok) {
+                const netInfo = await netRes.json();
+                if (Array.isArray(netInfo.lanIps) && netInfo.lanIps.length > 0) {
+                    lanIpLista = netInfo.lanIps;
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        const portPart = window.location.port ? (':' + window.location.port) : '';
+                        defaultHost = lanIpLista[0] + portPart;
+                    }
+                }
+            }
+        } catch (e) {}
+
+        const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        const alapUrl = `${proto}//${defaultHost}${basePath}/views/audience.html?versenyId=${aktId}`;
+        const datumSzoveg = vAdat.date ? new Date(vAdat.date).toLocaleDateString('hu-HU') : '-';
+
+        if (!document.getElementById('tmQrPosterPrintStyle')) {
+            const st = document.createElement('style');
+            st.id = 'tmQrPosterPrintStyle';
+            st.textContent = `
+                @media print {
+                    body.tm-printing-qr-poster > *:not(#tmQrPosterModal) { display: none !important; }
+                    body.tm-printing-qr-poster { background: #FFFFFF !important; margin: 0 !important; padding: 0 !important; }
+                    body.tm-printing-qr-poster #tmQrPosterModal {
+                        position: static !important;
+                        background: #FFFFFF !important;
+                        padding: 0 !important;
+                        overflow: visible !important;
+                        display: block !important;
+                    }
+                    body.tm-printing-qr-poster .tm-qr-no-print { display: none !important; }
+                    body.tm-printing-qr-poster #tmQrPosterSheet {
+                        box-shadow: none !important;
+                        border: 3px solid #18181B !important;
+                        max-width: 100% !important;
+                        margin: 0 auto !important;
+                        page-break-inside: avoid !important;
+                    }
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        const ipGombokHtml = lanIpLista.length > 0
+            ? `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+                <span style="font-size:0.78rem;font-weight:700;color:#52525B;">Felismert helyi Wi-Fi IP cím(ek):</span>
+                ${lanIpLista.map(ip => {
+                    const portPart = window.location.port ? (':' + window.location.port) : '';
+                    const cel = `${proto}//${ip}${portPart}${basePath}/views/audience.html?versenyId=${aktId}`;
+                    return `<button type="button" class="btn btn-outline" style="padding:3px 9px;font-size:0.76rem;" onclick="document.getElementById('tmQrUrlInput').value='${this.escapeHtml(cel)}';TatamiMaster.frissitQrPlakatElonezet();">${this.icon('wifi', 12)} ${this.escapeHtml(ip)}</button>`;
+                }).join('')}
+               </div>`
+            : '';
+
+        modal = document.createElement('div');
+        modal.id = 'tmQrPosterModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(24,24,27,0.84);z-index:10010;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
+        modal.innerHTML = `
+            <div style="background:#FAF8F5;width:100%;max-width:740px;border-radius:14px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,0.5);border:2px solid #18181B;color:#18181B;">
+                <div class="tm-qr-no-print" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid #E4E0D7;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        ${this.icon('qr', 22)}
+                        <div>
+                            <strong style="font-size:1.12rem;display:block;">Nyomtatható A4 Csarnok QR-Plakát</strong>
+                            <span style="font-size:0.82rem;color:#52525B;">Függeszd ki a bejáratnál, a lelátón és a melegítőteremben!</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline-blue" onclick="TatamiMaster.letoltQrSvg()">
+                            ${this.icon('save', 15)} QR-kód Letöltése (SVG)
+                        </button>
+                        <button type="button" class="btn btn-outline-green" onclick="TatamiMaster.nyomtatQrPlakat()">
+                            ${this.icon('print', 15)} A4 Plakát Nyomtatása
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('tmQrPosterModal').remove()">
+                            ${this.icon('x', 15)} Bezárás
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tm-qr-no-print" style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+                    <label for="tmQrUrlInput" style="font-size:0.82rem;font-weight:800;color:#18181B;display:block;margin-bottom:4px;">
+                        QR-kód célcíme (URL – ha a telefonok helyi Wi-Fi-ről csatlakoznak, a gép helyi IP-címe szerepeljen a localhost helyett):
+                    </label>
+                    <input type="text" id="tmQrUrlInput" class="input-field" style="width:100%;font-weight:700;font-size:0.88rem;" value="${this.escapeHtml(alapUrl)}" oninput="TatamiMaster.frissitQrPlakatElonezet()">
+                    ${ipGombokHtml}
+                </div>
+
+                <!-- NYOMTATHATÓ A4 PLAKÁT LAP -->
+                <div id="tmQrPosterSheet" style="background:#FFFFFF;border:3px solid #18181B;border-radius:12px;padding:32px 28px;text-align:center;">
+                    <div style="display:inline-flex;align-items:center;gap:12px;background:#18181B;color:#FAF8F5;padding:8px 20px;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:0.9rem;margin-bottom:14px;">
+                        ${this.brandLogoSvg(26)}
+                        <span>TATAMI MASTER&trade; &bull; ÉLŐ VERSENYKÖVETÉS</span>
+                    </div>
+
+                    <h1 style="margin:6px 0 8px 0;font-size:2rem;line-height:1.2;color:#18181B;text-transform:uppercase;letter-spacing:0.5px;">
+                        ${this.escapeHtml(vAdat.name || 'Karate Bajnokság')}
+                    </h1>
+                    <div style="font-size:0.98rem;color:#52525B;font-weight:700;margin-bottom:20px;">
+                        Dátum: ${this.escapeHtml(datumSzoveg)} &bull; Szervező: ${this.escapeHtml(vAdat.organizer || 'Shobu HSE')}
+                    </div>
+
+                    <div id="tmQrSvgBox" style="display:inline-block;padding:14px;border:3px solid #18181B;border-radius:14px;background:#FFFFFF;margin-bottom:16px;">
+                        ${this.generalQrSvg(alapUrl, 270)}
+                    </div>
+
+                    <div style="font-size:1.35rem;font-weight:800;color:#991B1B;letter-spacing:0.4px;margin-bottom:6px;text-transform:uppercase;">
+                        Olvasd be a telefonod kamerájával!
+                    </div>
+                    <div id="tmQrUrlCaption" style="font-family:Consolas,monospace;font-size:0.84rem;color:#3F3F46;background:#FAF8F5;border:1px solid #E4E0D7;display:inline-block;padding:5px 12px;border-radius:6px;margin-bottom:20px;word-break:break-all;">
+                        ${this.escapeHtml(alapUrl)}
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;text-align:left;border-top:2px solid #E4E0D7;padding-top:18px;">
+                        <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
+                            <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
+                                ${this.icon('clock', 16)} 1. „Mikor küzdök?”
+                            </strong>
+                            <span style="font-size:0.82rem;color:#3F3F46;line-height:1.4;display:block;">
+                                Írd be a versenyző vagy klub nevét, és lásd melyik tatamin, hanyadik meccsként, várhatóan hány perc múlva szólítanak!
+                            </span>
+                        </div>
+                        <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
+                            <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
+                                ${this.icon('monitor', 16)} 2. Élő Tatami Állás
+                            </strong>
+                            <span style="font-size:0.82rem;color:#3F3F46;line-height:1.4;display:block;">
+                                Valós idejű óra, pontszámok, hosszabbítások és „Felkészül” szólítások minden tatamiról külön frissítés nélkül.
+                            </span>
+                        </div>
+                        <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
+                            <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
+                                ${this.icon('git-branch', 16)} 3. Ágrajz &amp; Ranglista
+                            </strong>
+                            <span style="font-size:0.82rem;color:#3F3F46;line-height:1.4;display:block;">
+                                Élő Kumite ágrajzok, körmérkőzés-tabellák és 5-bírói Kata rangsorok közvetlenül a mobilodon.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    },
+
+    frissitQrPlakatElonezet: function() {
+        const inp = document.getElementById('tmQrUrlInput');
+        const svgBox = document.getElementById('tmQrSvgBox');
+        const cap = document.getElementById('tmQrUrlCaption');
+        if (!inp || !svgBox) return;
+        const url = inp.value.trim() || window.location.href;
+        svgBox.innerHTML = this.generalQrSvg(url, 270);
+        if (cap) cap.innerText = url;
+    },
+
+    nyomtatQrPlakat: function() {
+        document.body.classList.add('tm-printing-qr-poster');
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => document.body.classList.remove('tm-printing-qr-poster'), 400);
+        }, 80);
+    },
+
+    letoltQrSvg: function() {
+        const svgEl = document.querySelector('#tmQrSvgBox svg');
+        if (!svgEl) return;
+        const blob = new Blob([svgEl.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TATAMI_MASTER_QR_Verseny_${this.lekerAktualisVersenyId()}.svg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+
     injectDesignSystem: function() {
         const utvonal = window.location.pathname.toLowerCase();
         const isViews = utvonal.includes('/views/');
         const rootPrefix = isViews ? '../' : '';
 
-        // 1. Böngészőfül ikon (Favicon) és védjegy meta-adatok beállítása MINDEN oldalon (felülírja a XAMPP ikont!)
         if (!document.getElementById('tmFaviconSvg')) {
             document.querySelectorAll('link[rel*="icon"]').forEach(el => el.remove());
 
@@ -409,7 +1279,6 @@ const TatamiMaster = {
     },
 
     injectBrandingAndLegal: function(rootPrefix = '') {
-        // 1. Felső fejléc (.top-header h1) logójának és TATAMI MASTER™ védjegyjelölésének egységesítése
         const headerH1 = document.querySelector('.top-header h1');
         if (headerH1) {
             const firstSvg = headerH1.querySelector('svg');
@@ -426,13 +1295,11 @@ const TatamiMaster = {
             }
         }
 
-        // 2. Aloldalakon (Bírói panel, Kyu-bontó, Mérlegelő, Eredmények stb.) aktív verseny-választó sáv beszúrása
         const utvonal = window.location.pathname.toLowerCase();
         if (utvonal.includes('/views/') && !document.getElementById('adminAktivVersenyBar') && !document.getElementById('audienceVersenyBar') && !document.getElementById('tmSubpageVersenyBar')) {
             this.injectSubpageVersenyBar();
         }
 
-        // 3. Hivatalos Védjegy- és Szerzői Jogi Lábjegyzet (.tm-legal-footer) elhelyezése
         if (!document.getElementById('tmLegalFooter')) {
             const footer = document.createElement('footer');
             footer.id = 'tmLegalFooter';
@@ -631,7 +1498,6 @@ const TatamiMaster = {
         }
     },
 
-    // Tiszta, gyors GET lekérdezés versenyenkénti (Multi-Tournament) adatszeparációval
     apiGet: async function(vegpont, opciok = null) {
         try {
             const res = await fetch(this.API_URL + '/' + vegpont);
@@ -645,7 +1511,6 @@ const TatamiMaster = {
 
             const alapVegpont = vegpont.split('/')[0];
 
-            // 1. Ha a Versenyeket (Tournaments) kérdezzük le, frissítjük a gyorsítótárat és AUTOMATIKUSAN kiválasztjuk az éppen aktuális versenyt
             if (alapVegpont === 'Tournaments') {
                 try {
                     localStorage.setItem('tatamiVersenyekCache', JSON.stringify(adatok));
@@ -677,12 +1542,10 @@ const TatamiMaster = {
                 return adatok;
             }
 
-            // 2. Ha minden verseny összesített adatait kérte a hívó (mindenVerseny: true), szűrés nélkül adjuk vissza
             if (opciok && opciok.mindenVerseny === true) {
                 return adatok;
             }
 
-            // 3. Versenyhez tartozó entitások szűrése az aktuálisan kiválasztott versenyre (aktualisVersenyId)
             const aktVersenyId = (opciok && opciok.versenyId)
                 ? parseInt(opciok.versenyId)
                 : this.lekerAktualisVersenyId();
@@ -736,7 +1599,6 @@ const TatamiMaster = {
         }
     },
 
-    // Tiszta POST / PUT / DELETE küldés XSS szűréssel + automatikus versenyhez rendeléssel
     apiSend: async function(vegpont, method, adat, opciok = null) {
         try {
             const tisztaAdat = adat ? this.sanitizePayload(adat) : null;
@@ -747,7 +1609,6 @@ const TatamiMaster = {
             });
             const alapVegpont = vegpont.split('/')[0];
 
-            // Tétel törlésekor (DELETE) eltávolítjuk a verseny-entitás térképből is (akkor is, ha már korábban törlődött: 404)
             if (method === 'DELETE' && ['Competitors', 'Categories', 'Tatamis', 'Registrations', 'Matches'].includes(alapVegpont) && (res.ok || res.status === 404)) {
                 const reszek = vegpont.split('/');
                 const toroltId = parseInt(reszek[1]);
@@ -767,17 +1628,20 @@ const TatamiMaster = {
                 return res;
             }
 
-            // Reset-seed esetén visszaállítjuk a verseny-entitás térképet az alap (ID=1) versenyre
             if (vegpont === 'Tournaments/reset-seed') {
                 localStorage.removeItem('tatamiVersenyAdatMap');
+                localStorage.removeItem('kataEredmenyek');
+                localStorage.removeItem('kataDontoMeccsIdk');
+                localStorage.removeItem('kumiteReszletek');
                 Object.keys(localStorage).forEach(k => {
-                    if (k.startsWith('tatamiNevezesLezarva_')) localStorage.removeItem(k);
+                    if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok')) {
+                        localStorage.removeItem(k);
+                    }
                 });
                 this.mentAktualisVerseny(1, 'Shobu HSE Országos Bajnokság 2026');
                 return res;
             }
 
-            // Új tétel (POST) létrehozásakor automatikusan hozzárendeljük az aktuális (vagy megadott) versenyhez
             if (method === 'POST' && ['Competitors', 'Categories', 'Tatamis', 'Registrations', 'Matches'].includes(alapVegpont)) {
                 try {
                     const klon = res.clone();
@@ -893,8 +1757,12 @@ const TatamiMaster = {
 
     mentKataEredmeny: function(matchId, competitorId, ertekeles) {
         let tarolo = this.safeJsonParse('kataEredmenyek', {});
-        tarolo[matchId] = { matchId: matchId, competitorId: competitorId, ...ertekeles };
+        const rekord = { matchId: matchId, competitorId: competitorId, ...ertekeles };
+        tarolo[matchId] = rekord;
         localStorage.setItem('kataEredmenyek', JSON.stringify(tarolo));
+        const delta = {};
+        delta[String(matchId)] = rekord;
+        this.kuldesLiveMegosztottAllapot('kataEredmenyek', delta, true);
     },
 
     lekerKataEredmenyek: function() { return this.safeJsonParse('kataEredmenyek', {}); },
@@ -903,6 +1771,7 @@ const TatamiMaster = {
         let eddigiek = this.safeJsonParse('kataDontoMeccsIdk', []);
         for (let id of matchIdTomb) { if (!eddigiek.includes(id)) eddigiek.push(id); }
         localStorage.setItem('kataDontoMeccsIdk', JSON.stringify(eddigiek));
+        this.kuldesLiveMegosztottAllapot('kataDontoMeccsIdk', eddigiek, false);
     },
 
     isKataDontoMeccs: function(matchId) {
@@ -913,12 +1782,17 @@ const TatamiMaster = {
         let tarolo = this.safeJsonParse('kumiteReszletek', {});
         tarolo[matchId] = adatok;
         localStorage.setItem('kumiteReszletek', JSON.stringify(tarolo));
+        const delta = {};
+        delta[String(matchId)] = adatok;
+        this.kuldesLiveMegosztottAllapot('kumiteReszletek', delta, true);
     },
 
     lekerKumiteReszletek: function() { return this.safeJsonParse('kumiteReszletek', {}); }
 };
 
+window.TatamiMaster = TatamiMaster;
 TatamiMaster.initVersenyKontextus();
 TatamiMaster.injectDesignSystem();
 TatamiMaster.ellenorizJogosultsag();
+TatamiMaster.initLiveSync();
 window.alert = function(msg) { TatamiMaster.toast(msg); };

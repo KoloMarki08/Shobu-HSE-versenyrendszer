@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Versenyrendszer.Models;
 
@@ -72,7 +72,8 @@ namespace Versenyrendszer.Controllers
             var registration = await _context.Registrations.FindAsync(id);
             if (registration == null)
             {
-                return NotFound("A nevezés nem található.");
+                // Idempotens törlés: ha már törölve lett (pl. kategória felbontáskor / kaszkád törléskor), ne dobjon 404 hibát
+                return NoContent();
             }
 
             _context.Registrations.Remove(registration);

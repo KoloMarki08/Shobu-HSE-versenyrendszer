@@ -6,13 +6,34 @@ let globalTatamik = [];
 let globalMerkozesek = [];
 let draggedMatchId = null;
 
+let adminLiveFrissitesTimer = null;
+
 window.onload = function() {
     const datumInput = document.getElementById('adminUjVersenyDatum');
     if (datumInput && !datumInput.value) {
         datumInput.value = new Date().toISOString().split('T')[0];
     }
     mindenAdatFrissitese();
+
+    // Valós idejű háttér-szinkronizáció: ha másik gépen (Edzői vagy Bírói pulton) változás történik,
+    // automatikusan frissítjük az Admin Központot is (kivéve ha épp szövegmezőbe gépel az admin)
+    TatamiMaster.on('liveAdatValtozott', function() {
+        const aktElem = document.activeElement;
+        const gepel = aktElem && ['INPUT', 'SELECT', 'TEXTAREA'].includes(aktElem.tagName);
+        if (gepel) return;
+
+        if (adminLiveFrissitesTimer) clearTimeout(adminLiveFrissitesTimer);
+        adminLiveFrissitesTimer = setTimeout(() => {
+            mindenAdatFrissitese();
+        }, 350);
+    });
 };
+
+function nyitAdminQrPlakat(versenyId = null) {
+    const celId = parseInt(versenyId) || TatamiMaster.lekerAktualisVersenyId();
+    const vObj = globalVersenyek.find(v => v.id === celId) || null;
+    TatamiMaster.nyitQrPlakatModal(vObj);
+}
 
 function toggleNevezesZarolas() {
     const jelenlegLezarva = TatamiMaster.isNevezesLezarva();
@@ -195,6 +216,9 @@ function frissitAdminAktivVersenyBar() {
             <span style="color:${lezarva ? '#991B1B' : '#18181B'};font-weight:700;">
                 &bull; ${lezarva ? `${TatamiMaster.icon('lock', 13)} Nevezés lezárva` : `${TatamiMaster.icon('unlock', 13)} Nevezés nyitva`}
             </span>
+            <button type="button" class="btn btn-outline-blue" style="padding:4px 9px;font-size:0.76rem;" onclick="nyitAdminQrPlakat(${aktVerseny.id})">
+                ${TatamiMaster.icon('qr', 13)} QR-Plakát
+            </button>
         `;
     }
 
@@ -223,11 +247,8 @@ async function adminValtsAutomatikusVersenyre() {
 }
 
 function ugorjVersenyekFulre() {
-    const btn = document.querySelector(`.admin-tabs .tab-btn[onclick*="tab-versenyek"]`);
-    if (btn) {
-        btn.click();
-    } else if (typeof openTab === 'function') {
-        openTab({ currentTarget: document.querySelector('.admin-tabs .tab-btn') }, 'tab-versenyek');
+    if (typeof ugorjAdminTabra === 'function') {
+        ugorjAdminTabra('tab-versenyek', true);
     }
     setTimeout(() => {
         const inp = document.getElementById('adminUjVersenyNev');
@@ -339,6 +360,9 @@ function versenyekAdminBetoltese() {
                     <a href="audience.html?versenyId=${v.id}" target="_blank" class="btn btn-outline-blue" style="padding:5px 10px;font-size:0.8rem;" title="Adott verseny élő nézői és edzői oldalának megnyitása">
                         ${TatamiMaster.icon('eye', 14)} Élő oldal
                     </a>
+                    <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:0.8rem;" onclick="nyitAdminQrPlakat(${v.id})" title="Nyomtatható A4 csarnok QR-plakát ehhez a versenyhez">
+                        ${TatamiMaster.icon('qr', 14)} QR-Plakát
+                    </button>
                     <button class="btn btn-outline" style="padding:5px 10px;font-size:0.8rem;" onclick="szerkesztVersenyTeljes(${v.id})">${TatamiMaster.icon('edit', 14)} Szerkesztés</button>
                     <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="torolElem('Tournaments', ${v.id})" title="Verseny törlése">${TatamiMaster.icon('trash', 14)} Törlés</button>
                 </div>
@@ -355,15 +379,17 @@ async function letrehozAlapTatamikEsKategoriakVersenyhez(versenyId) {
     }
 
     const alapKategoriak = [
-        { name: 'Gyermek Fiú Kata (8-11 év)',            matchType: 'KATA',   gender: 'Férfi', minAge: 8,  maxAge: 11 },
-        { name: 'Gyermek Lány Kata (8-11 év)',           matchType: 'KATA',   gender: 'Női',   minAge: 8,  maxAge: 11 },
-        { name: 'Serdülő & Ifjúsági Kata (12-15 év)',    matchType: 'KATA',   gender: 'Vegyes',minAge: 12, maxAge: 15 },
-        { name: 'Junior & Felnőtt Kata (16+ év)',        matchType: 'KATA',   gender: 'Vegyes',minAge: 16, maxAge: 99 },
-        { name: 'Gyermek Fiú Kumite Open (8-11 év)',     matchType: 'KUMITE', gender: 'Férfi', minAge: 8,  maxAge: 11 },
-        { name: 'Serdülő Fiú Kumite Open (12-13 év)',    matchType: 'KUMITE', gender: 'Férfi', minAge: 12, maxAge: 13 },
-        { name: 'Junior Férfi Kumite Open (16-17 év)',   matchType: 'KUMITE', gender: 'Férfi', minAge: 16, maxAge: 17 },
-        { name: 'Felnőtt Férfi Kumite Open (18+ év)',    matchType: 'KUMITE', gender: 'Férfi', minAge: 18, maxAge: 99 },
-        { name: 'Felnőtt Női Kumite Open (18+ év)',      matchType: 'KUMITE', gender: 'Női',   minAge: 18, maxAge: 99 }
+        { name: 'Gyerek 3,2,1 Fiú Kata (8-11 év)',      matchType: 'KATA',   gender: 'Férfi', minAge: 8,  maxAge: 11 },
+        { name: 'Gyerek 3,2,1 Lány Kata (8-11 év)',     matchType: 'KATA',   gender: 'Női',   minAge: 8,  maxAge: 11 },
+        { name: 'Serdülő & Ifjúsági Kata (12-15 év)',   matchType: 'KATA',   gender: 'Vegyes',minAge: 12, maxAge: 15 },
+        { name: 'Junior, Felnőtt & Senior Kata (16+)',  matchType: 'KATA',   gender: 'Vegyes',minAge: 16, maxAge: 99 },
+        { name: 'Gyerek 3,2,1 Kumite Open (8-11 év)',   matchType: 'KUMITE', gender: 'Férfi', minAge: 8,  maxAge: 11 },
+        { name: 'Serdülő Kumite Open (12-13 év)',       matchType: 'KUMITE', gender: 'Férfi', minAge: 12, maxAge: 13 },
+        { name: 'Ifjúsági Kumite Open (14-15 év)',      matchType: 'KUMITE', gender: 'Férfi', minAge: 14, maxAge: 15 },
+        { name: 'Junior Kumite Open (16-17 év)',        matchType: 'KUMITE', gender: 'Férfi', minAge: 16, maxAge: 17 },
+        { name: 'Felnőtt Férfi Kumite Open (18-34 év)', matchType: 'KUMITE', gender: 'Férfi', minAge: 18, maxAge: 34 },
+        { name: 'Felnőtt Női Kumite Open (18-34 év)',   matchType: 'KUMITE', gender: 'Női',   minAge: 18, maxAge: 34 },
+        { name: 'Senior Kumite Open (35+ év)',          matchType: 'KUMITE', gender: 'Férfi', minAge: 35, maxAge: 99 }
     ];
 
     for (let kat of alapKategoriak) {

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Versenyrendszer.Models;
 
@@ -68,7 +68,7 @@ namespace Versenyrendszer.Controllers
             var category = await _context.Categories.FindAsync(id);
             if (category == null)
             {
-                return NotFound("A kategória nem található.");
+                return NoContent();
             }
 
             _context.Categories.Remove(category);

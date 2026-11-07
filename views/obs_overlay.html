@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
-    <title>Tatami Master - OBS Live Stream Overlay</title>
+    <title>TATAMI MASTER™ - OBS Live Stream Overlay</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Segoe UI', sans-serif; }
         body {
@@ -40,6 +40,19 @@
         }
         @keyframes blink { 50% { opacity: 0.25; } }
 
+        .obs-round-pill {
+            background: #27272A;
+            color: #FAF8F5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            font-weight: 800;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .obs-round-pill.overtime {
+            background: #991B1B;
+        }
+
         /* ALSÓ TELEVÍZIÓS SCOREBOARD (LOWER THIRD) */
         .obs-lower-bar {
             position: fixed;
@@ -56,9 +69,9 @@
         }
         .obs-kumite-row {
             display: grid;
-            grid-template-columns: 1fr 110px 210px 110px 1fr;
+            grid-template-columns: 1fr 110px 220px 110px 1fr;
             align-items: center;
-            height: 92px;
+            height: 96px;
         }
         .obs-fighter {
             padding: 0 28px;
@@ -101,19 +114,31 @@
             background: #18181B;
             color: #FAF8F5;
         }
-        .obs-timer {
-            font-size: 3.2rem;
-            font-weight: 800;
-            text-align: center;
-            color: #FAF8F5;
+        .obs-timer-cell {
             background: #0F0F12;
             height: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-variant-numeric: tabular-nums;
             border-left: 2px solid #27272A;
             border-right: 2px solid #27272A;
+        }
+        .obs-timer {
+            font-size: 2.85rem;
+            font-weight: 800;
+            text-align: center;
+            color: #FAF8F5;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .obs-subround {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #E4E0D7;
+            letter-spacing: 0.8px;
+            margin-top: 4px;
+            text-transform: uppercase;
         }
         /* KATA NÉZET OBS-BEN */
         .obs-kata-row {
@@ -122,7 +147,7 @@
             justify-content: space-between;
             padding: 16px 32px;
             color: white;
-            height: 92px;
+            height: 96px;
         }
         .obs-kata-judges {
             display: flex;
@@ -143,6 +168,7 @@
     <div class="obs-top-badge">
         <div class="obs-live-dot"></div>
         <span id="obsMatchInfo">1. TATAMI — ÉLŐ KÖZVETÍTÉS</span>
+        <span id="obsRoundBadge" class="obs-round-pill">ALAPIDŐ</span>
     </div>
 
     <div class="obs-lower-bar">
@@ -153,7 +179,10 @@
                 <div id="obsAkaPen" class="obs-pen">Chui / Genten: 0</div>
             </div>
             <div id="obsAkaScore" class="obs-score">0</div>
-            <div id="obsTimer" class="obs-timer">02:00</div>
+            <div class="obs-timer-cell">
+                <div id="obsTimer" class="obs-timer">02:00</div>
+                <div id="obsSubRound" class="obs-subround">ALAPIDŐ</div>
+            </div>
             <div id="obsShiroScore" class="obs-score">0</div>
             <div class="obs-fighter obs-shiro">
                 <div id="obsShiroName" class="obs-name">SHIRO Versenyző</div>
@@ -181,29 +210,52 @@
         </div>
     </div>
 
+    <script src="../JS/core.js?v=20261107_v6"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const tatamiSzam = urlParams.get('tatami'); // Pl. ?tatami=1 vagy ?tatami=2
+        const tatamiSzam = urlParams.get('tatami');
+
+        function formazObsBuntetes(b) {
+            const p = parseInt(b) || 0;
+            if (p === 0) return 'Nincs (0)';
+            if (p === 1) return '1x Chui';
+            if (p === 2) return '2x Chui';
+            if (p === 3) return '1x GENTEN';
+            return 'SIKAKU (2G)';
+        }
 
         function frissitObs() {
-            const kulcs = tatamiSzam ? ('tatamiAdatok_' + tatamiSzam) : 'tatamiAdatok';
-            const nyers = localStorage.getItem(kulcs) || localStorage.getItem('tatamiAdatok');
-            if (!nyers) return;
+            const d = (typeof TatamiMaster !== 'undefined')
+                ? TatamiMaster.lekerLiveTatamiAllapot(tatamiSzam)
+                : null;
+            if (!d) return;
 
             try {
-                const d = JSON.parse(nyers);
                 document.getElementById('obsMatchInfo').innerText = d.matchInfo || 'TATAMI ÉLŐ STREAM';
                 const isKata = (d.mode && d.mode.toUpperCase() === 'KATA');
 
                 document.getElementById('obsKumiteRow').style.display = isKata ? 'none' : 'grid';
                 document.getElementById('obsKataRow').style.display = isKata ? 'flex' : 'none';
 
+                const rLabel = d.roundLabel || (isKata ? 'KATA' : 'ALAPIDŐ');
+                const rBadge = document.getElementById('obsRoundBadge');
+                if (rBadge) {
+                    rBadge.innerText = rLabel;
+                    if (d.roundCode && d.roundCode !== 'ALAP' && !isKata) {
+                        rBadge.classList.add('overtime');
+                    } else {
+                        rBadge.classList.remove('overtime');
+                    }
+                }
+                const subR = document.getElementById('obsSubRound');
+                if (subR) subR.innerText = rLabel;
+
                 document.getElementById('obsAkaName').innerText = d.akaName || 'AKA';
                 document.getElementById('obsShiroName').innerText = d.shiroName || 'SHIRO';
                 document.getElementById('obsAkaScore').innerText = d.akaScore ?? 0;
                 document.getElementById('obsShiroScore').innerText = d.shiroScore ?? 0;
-                document.getElementById('obsAkaPen').innerText = 'Büntetés: ' + (d.akaPenalties || 0);
-                document.getElementById('obsShiroPen').innerText = 'Büntetés: ' + (d.shiroPenalties || 0);
+                document.getElementById('obsAkaPen').innerText = 'Büntetés: ' + formazObsBuntetes(d.akaPenalties);
+                document.getElementById('obsShiroPen').innerText = 'Büntetés: ' + formazObsBuntetes(d.shiroPenalties);
                 document.getElementById('obsTimer').innerText = d.timer || '02:00';
 
                 document.getElementById('obsKataName').innerText = d.akaName || '-';
@@ -217,6 +269,9 @@
             } catch (e) {}
         }
 
+        if (typeof TatamiMaster !== 'undefined') {
+            TatamiMaster.on('liveTatamiFrissult', frissitObs);
+        }
         window.addEventListener('storage', frissitObs);
         setInterval(frissitObs, 250);
         frissitObs();

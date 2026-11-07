@@ -1,21 +1,37 @@
+const tvUrlParams = new URLSearchParams(window.location.search);
+const tvTatamiId = tvUrlParams.get('tatami'); // Pl. ?tatami=1 vagy üres (legutóbbi aktív tatami)
+
 window.addEventListener('DOMContentLoaded', function() {
     tvKijelzoFrissites();
-    // Azonnali frissítés, ha a másik ablakban (Bírói panelen) változik a localStorage
     window.addEventListener('storage', tvKijelzoFrissites);
-    // Biztonsági folyamatos frissítés 250ms-onként
+
+    if (typeof TatamiMaster !== 'undefined') {
+        TatamiMaster.on('liveTatamiFrissult', function() {
+            tvKijelzoFrissites();
+        });
+        TatamiMaster.on('liveKapcsolatValtozott', function(st) {
+            const dot = document.getElementById('tvLiveSyncDot');
+            if (dot) {
+                dot.innerText = st && st.connected ? 'ÉLŐ SZINKRON AKTÍV' : 'HELYI SZINKRON';
+                dot.style.color = st && st.connected ? '#18181B' : '#71717A';
+            }
+        });
+    }
+
     setInterval(tvKijelzoFrissites, 250);
 });
 
 function tvKijelzoFrissites() {
-    const nyers = localStorage.getItem('tatamiAdatok');
-    if (!nyers) return;
-
-    let adatok = {};
-    try {
-        adatok = JSON.parse(nyers);
-    } catch (e) {
-        return;
+    let adatok = null;
+    if (typeof TatamiMaster !== 'undefined') {
+        adatok = TatamiMaster.lekerLiveTatamiAllapot(tvTatamiId);
+    } else {
+        const nyers = localStorage.getItem(tvTatamiId ? ('tatamiAdatok_' + tvTatamiId) : 'tatamiAdatok') || localStorage.getItem('tatamiAdatok');
+        if (nyers) {
+            try { adatok = JSON.parse(nyers); } catch (e) {}
+        }
     }
+    if (!adatok) return;
 
     // 1. Felső kategória és mérkőzés információ
     const matchInfoEl = document.getElementById('tvMatchInfo');
@@ -39,7 +55,7 @@ function tvKijelzoFrissites() {
         kataView.style.display = isKata ? 'flex' : 'none';
     }
 
-    // 4. KUMITE adatok frissítése
+    // 4. KUMITE adatok, hosszabbítás és mérlegelés fázis frissítése
     const akaNameEl = document.getElementById('tvAkaName');
     const shiroNameEl = document.getElementById('tvShiroName');
     const akaScoreEl = document.getElementById('tvAkaScore');
@@ -47,6 +63,8 @@ function tvKijelzoFrissites() {
     const akaPenEl = document.getElementById('tvAkaPenalties');
     const shiroPenEl = document.getElementById('tvShiroPenalties');
     const timerEl = document.getElementById('tvTimer');
+    const roundBadgeEl = document.getElementById('tvRoundBadge');
+    const ruleLabelEl = document.getElementById('tvRuleLabel');
 
     if (akaNameEl) akaNameEl.innerText = adatok.akaName || 'AKA Versenyző';
     if (shiroNameEl) shiroNameEl.innerText = adatok.shiroName || 'SHIRO Versenyző';
@@ -61,6 +79,34 @@ function tvKijelzoFrissites() {
     }
     if (timerEl) {
         timerEl.innerText = adatok.timer || '02:00';
+        const rem = parseInt(adatok.remainingSeconds);
+        if (!isNaN(rem) && rem > 0 && rem <= 15 && adatok.roundCode !== 'MERLEGELES') {
+            timerEl.classList.add('warning-15s');
+        } else {
+            timerEl.classList.remove('warning-15s');
+        }
+    }
+
+    if (roundBadgeEl) {
+        const rLabel = adatok.roundLabel || 'ALAPIDŐ';
+        roundBadgeEl.innerText = rLabel;
+        if (adatok.roundCode && adatok.roundCode !== 'ALAP') {
+            roundBadgeEl.classList.add('overtime');
+        } else {
+            roundBadgeEl.classList.remove('overtime');
+        }
+    }
+
+    if (ruleLabelEl) {
+        if (adatok.roundCode === 'MERLEGELES' && (adatok.weighInAkaKg || adatok.weighInShiroKg)) {
+            ruleLabelEl.style.display = 'block';
+            ruleLabelEl.innerText = `AKA: ${adatok.weighInAkaKg || '?'} kg  |  SHIRO: ${adatok.weighInShiroKg || '?'} kg`;
+        } else if (adatok.ruleLabel) {
+            ruleLabelEl.style.display = 'block';
+            ruleLabelEl.innerText = adatok.ruleLabel;
+        } else {
+            ruleLabelEl.style.display = 'none';
+        }
     }
 
     // 5. KATA adatok frissítése

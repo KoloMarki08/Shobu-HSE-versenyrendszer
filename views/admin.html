@@ -9,7 +9,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261105_v4">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261107_v6">
 </head>
 
 <body>
@@ -36,10 +36,14 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
                 Bírói Vezérlőpult
             </a>
-            <a href="audience.html" class="btn btn-outline" target="_blank" title="Nézők és edzők számára látható élő eredménykövető oldal megnyitása">
+            <a id="adminAktivVersenyEloLink" href="audience.html" class="btn btn-outline" target="_blank" title="Nézők és edzők számára látható élő eredménykövető oldal megnyitása">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 Élő Nézői / Edzői Oldal
             </a>
+            <button type="button" class="btn btn-outline-blue" onclick="nyitAdminQrPlakat()" title="Nyomtatható A4 csarnok QR-plakát az aktuális verseny élő követéséhez és a „Mikor küzdök?” időbecslőhöz">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+                Csarnok QR-Plakát
+            </button>
             <button class="btn btn-outline" onclick="nagyTesztAdatbazisReset()" title="Minden adat törlése és a gyári minta-versenyzők újratöltése">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                 Gyári Mintaadatok Betöltése
@@ -50,204 +54,25 @@
 
     <main class="admin-container">
 
-        <!-- 1. BLOKK: AKTÍV (SZERKESZTÉS ALATT ÁLLÓ) VERSENY VÁLASZTÓ ÉS VEZÉRLŐSÁV -->
-        <div id="adminAktivVersenyBar" class="pro-card" style="padding: 18px 22px; margin-bottom: 20px; border: 2px solid #18181B; background: #FFFFFF;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #E4E0D7;">
-                <div>
-                    <div style="font-size: 0.78rem; font-weight: 800; color: #52525B; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px;">
-                        1. FONTOS TUDNIVALÓ: MELYIK VERSENYT KEZELED MOST?
-                    </div>
-                    <div style="font-size: 0.94rem; color: #27272A;">
-                        Az alábbi legördülő listában kiválasztott verseny adatait (versenyzőit, kategóriáit, sorsolását) látod és szerkeszted az oldalon.
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-outline" style="padding: 9px 14px; font-size: 0.86rem;" onclick="ugorjVersenyekFulre()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Új verseny meghirdetése / Versenyek listája
-                    </button>
-                    <a id="adminAktivVersenyEloLink" href="audience.html" target="_blank" class="btn btn-outline-blue" style="padding: 9px 14px; font-size: 0.86rem;">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                        Ezen verseny élő nézői oldala
-                    </a>
-                </div>
-            </div>
-
+        <!-- AKTÍV VERSENY VÁLASZTÓ SÁV -->
+        <div id="adminAktivVersenyBar" class="pro-card" style="padding: 14px 20px; margin-bottom: 18px; border: 2px solid #18181B; background: #FFFFFF; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <span style="background: #18181B; color: #FAF8F5; padding: 8px 14px; border-radius: 7px; font-weight: 800; font-size: 0.84rem; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 7px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                    KIVÁLASZTOTT VERSENY:
+                    AKTÍV VERSENY:
                 </span>
                 <select id="adminAktivVersenySelect" class="input-field" style="min-width: 310px; font-weight: 800; font-size: 1.02rem; border-color: #18181B;" onchange="adminValtsAktivVersenyt(this.value)"></select>
-                <div id="adminAktivVersenyMeta" style="font-size: 0.88rem; color: #52525B; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"></div>
             </div>
-        </div>
-
-        <!-- 2. BLOKK: LÉPÉSRŐL LÉPÉSRE FOLYAMATJELZŐ ÉS GYORS ÚTMUTATÓ -->
-        <div class="admin-workflow-guide">
-            <div class="admin-workflow-header">
-                <div class="admin-workflow-title">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    Hogyan kell használni az Admin Központot? – Sorrendi útmutató (Kattints bármelyik lépésre!)
-                </div>
-                <div class="admin-workflow-subtitle">
-                    Haladj balról jobbra az 1–5. lépéseken! Bármelyik kártyára rákattinthatsz a megnyitáshoz.
-                </div>
-            </div>
-
-            <div class="admin-workflow-steps">
-                <button type="button" class="admin-step-card" data-tab="tab-versenyek" onclick="ugorjAdminTabra('tab-versenyek', false)">
-                    <div class="admin-step-top">
-                        <span class="admin-step-badge">Alaplépés</span>
-                        <span class="admin-step-stat" id="stepStatVersenyek">1 verseny</span>
-                    </div>
-                    <div class="admin-step-name">Versenyek & Kiírás</div>
-                    <div class="admin-step-desc">Új verseny meghirdetése, dátum, plakát és PDF kiírás.</div>
-                </button>
-
-                <button type="button" class="admin-step-card active" data-tab="tab-versenyzok" onclick="ugorjAdminTabra('tab-versenyzok', false)">
-                    <div class="admin-step-top">
-                        <span class="admin-step-badge">1. Lépés</span>
-                        <span class="admin-step-stat" id="stepStatVersenyzok">0 fő</span>
-                    </div>
-                    <div class="admin-step-name">Versenyzők Felvétele</div>
-                    <div class="admin-step-desc">Indulók rögzítése (név, klub, súly, öv) és nevezés lezárása.</div>
-                </button>
-
-                <button type="button" class="admin-step-card" data-tab="tab-kategoriak" onclick="ugorjAdminTabra('tab-kategoriak', false)">
-                    <div class="admin-step-top">
-                        <span class="admin-step-badge">2. Lépés</span>
-                        <span class="admin-step-stat" id="stepStatKategoriak">0 kat.</span>
-                    </div>
-                    <div class="admin-step-name">Kategóriák & Súlybontás</div>
-                    <div class="admin-step-desc">Korcsoportok megadása és Kumite súlycsoportokra bontás.</div>
-                </button>
-
-                <button type="button" class="admin-step-card" data-tab="tab-nevezesek" onclick="ugorjAdminTabra('tab-nevezesek', false)">
-                    <div class="admin-step-top">
-                        <span class="admin-step-badge">3. Lépés</span>
-                        <span class="admin-step-stat" id="stepStatNevezesek">0 nevezés</span>
-                    </div>
-                    <div class="admin-step-name">Nevezések Ellenőrzése</div>
-                    <div class="admin-step-desc">Ki melyik kategóriában indul? Utólagos pótlás vagy törlés.</div>
-                </button>
-
-                <button type="button" class="admin-step-card" data-tab="tab-tatamik" onclick="ugorjAdminTabra('tab-tatamik', false)">
-                    <div class="admin-step-top">
-                        <span class="admin-step-badge">4. Lépés</span>
-                        <span class="admin-step-stat" id="stepStatMeccsek">0 meccs</span>
-                    </div>
-                    <div class="admin-step-name">Tatamik & Sorsolás</div>
-                    <div class="admin-step-desc">Kategóriák kisorsolása a küzdőterekre és menetrend.</div>
-                </button>
-
-                <button type="button" class="admin-step-card" data-tab="tab-agrajz" onclick="ugorjAdminTabra('tab-agrajz', false)">
-                    <div class="admin-step-top">
-                        <span class="admin-step-badge">5. Lépés</span>
-                        <span class="admin-step-stat" id="stepStatAgrajz">Ágrajzok</span>
-                    </div>
-                    <div class="admin-step-name">Ágrajzok & Nyomtatás</div>
-                    <div class="admin-step-desc">Kész ágrajzok és Kata ranglisták megtekintése, nyomtatása.</div>
-                </button>
-            </div>
-        </div>
-
-        <!-- 3. BLOKK: ÉLŐ STATISZTIKAI IRÁNYÍTÓPULT (KATTINTHATÓ KPI KÁRTYÁK) -->
-        <div class="kpi-grid">
-            <div class="kpi-card clickable-kpi" onclick="ugorjAdminTabra('tab-versenyzok', true)" title="Kattints ide a Versenyzők fül megnyitásához">
-                <div>
-                    <div class="kpi-label">1. Regisztrált Versenyzők</div>
-                    <div class="kpi-num" id="kpiVersenyzok">0</div>
-                    <div class="kpi-action-hint">Megnyitás: Versenyzők &rarr;</div>
-                </div>
-                <div class="kpi-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-            </div>
-            <div class="kpi-card clickable-kpi" onclick="ugorjAdminTabra('tab-kategoriak', true)" title="Kattints ide a Kategóriák fül megnyitásához">
-                <div>
-                    <div class="kpi-label">2. Meghirdetett Kategóriák</div>
-                    <div class="kpi-num" id="kpiKategoriak">0</div>
-                    <div class="kpi-action-hint">Megnyitás: Kategóriák &rarr;</div>
-                </div>
-                <div class="kpi-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                </div>
-            </div>
-            <div class="kpi-card clickable-kpi" onclick="ugorjAdminTabra('tab-nevezesek', true)" title="Kattints ide a Nevezések fül megnyitásához">
-                <div>
-                    <div class="kpi-label">3. Leadott Nevezések</div>
-                    <div class="kpi-num" id="kpiNevezesek">0</div>
-                    <div class="kpi-action-hint">Megnyitás: Nevezések &rarr;</div>
-                </div>
-                <div class="kpi-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
-                </div>
-            </div>
-            <div class="kpi-card clickable-kpi" onclick="ugorjAdminTabra('tab-tatamik', true)" title="Kattints ide a Tatamik és Sorsolás fül megnyitásához">
-                <div>
-                    <div class="kpi-label">4. Mérkőzések (Kész / Összes)</div>
-                    <div class="kpi-num" id="kpiMeccsek">0 / 0</div>
-                    <div class="kpi-action-hint">Megnyitás: Sorsolás &rarr;</div>
-                </div>
-                <div class="kpi-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. BLOKK: GYORS FÜLVÁLASZTÓ ÉS LENYITHATÓ MENÜVEZÉRLŐ SÁV -->
-        <div id="adminTabsAnchor" class="admin-tabs">
-            <button class="tab-btn" data-tab="tab-versenyek" onclick="openTab(event, 'tab-versenyek')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                0. Versenyek Létrehozása
-            </button>
-            <button class="tab-btn active" data-tab="tab-versenyzok" onclick="openTab(event, 'tab-versenyzok')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                1. Versenyzők & Gyorsnevezés
-            </button>
-            <button class="tab-btn" data-tab="tab-kategoriak" onclick="openTab(event, 'tab-kategoriak')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
-                2. Kategóriák & Súlybontás
-            </button>
-            <button class="tab-btn" data-tab="tab-nevezesek" onclick="openTab(event, 'tab-nevezesek')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-                3. Nevezések Kezelése
-            </button>
-            <button class="tab-btn" data-tab="tab-tatamik" onclick="openTab(event, 'tab-tatamik')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><polyline points="18 2 22 6 18 10"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><polyline points="18 14 22 18 18 22"/></svg>
-                4. Tatamik & Sorsolás
-            </button>
-            <button class="tab-btn" data-tab="tab-agrajz" onclick="openTab(event, 'tab-agrajz')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-                5. Ágrajzok & Nyomtatás
-            </button>
-        </div>
-
-        <div class="admin-accordion-toolbar">
-            <div style="font-size: 0.92rem; color: #27272A; display: flex; align-items: center; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#18181B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                <span><strong>Lenyitható menük és fülek:</strong> Bármelyik lenti menüsávra (0–5. főmenü) vagy belső részfeladatra (A, B, C, D) rákattintva <strong>lenyithatod vagy összecsukhatod</strong> a tartalmát!</span>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-outline" style="padding: 7px 13px; font-size: 0.83rem;" onclick="expandAllAdminTabs()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    Összes menü lenyitása
-                </button>
-                <button type="button" class="btn btn-outline" style="padding: 7px 13px; font-size: 0.83rem;" onclick="collapseAllAdminTabs()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-                    Összes menü összecsukása
-                </button>
-            </div>
+            <div id="adminAktivVersenyMeta" style="font-size: 0.88rem; color: #52525B; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"></div>
         </div>
 
         <!-- =====================================================================
-             0. FÜL: VERSENYEK LÉTREHOZÁSA, PLAKÁT ÉS VERSENYKIÍRÁS KEZELÉSE
+             1. MENÜ: VERSENYEK LÉTREHOZÁSA, PLAKÁT ÉS VERSENYKIÍRÁS KEZELÉSE
              ===================================================================== -->
         <div class="admin-accordion-panel">
             <button type="button" class="admin-accordion-header" aria-expanded="false" onclick="toggleAccordionTab('tab-versenyek', event)">
                 <div class="admin-accordion-left">
-                    <span class="admin-acc-step-pill">0. MENÜ</span>
+                    <span class="admin-acc-step-pill">1. MENÜ</span>
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
@@ -265,23 +90,13 @@
                 </div>
             </button>
         <section id="tab-versenyek" class="tab-content pro-card" style="display: none;">
-            <div class="admin-help-banner">
-                <div class="admin-help-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                </div>
-                <div class="admin-help-text">
-                    <strong>Mire való ez a fül?</strong> Itt tudsz <strong>új versenyt meghirdetni</strong> (plakáttal és letölthető PDF versenykiírással együtt), vagy a lenti táblázatban <strong>átváltani egy másik verseny szerkesztésére</strong>. Minden verseny külön versenyzői névsorral és sorsolással rendelkezik.
-                </div>
-            </div>
-
             <!-- A) ÚJ VERSENY MEGHIRDETÉSE -->
             <div class="admin-section-box">
                 <div class="admin-section-header">
                     <h3 class="admin-section-title">
-                        <span class="admin-section-num">A) LÉPÉS</span>
+                        <span class="admin-section-num">A) ŰRLAP</span>
                         Új Verseny Meghirdetése és Közzététele
                     </h3>
-                    <small style="color: #52525B; font-weight: 600;">Töltsd ki az adatokat, majd nyomd meg a „Verseny Létrehozása & Közzététele” gombot!</small>
                 </div>
 
                 <div class="add-form-container" style="flex-direction: column; align-items: stretch; gap: 14px; margin-bottom: 0;">
@@ -371,55 +186,33 @@
                     <tbody id="adminVersenyekTbody"></tbody>
                 </table>
             </div>
-
-            <div class="admin-step-nav-footer">
-                <span style="color: #52525B; font-size: 0.9rem; font-weight: 600;">Ha kiválasztottad a versenyt, lépj tovább a versenyzők felvételéhez:</span>
-                <button type="button" class="btn btn-outline-green" onclick="ugorjAdminTabra('tab-versenyzok', true)">
-                    Tovább az 1. lépésre: Versenyzők Felvétele &rarr;
-                </button>
-            </div>
         </section>
         </div>
 
         <!-- =====================================================================
-             1. FÜL: VERSENYZŐK + TÖBBSZÖRÖS KATEGÓRIA BEPIPÁLÁS
+             2. MENÜ: VERSENYZŐK + TÖBBSZÖRÖS KATEGÓRIA BEPIPÁLÁS
              ===================================================================== -->
-        <div class="admin-accordion-panel open">
-            <button type="button" class="admin-accordion-header" aria-expanded="true" onclick="toggleAccordionTab('tab-versenyzok', event)">
+        <div class="admin-accordion-panel">
+            <button type="button" class="admin-accordion-header" aria-expanded="false" onclick="toggleAccordionTab('tab-versenyzok', event)">
                 <div class="admin-accordion-left">
-                    <span class="admin-acc-step-pill">1. MENÜ</span>
+                    <span class="admin-acc-step-pill">2. MENÜ</span>
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             Versenyzők Felvétele, Keresése és Gyorsnevezés
                         </span>
-                        <span class="admin-acc-subtitle">Indulók rögzítése (név, klub, súly, övfokozat), kategória-bepipálás és nevezés lezárása</span>
+                        <span class="admin-acc-subtitle">Indulók rögzítése (név, klub, súly, övfokozat) és azonnali kategória-bepipálás</span>
                     </div>
                 </div>
                 <div class="admin-accordion-right">
                     <span class="admin-acc-count-badge" id="accBadgeVersenyzok">0 fő</span>
                     <span class="admin-acc-toggle-pill">
-                        <span class="acc-toggle-text">Bezárás</span>
+                        <span class="acc-toggle-text">Lenyitás</span>
                         <svg class="admin-acc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </span>
                 </div>
             </button>
-        <section id="tab-versenyzok" class="tab-content active pro-card">
-            <div class="admin-help-banner">
-                <div class="admin-help-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
-                </div>
-                <div class="admin-help-text">
-                    <strong>1. LÉPÉS – Mire való ez a fül?</strong> Itt veheted fel a versenyen induló <strong>versenyzőket</strong> (név, egyesület, övfokozat, testsúly, születési év), és rögtön be is pipálhatod, melyik kategóriában indulnak. Ha végeztél a nevezésekkel, a <strong>„Nevezés Lezárása”</strong> gombbal lezárhatod a jelentkezést.
-                </div>
-            </div>
-
-            <!-- NEVEZÉSI STÁTUSZ ÉS LEZÁRÁS SÁV -->
-            <div class="nevezes-zarolas-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: #FAF8F5; border: 1.5px solid #CFC9BC; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;">
-                <div class="nevezes-zarolas-status" style="display: flex; align-items: center; gap: 10px; font-size: 0.94rem; color: #18181B;"></div>
-                <button type="button" class="btn btn-outline nevezes-zarolas-btn" onclick="toggleNevezesZarolas()"></button>
-            </div>
-
+        <section id="tab-versenyzok" class="tab-content pro-card" style="display: none;">
             <!-- A) ÚJ VERSENYZŐ FELVÉTELE -->
             <div class="admin-section-box">
                 <div class="admin-section-header">
@@ -427,7 +220,6 @@
                         <span class="admin-section-num">A) ŰRLAP</span>
                         Új Versenyző Felvétele és Azonnali Benevezése
                     </h3>
-                    <small style="color: #52525B; font-weight: 600;">Írd be a versenyző adatait, pipáld be a kategóriáját, majd nyomd meg a „Versenyző Mentése” gombot!</small>
                 </div>
 
                 <div id="adminVersenyzoNevezesForm" class="add-form-container" style="margin-bottom: 0;">
@@ -498,25 +290,16 @@
                     <tbody id="versenyzokTbody"></tbody>
                 </table>
             </div>
-
-            <div class="admin-step-nav-footer">
-                <button type="button" class="btn btn-outline" onclick="ugorjAdminTabra('tab-versenyek', true)">
-                    &larr; Vissza a 0. lépésre: Versenyek
-                </button>
-                <button type="button" class="btn btn-outline-green" onclick="ugorjAdminTabra('tab-kategoriak', true)">
-                    Tovább a 2. lépésre: Kategóriák & Súlycsoport-bontás &rarr;
-                </button>
-            </div>
         </section>
         </div>
 
         <!-- =====================================================================
-             2. FÜL: KATEGÓRIÁK ÉS SÚLYCSOPORT-BONTÓ
+             3. MENÜ: KATEGÓRIÁK ÉS SÚLYCSOPORT-BONTÓ
              ===================================================================== -->
         <div class="admin-accordion-panel">
             <button type="button" class="admin-accordion-header" aria-expanded="false" onclick="toggleAccordionTab('tab-kategoriak', event)">
                 <div class="admin-accordion-left">
-                    <span class="admin-acc-step-pill">2. MENÜ</span>
+                    <span class="admin-acc-step-pill">3. MENÜ</span>
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
@@ -534,15 +317,6 @@
                 </div>
             </button>
         <section id="tab-kategoriak" class="tab-content pro-card" style="display: none;">
-            <div class="admin-help-banner">
-                <div class="admin-help-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
-                </div>
-                <div class="admin-help-text">
-                    <strong>2. LÉPÉS – Mire való ez a fül?</strong> Itt láthatod a meghirdetett <strong>versenykategóriákat</strong>. A <strong>B) Súlycsoport-bontóval</strong> a népes Kumite kategóriákat 1 kattintással szétoszthatod súlycsoportokra (pl. -60 kg, -70 kg, +70 kg) – a gép automatikusan átsorolja a versenyzőket és törli az üresen maradt alap kategóriát!
-                </div>
-            </div>
-
             <!-- A) ÚJ KATEGÓRIA LÉTREHOZÁSA KÉZZEL -->
             <div class="admin-section-box">
                 <div class="admin-section-header">
@@ -660,25 +434,16 @@
                     <tbody id="kategoriakTbody"></tbody>
                 </table>
             </div>
-
-            <div class="admin-step-nav-footer">
-                <button type="button" class="btn btn-outline" onclick="ugorjAdminTabra('tab-versenyzok', true)">
-                    &larr; Vissza az 1. lépésre: Versenyzők
-                </button>
-                <button type="button" class="btn btn-outline-green" onclick="ugorjAdminTabra('tab-nevezesek', true)">
-                    Tovább a 3. lépésre: Nevezések Ellenőrzése &rarr;
-                </button>
-            </div>
         </section>
         </div>
 
         <!-- =====================================================================
-             3. FÜL: NEVEZÉSEK KEZELÉSE
+             4. MENÜ: NEVEZÉSEK KEZELÉSE
              ===================================================================== -->
         <div class="admin-accordion-panel">
             <button type="button" class="admin-accordion-header" aria-expanded="false" onclick="toggleAccordionTab('tab-nevezesek', event)">
                 <div class="admin-accordion-left">
-                    <span class="admin-acc-step-pill">3. MENÜ</span>
+                    <span class="admin-acc-step-pill">4. MENÜ</span>
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
@@ -696,21 +461,6 @@
                 </div>
             </button>
         <section id="tab-nevezesek" class="tab-content pro-card" style="display: none;">
-            <div class="admin-help-banner">
-                <div class="admin-help-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-                </div>
-                <div class="admin-help-text">
-                    <strong>3. LÉPÉS – Mire való ez a fül?</strong> Itt ellenőrizheted az összes leadott <strong>nevezést</strong> (ki melyik kategóriában indul). Ha egy már felvett versenyzőt szeretnél még egy további kategóriába (pl. Kumite mellé Katába is) benevezni, vagy egy téves nevezést törölni, itt megteheted.
-                </div>
-            </div>
-
-            <!-- NEVEZÉSI STÁTUSZ ÉS LEZÁRÁS SÁV -->
-            <div class="nevezes-zarolas-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: #FAF8F5; border: 1.5px solid #CFC9BC; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;">
-                <div class="nevezes-zarolas-status" style="display: flex; align-items: center; gap: 10px; font-size: 0.94rem; color: #18181B;"></div>
-                <button type="button" class="btn btn-outline nevezes-zarolas-btn" onclick="toggleNevezesZarolas()"></button>
-            </div>
-
             <!-- A) UTÓLAGOS BENEVEZÉS -->
             <div class="admin-section-box">
                 <div class="admin-section-header">
@@ -758,25 +508,16 @@
                     <tbody id="nevezesekTbody"></tbody>
                 </table>
             </div>
-
-            <div class="admin-step-nav-footer">
-                <button type="button" class="btn btn-outline" onclick="ugorjAdminTabra('tab-kategoriak', true)">
-                    &larr; Vissza a 2. lépésre: Kategóriák
-                </button>
-                <button type="button" class="btn btn-outline-green" onclick="ugorjAdminTabra('tab-tatamik', true)">
-                    Tovább a 4. lépésre: Tatamik & Sorsolás &rarr;
-                </button>
-            </div>
         </section>
         </div>
 
         <!-- =====================================================================
-             4. FÜL: TATAMIK ÉS SORSOLÁS
+             5. MENÜ: TATAMIK ÉS SORSOLÁS
              ===================================================================== -->
         <div class="admin-accordion-panel">
             <button type="button" class="admin-accordion-header" aria-expanded="false" onclick="toggleAccordionTab('tab-tatamik', event)">
                 <div class="admin-accordion-left">
-                    <span class="admin-acc-step-pill">4. MENÜ</span>
+                    <span class="admin-acc-step-pill">5. MENÜ</span>
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><polyline points="18 2 22 6 18 10"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><polyline points="18 14 22 18 18 22"/></svg>
@@ -794,16 +535,6 @@
                 </div>
             </button>
         <section id="tab-tatamik" class="tab-content pro-card" style="display: none;">
-            <div class="admin-help-banner">
-                <div class="admin-help-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><polyline points="18 2 22 6 18 10"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><polyline points="18 14 22 18 18 22"/></svg>
-                </div>
-                <div class="admin-help-text">
-                    <strong>4. LÉPÉS – Mire való ez a fül?</strong> Itt oszthatod be a kategóriákat a <strong>küzdőterekre (Tatami A, B, C)</strong> és készítheted el a <strong>sorsolást</strong>.<br>
-                    <strong>Hivatalos Kyokushin Kumite szabály a rendszerben:</strong> <strong>5 főnél vagy 5 fő alatt (2, 3, 4 vagy 5 induló)</strong> automatikusan <strong>Körmérkőzés</strong> (mindenki küzd mindenkivel), <strong>5 fő felett (6+ indulótól)</strong> pedig <strong>Egyenes kiesés</strong> (ágrajz) készül!
-                </div>
-            </div>
-
             <!-- A) KÜZDŐTEREK (TATAMIK) KEZELÉSE -->
             <div class="admin-section-box">
                 <div class="admin-section-header">
@@ -920,25 +651,16 @@
                     <tbody id="merkozesekTbody"></tbody>
                 </table>
             </div>
-
-            <div class="admin-step-nav-footer">
-                <button type="button" class="btn btn-outline" onclick="ugorjAdminTabra('tab-nevezesek', true)">
-                    &larr; Vissza a 3. lépésre: Nevezések
-                </button>
-                <button type="button" class="btn btn-outline-green" onclick="ugorjAdminTabra('tab-agrajz', true)">
-                    Tovább az 5. lépésre: Ágrajzok & Nyomtatás &rarr;
-                </button>
-            </div>
         </section>
         </div>
 
         <!-- =====================================================================
-             5. FÜL: VIZUÁLIS ÁGRAJZ ÉS KATA RANGLISTA
+             6. MENÜ: VIZUÁLIS ÁGRAJZ ÉS KATA RANGLISTA
              ===================================================================== -->
         <div class="admin-accordion-panel">
             <button type="button" class="admin-accordion-header" aria-expanded="false" onclick="toggleAccordionTab('tab-agrajz', event)">
                 <div class="admin-accordion-left">
-                    <span class="admin-acc-step-pill">5. MENÜ</span>
+                    <span class="admin-acc-step-pill">6. MENÜ</span>
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
@@ -956,15 +678,6 @@
                 </div>
             </button>
         <section id="tab-agrajz" class="tab-content pro-card" style="display: none;">
-            <div class="admin-help-banner">
-                <div class="admin-help-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-                </div>
-                <div class="admin-help-text">
-                    <strong>5. LÉPÉS – Mire való ez a fül?</strong> Itt tekintheted meg és <strong>nyomtathatod ki</strong> bármelyik kisorsolt kategória hivatalos <strong>egyenes kieséses ágrajzát</strong>, körmérkőzés-tábláját vagy Kata pontozólistáját. Csak válaszd ki a kategóriát a legördülő menüből!
-                </div>
-            </div>
-
             <div class="admin-section-box" style="margin-bottom: 0;">
                 <div class="admin-section-header">
                     <h3 class="admin-section-title">
@@ -985,25 +698,15 @@
 
                 <div id="bracketContainer"></div>
             </div>
-
-            <div class="admin-step-nav-footer">
-                <button type="button" class="btn btn-outline" onclick="ugorjAdminTabra('tab-tatamik', true)">
-                    &larr; Vissza a 4. lépésre: Tatamik & Sorsolás
-                </button>
-                <a href="biroi_panel.html" class="btn btn-outline-blue">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-                    Tovább a Bírói Vezérlőpultra (Mérkőzések Levezetése) &rarr;
-                </a>
-            </div>
         </section>
         </div>
 
     </main>
 
-    <script src="../JS/core.js?v=20261105_v4"></script>
-    <script src="../JS/auth.js?v=20261105_v4"></script>
-    <script src="../JS/tabs.js?v=20261105_v4"></script>
-    <script src="../JS/admin_adatok.js?v=20261105_v4"></script>
+    <script src="../JS/core.js?v=20261107_v6"></script>
+    <script src="../JS/auth.js?v=20261107_v6"></script>
+    <script src="../JS/tabs.js?v=20261107_v6"></script>
+    <script src="../JS/admin_adatok.js?v=20261107_v6"></script>
 </body>
 
 </html>

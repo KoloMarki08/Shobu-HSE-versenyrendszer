@@ -4,8 +4,24 @@ let exNevezesek = [];
 let exTatamik = [];
 let exMeccsek = [];
 
+let extraLiveDebounce = null;
+
 window.addEventListener('DOMContentLoaded', async function() {
     await extraAdatokBetoltese();
+
+    if (window.TatamiMaster && typeof TatamiMaster.initLiveSync === 'function') {
+        TatamiMaster.initLiveSync({ tatamiFigyeles: false });
+        TatamiMaster.on('liveAdatValtozott', function() {
+            if (extraLiveDebounce) clearTimeout(extraLiveDebounce);
+            extraLiveDebounce = setTimeout(function() {
+                const aktiv = document.activeElement;
+                if (aktiv && (aktiv.tagName === 'INPUT' || aktiv.tagName === 'SELECT' || aktiv.tagName === 'TEXTAREA')) {
+                    return;
+                }
+                extraAdatokBetoltese();
+            }, 350);
+        });
+    }
 });
 
 async function extraAdatokBetoltese() {
@@ -347,11 +363,11 @@ function initNevezesPage() {
 
 async function gyorsSulyMentes(id) {
     let v = exVersenyzok.find(x => x.id === id);
-    let ujSuly = parseInt(document.getElementById('gyorsSuly_' + id).value);
+    let ujSuly = parseFloat(document.getElementById('gyorsSuly_' + id).value);
     if (!v || isNaN(ujSuly)) return;
     v.weight = ujSuly;
     await TatamiMaster.apiSend('Competitors/' + id, 'PUT', v);
-    alert(`${v.name} mérlegelt súlya (${ujSuly} kg) elmentve!`);
+    TatamiMaster.toast(`${v.name} mérlegelt súlya (${ujSuly} kg) elmentve!`);
     await extraAdatokBetoltese();
 }
 

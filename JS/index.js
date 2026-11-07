@@ -1,5 +1,17 @@
+let indexLiveDebounce = null;
+
 window.onload = function() {
     versenyekBetoltese();
+
+    if (window.TatamiMaster && typeof TatamiMaster.initLiveSync === 'function') {
+        TatamiMaster.initLiveSync({ tatamiFigyeles: false });
+        TatamiMaster.on('liveAdatValtozott', function() {
+            if (indexLiveDebounce) clearTimeout(indexLiveDebounce);
+            indexLiveDebounce = setTimeout(function() {
+                versenyekBetoltese();
+            }, 350);
+        });
+    }
 };
 
 function toggleVersenyekPanel() {

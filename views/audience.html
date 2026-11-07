@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="copyright" content="© 2026 TATAMI MASTER™ - Shobu HSE. Minden jog fenntartva (All Rights Reserved).">
     <meta name="application-name" content="TATAMI MASTER™">
-    <title>TATAMI MASTER™ - Élő Követés & Edzői Felület</title>
+    <title>TATAMI MASTER™ - Élő Követés, „Mikor küzdök?” &amp; Edzői Felület</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/stlye.css?v=20261105_v4">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261105_v4">
+    <link rel="stylesheet" href="../CSS/stlye.css?v=20261107_v6">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261107_v6">
 </head>
 <body>
-    <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 28px;">
+    <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; flex-wrap: wrap; gap: 10px;">
         <h1>
             <svg class="tm-brand-logo" width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TATAMI MASTER™ Hivatalos Védjegy Logó">
                 <polygon points="19,2 45,2 62,19 62,45 45,62 19,62 2,45 2,19" fill="#18181B" stroke="#FAF8F5" stroke-width="2.5" stroke-linejoin="round"/>
@@ -23,10 +23,18 @@
                 <path d="M32 24.5V46" stroke="#FAF8F5" stroke-width="2.8" stroke-linecap="round"/>
                 <path d="M22.5 41.5V29.5L32 37.5L41.5 29.5V41.5" stroke="#FAF8F5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <em>TATAMI MASTER<sup class="tm-trademark" title="TATAMI MASTER™ – Védjegyoltalom alatt álló márkanév és logó">™</sup></em> <span class="red-text" id="audienceHeaderSub">ÉLŐ KÖVETÉS & ÁGRAJZOK</span>
+            <em>TATAMI MASTER<sup class="tm-trademark" title="TATAMI MASTER™ – Védjegyoltalom alatt álló márkanév és logó">™</sup></em> <span class="red-text" id="audienceHeaderSub">ÉLŐ KÖVETÉS &amp; ÁGRAJZOK</span>
         </h1>
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span id="audienceLiveSyncBadge" style="background: rgba(250, 248, 245, 0.14); color: #FAF8F5; border: 1px solid rgba(250, 248, 245, 0.28); padding: 6px 11px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; display: inline-block;"></span>
+                <span>ÉLŐ ADATKAPCSOLAT</span>
+            </span>
             <span id="loggedCoachBadge" style="display: none; background: rgba(250, 248, 245, 0.14); color: #FAF8F5; border: 1px solid rgba(250, 248, 245, 0.25); padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;"></span>
+            <button type="button" class="btn btn-outline" onclick="nyitAudienceQrPlakat()" title="Nyomtatható csarnok QR-plakát megnyitása">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+                QR-Plakát
+            </button>
             <button class="btn btn-outline" onclick="TatamiMaster.kijelentkezes()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 Kilépés a főoldalra
@@ -39,7 +47,7 @@
         <!-- ========================================================= -->
         <!-- AKTÍV VERSENY FEJLÉC ÉS VERSENYVÁLASZTÓ SÁV               -->
         <!-- ========================================================= -->
-        <div id="audienceVersenyBar" class="pro-card" style="padding: 18px 22px; margin-bottom: 24px; border: 1.5px solid #18181B; background: #FFFFFF; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div id="audienceVersenyBar" class="pro-card" style="padding: 18px 22px; margin-bottom: 22px; border: 1.5px solid #18181B; background: #FFFFFF; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1;">
                 <div id="audienceVersenyPlakatBox" style="display: none;"></div>
                 <div>
@@ -63,7 +71,7 @@
         <!-- ========================================================= -->
         <!-- EDZŐI (COACH) ÉS ADMIN NEVEZÉSI KÖZPONT (MONOKRÓM)        -->
         <!-- ========================================================= -->
-        <div id="edzoiNevezesPanel" class="pro-card" style="display: none; margin-bottom: 30px;">
+        <div id="edzoiNevezesPanel" class="pro-card" style="display: none; margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                 <h2 style="margin: 0; color: #18181B; display: flex; align-items: center; gap: 10px;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -104,7 +112,7 @@
 
                     <button class="btn btn-outline-green" style="padding: 10px 20px;" onclick="coachUjVersenyzoEsNevezes()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        Versenyző Felvétele & Benevezése a kijelölt kategóriákba
+                        Versenyző Felvétele &amp; Benevezése a kijelölt kategóriákba
                     </button>
                 </div>
 
@@ -147,11 +155,43 @@
         </div>
 
         <!-- ========================================================= -->
-        <!-- NÉZŐI ÉS EDZŐI ÉLŐ KÖVETÉS (MINDENKINEK LÁTHATÓ)          -->
+        <!-- „MIKOR KÜZDÖK?” ÉLŐ SZÓLÍTÁS- ÉS VÁRAKOZÁSI IDŐ BECSLŐ    -->
+        <!-- ========================================================= -->
+        <div id="mikorKuzdokCard" class="pro-card" style="margin-bottom: 26px; border: 2px solid #18181B; background: #FFFFFF;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #E4E0D7; margin-bottom: 14px;">
+                <div>
+                    <h2 style="margin: 0; color: #18181B; display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>„Mikor küzdök?” — Élő Szólítás és Várható Kezdési Idő</span>
+                    </h2>
+                    <div style="font-size: 0.85rem; color: #52525B; margin-top: 3px;">
+                        Keress rá a versenyző vagy klub nevére: azonnal látod a tatamit, a sorszámot, a felkötendő övszínt (AKA / SHIRO) és a becsült perceket!
+                    </div>
+                </div>
+                <button type="button" id="btnSzolitasHangToggle" class="btn btn-outline" onclick="toggleSzolitasHang()" title="Hangjelzés ezen az eszközön, amikor a követett versenyző FELKÉSZÜL vagy TATAMIRA LÉP">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                    <span>Szólítási hangjelzés: BE</span>
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px;">
+                <div style="position: relative; flex: 2; min-width: 240px;">
+                    <input type="text" id="mikorKuzdokKereso" class="input-field" style="width: 100%; padding-left: 36px; font-weight: 700;" placeholder="Írd be a versenyző vagy az egyesület nevét (pl. Kovács vagy Shobu)..." oninput="frissitMikorKuzdokPanel()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <select id="mikorKuzdokVersenyzoSelect" class="input-field" style="flex: 1.2; min-width: 230px; font-weight: 700;" onchange="valasztMikorKuzdokDropdown(this.value)"></select>
+            </div>
+
+            <div id="mikorKuzdokKovetettSav" style="display: none; margin-bottom: 12px;"></div>
+            <div id="mikorKuzdokEredmenyContainer"></div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- NÉZŐI ÉS EDZŐI ÉLŐ TATAMI ÁLLÁS (VALÓS IDEJŰ ÓRÁVAL!)     -->
         <!-- ========================================================= -->
         <h2 style="margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: #18181B;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-            Élő Tatami Beosztás (Most küzd & Felkészül)
+            Élő Tatami Beosztás és Valós Idejű Eredményjelző (Most küzd &amp; Felkészül)
         </h2>
         <div id="audienceTatamiGrid" class="tatami-grid">
             <p style="color: #52525B;">Tatamik állásának betöltése...</p>
@@ -183,8 +223,8 @@
         </div>
     </main>
 
-    <script src="../JS/core.js?v=20261105_v4"></script>
-    <script src="../JS/auth.js?v=20261105_v4"></script>
-    <script src="../JS/audience.js?v=20261105_v4"></script>
+    <script src="../JS/core.js?v=20261107_v6"></script>
+    <script src="../JS/auth.js?v=20261107_v6"></script>
+    <script src="../JS/audience.js?v=20261107_v6"></script>
 </body>
 </html>
