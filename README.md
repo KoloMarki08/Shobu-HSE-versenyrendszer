@@ -124,7 +124,7 @@ Amikor a konzolon megjelenik a `Now listening on: https://localhost:7045` üzene
 
 * **Főoldal & Belépés:** `http://localhost/Shobu-HSE-versenyrendszer/index.html`
 * **Adminisztrációs Központ (0–5. lépéses lenyitható menükkel):** `http://localhost/Shobu-HSE-versenyrendszer/views/admin.html`
-* **Aréna Bírói Vezérlőpult (Kumite korcsoport szerinti hosszabbításokkal, gonggal & Kata pontozással):** `http://localhost/Shobu-HSE-versenyrendszer/views/biroi_panel.html`
+* **Aréna Bírói Vezérlőpult (Kumite korcsoport szerinti hosszabbításokkal & Kata pontozással):** `http://localhost/Shobu-HSE-versenyrendszer/views/biroi_panel.html`
 * **Élő TV Kijelző (2. monitorra / projektorra, valós idejű szinkronnal):** `http://localhost/Shobu-HSE-versenyrendszer/views/tv_kijelzo.html`
 * **OBS Stream Overlay:** `http://localhost/Shobu-HSE-versenyrendszer/views/obs_overlay.html`
 * **Élő Nézői & Edzői Követő Oldal („Mikor küzdök?” időbecslővel és A4 Csarnok QR-Plakáttal):** `http://localhost/Shobu-HSE-versenyrendszer/views/audience.html`

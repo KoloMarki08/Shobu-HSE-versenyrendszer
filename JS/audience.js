@@ -5,12 +5,10 @@ let audNevezesek = [];
 let audTatamik = [];
 let audMeccsek = [];
 
-let szolitasHangBekapcsolva = localStorage.getItem('tatamiSzolitasHang') !== 'false';
 let utolsoSzolitasAllapotMap = {}; // Kulcs: "compId_matchId" -> "MOST" | "FELKESZUL"
 let audFrissitesIdozito = null;
 
 window.onload = function() {
-    frissitSzolitasHangGombUI();
     ellenorizEdzoiMod();
     audienceAdatokBetoltese();
 
@@ -45,27 +43,6 @@ function nyitAudienceQrPlakat() {
     TatamiMaster.nyitQrPlakatModal(aktVerseny);
 }
 
-function toggleSzolitasHang() {
-    szolitasHangBekapcsolva = !szolitasHangBekapcsolva;
-    localStorage.setItem('tatamiSzolitasHang', szolitasHangBekapcsolva ? 'true' : 'false');
-    frissitSzolitasHangGombUI();
-    if (szolitasHangBekapcsolva) {
-        TatamiMaster.lejatszGongHang('szolitas');
-        TatamiMaster.toast("Szólítási hangjelzés bekapcsolva! Hangjelzést kapsz, ha a követett versenyző FELKÉSZÜL vagy TATAMIRA LÉP.");
-    } else {
-        TatamiMaster.toast("Szólítási hangjelzés némítva ezen az eszközön.", "figyelem");
-    }
-}
-
-function frissitSzolitasHangGombUI() {
-    const btn = document.getElementById('btnSzolitasHangToggle');
-    if (!btn) return;
-    btn.innerHTML = szolitasHangBekapcsolva
-        ? `${TatamiMaster.icon('bell', 15)} <span>Szólítási hangjelzés: BE</span>`
-        : `${TatamiMaster.icon('volume-x', 15)} <span>Szólítási hangjelzés: KI</span>`;
-    btn.style.borderColor = szolitasHangBekapcsolva ? '#18181B' : '#CFC9BC';
-}
-
 function lekerKovetettVersenyzoIdk() {
     const vId = TatamiMaster.lekerAktualisVersenyId();
     const tomb = TatamiMaster.safeJsonParse('tatamiKovetettVersenyzok_' + vId, []);
@@ -92,10 +69,7 @@ function toggleVersenyzoKovetes(compId) {
     } else {
         lista.push(id);
         mentKovetettVersenyzoIdk(lista);
-        if (szolitasHangBekapcsolva) {
-            TatamiMaster.lejatszGongHang('szolitas');
-        }
-        TatamiMaster.toast(`${nev} kitűzve! Értesítünk, amint FELKÉSZÜL vagy TATAMIRA LÉP.`);
+        TatamiMaster.toast(`${nev} kitűzve a követett versenyzők közé!`);
     }
     frissitMikorKuzdokPanel();
 }
@@ -475,9 +449,6 @@ function ellenorizKovetettSzolitasRiasztas(kovetettIdk) {
             if ((info.statuszKod === 'MOST' || info.statuszKod === 'FELKESZUL') && elozo !== info.statuszKod) {
                 utolsoSzolitasAllapotMap[kulcs] = info.statuszKod;
                 if (elozo !== undefined) {
-                    if (szolitasHangBekapcsolva) {
-                        TatamiMaster.lejatszGongHang('szolitas');
-                    }
                     const uzenet = info.statuszKod === 'MOST'
                         ? `SZÓLÍTÁS: ${vObj.name} MOST LÉP TATAMIRA (${info.tatamiNev}, #${m.matchOrder}. meccs)!`
                         : `FELKÉSZÜL: ${vObj.name} a KÖVETKEZŐ mérkőzésen küzd (${info.tatamiNev}, #${m.matchOrder}. meccs)!`;
@@ -506,7 +477,7 @@ function frissitMikorKuzdokPanel() {
                 const v = audVersenyzok.find(x => x.id === id);
                 if (!v) return '';
                 return `<span style="background:#18181B;color:#FAF8F5;padding:4px 10px;border-radius:999px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
-                    ${TatamiMaster.icon('bell', 13)}
+                    ${TatamiMaster.icon('pin', 13)}
                     <span>${TatamiMaster.escapeHtml(v.name)}</span>
                     <button type="button" onclick="toggleVersenyzoKovetes(${v.id})" style="background:none;border:none;color:#FAF8F5;cursor:pointer;padding:0;display:inline-flex;" title="Követés kikapcsolása">${TatamiMaster.icon('x', 13)}</button>
                 </span>`;
@@ -540,7 +511,7 @@ function frissitMikorKuzdokPanel() {
         } else {
             cont.innerHTML = `<div style="background:#FAF8F5;border:1px dashed #CFC9BC;border-radius:8px;padding:12px 16px;color:#52525B;font-size:0.88rem;display:flex;align-items:center;gap:8px;">
                 ${TatamiMaster.icon('info', 16)}
-                <span>Írd be fent a versenyző vagy az egyesület nevét (vagy válassz a legördülő listából), és tűzd ki a csengő gombbal az élő szólítás-figyeléshez!</span>
+                <span>Írd be fent a versenyző vagy az egyesület nevét (vagy válassz a legördülő listából), és tűzd ki a Követés gombbal!</span>
             </div>`;
         }
         return;
@@ -563,7 +534,7 @@ function frissitMikorKuzdokPanel() {
                 <span style="font-size:0.8rem;color:#52525B;font-weight:700;">${TatamiMaster.escapeHtml(v.club || '-')} &bull; ${TatamiMaster.escapeHtml(v.belt || '-')} ${v.weight ? '&bull; ' + v.weight + ' kg' : ''}</span>
             </div>
             <button type="button" class="${kovetve ? 'btn btn-danger' : 'btn btn-outline-blue'}" style="padding:5px 10px;font-size:0.78rem;" onclick="toggleVersenyzoKovetes(${v.id})">
-                ${TatamiMaster.icon('bell', 13)} ${kovetve ? 'Követve' : 'Követés'}
+                ${TatamiMaster.icon('pin', 13)} ${kovetve ? 'Kitűzve' : 'Követés'}
             </button>
         </div>`;
 

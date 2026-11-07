@@ -14,9 +14,14 @@ const TatamiMaster = {
             }
             const host = window.location.hostname;
             if (host && host !== 'localhost' && host !== '127.0.0.1') {
-                const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
-                const port = proto === 'https:' ? '7045' : '5008';
-                return `${proto}//${host}:${port}/api`;
+                const isPrivateLanIp = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host);
+                if (isPrivateLanIp) {
+                    const proto = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                    const port = proto === 'https:' ? '7045' : '5008';
+                    return `${proto}//${host}:${port}/api`;
+                }
+                // Éles publikus domainen (pl. https://sajatdomain.hu) az Nginx ugyanazon a címen (/api) szolgálja ki a C# Backendet
+                return `${window.location.origin}/api`;
             }
         } catch (e) {}
         return 'https://localhost:7045/api';
@@ -26,7 +31,6 @@ const TatamiMaster = {
     _liveVersion: 0,
     _liveDataVersion: 0,
     _liveConnected: false,
-    _audioCtx: null,
 
     WIN_TYPES: {
         'IPPON':   { kod: 'IPPON',   rovid: 'IPP', cimke: 'Egyből Ippon',                        pont: 3 },
@@ -244,72 +248,6 @@ const TatamiMaster = {
             <path d="M32 24.5V46" stroke="#FAF8F5" stroke-width="2.8" stroke-linecap="round"/>
             <path d="M22.5 41.5V29.5L32 37.5L41.5 29.5V41.5" stroke="#FAF8F5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`;
-    },
-
-    // --- WEB AUDIO API TATAMI HANGJELZÉS (100% OFFLINE: 15 MP HYOSHIGI KOPPANÁS, 0:00 GONG, SZÓLÍTÁS) ---
-    lejatszGongHang: function(tipus = 'gong') {
-        try {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) return;
-            if (!this._audioCtx) this._audioCtx = new AudioCtx();
-            if (this._audioCtx.state === 'suspended') {
-                this._audioCtx.resume();
-            }
-            const ctx = this._audioCtx;
-            const now = ctx.currentTime;
-
-            if (tipus === 'figyelmeztetes') {
-                // 15 másodperces figyelmeztetés (Shibaraku): dupla fa-csattanó (Hyoshigi) hang
-                [0, 0.22].forEach(offset => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(1040, now + offset);
-                    osc.frequency.exponentialRampToValueAtTime(620, now + offset + 0.09);
-                    gain.gain.setValueAtTime(0.45, now + offset);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.11);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now + offset);
-                    osc.stop(now + offset + 0.12);
-                });
-            } else if (tipus === 'szolitas') {
-                // "Mikor küzdök?" szólítási értesítő dallam a telefonon
-                [523.25, 659.25, 783.99].forEach((freq, idx) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    const t = now + idx * 0.14;
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, t);
-                    gain.gain.setValueAtTime(0.32, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(t);
-                    osc.stop(t + 0.36);
-                });
-            } else {
-                // 00:00 Menet vége (Yame): mély, felharmonikus tatami gong
-                const frekvenciak = [
-                    { f: 196.0, a: 0.55, d: 1.8 },
-                    { f: 293.7, a: 0.32, d: 1.4 },
-                    { f: 493.9, a: 0.20, d: 0.9 },
-                    { f: 784.0, a: 0.10, d: 0.5 }
-                ];
-                frekvenciak.forEach(h => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(h.f, now);
-                    gain.gain.setValueAtTime(h.a, now);
-                    gain.gain.exponentialRampToValueAtTime(0.0008, now + h.d);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now);
-                    osc.stop(now + h.d + 0.05);
-                });
-            }
-        } catch (e) {}
     },
 
     // --- VALÓS IDEJŰ (LIVE) ESZKÖZÖK KÖZÖTTI SZINKRONIZÁCIÓ (SSE + POLLING TARTALÉK + LOCALSTORAGE) ---

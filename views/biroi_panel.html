@@ -388,10 +388,6 @@
             <em>TATAMI MASTER<sup class="tm-trademark" title="TATAMI MASTER™ – Védjegyoltalom alatt álló márkanév és logó">™</sup></em> <span class="red-text">ARÉNA BÍRÓI VEZÉRLŐPULT</span>
         </h1>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <button id="btnGongHangToggle" type="button" class="btn btn-outline" onclick="toggleGongHang()" title="15 másodperces figyelmeztetés és 0:00 meccsvégi gong hangjelzés ki/bekapcsolása">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                <span>Hangjelzés: BE</span>
-            </button>
             <button class="btn btn-outline-blue" onclick="nyitTvKijelzo()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
                 Élő TV Kijelző (2. monitorra)
@@ -552,7 +548,6 @@
                             <button class="btn btn-outline" style="padding: 5px 9px; font-size: 0.78rem;" onclick="idoBeallitas(60)">1:00</button>
                             <button class="btn btn-outline" style="padding: 5px 9px; font-size: 0.78rem;" onclick="idoBeallitas(90)">1:30</button>
                             <button class="btn btn-outline" style="padding: 5px 9px; font-size: 0.78rem;" onclick="idoBeallitas(120)">2:00</button>
-                            <button class="btn btn-outline" style="padding: 5px 9px; font-size: 0.78rem;" onclick="TatamiMaster.lejatszGongHang('gong')" title="Kézi gong hangjelzés megszólaltatása">Gong</button>
                         </div>
                     </div>
 
@@ -686,9 +681,9 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261107_v6"></script>
-    <script src="../JS/auth.js?v=20261107_v6"></script>
-    <script src="../JS/biroi_panel.js?v=20261107_v6"></script>
+    <script src="../JS/core.js?v=20261107_v7"></script>
+    <script src="../JS/auth.js?v=20261107_v7"></script>
+    <script src="../JS/biroi_panel.js?v=20261107_v7"></script>
 </body>
 
 </html>

@@ -114,8 +114,9 @@ app.Use(async (context, next) =>
 // Helyi Wi-Fi / LAN (pl. 192.168.x.x:5008) kéréseket nem irányítunk át önaláírt localhost HTTPS-re,
 // így a telefonok és okos TV-k tanúsítványhiba nélkül csatlakoznak a csarnokban!
 app.UseWhen(
-    ctx => string.Equals(ctx.Request.Host.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
-           string.Equals(ctx.Request.Host.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase),
+    ctx => app.Environment.IsDevelopment() &&
+           (string.Equals(ctx.Request.Host.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(ctx.Request.Host.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)),
     subApp => subApp.UseHttpsRedirection()
 );
 

@@ -9,7 +9,6 @@ let kumiteHistory = { aka: [], shiro: [] };
 // Korcsoporthoz igazított Kyokushin küzdőidő és hosszabbítás állapot
 let aktivIdoSzabaly = TatamiMaster.KUMITE_IDO_SZABALYOK['FELNOTT'];
 let aktivFazisIndex = 0;
-let gongHangBekapcsolva = localStorage.getItem('tatamiGongHang') !== 'false';
 
 let panelVersenyzok = [];
 let panelKategoriak = [];
@@ -20,7 +19,6 @@ let kovetkezoMeccsSzoveg = "Várakozás a következő mérkőzésre...";
 let mentesFolyamatban = false;
 
 window.onload = async function() {
-    frissitGongGombUI();
     initKataGyorsBillentyuzet();
     await biroiAdatokFrissitese();
     frissitKumiteFazisUI();
@@ -33,27 +31,6 @@ window.onload = async function() {
         }
     });
 };
-
-function toggleGongHang() {
-    gongHangBekapcsolva = !gongHangBekapcsolva;
-    localStorage.setItem('tatamiGongHang', gongHangBekapcsolva ? 'true' : 'false');
-    frissitGongGombUI();
-    if (gongHangBekapcsolva) {
-        TatamiMaster.lejatszGongHang('figyelmeztetes');
-        TatamiMaster.toast("Tatami hangjelzés bekapcsolva (15 mp figyelmeztetés + 0:00 gong).");
-    } else {
-        TatamiMaster.toast("Tatami hangjelzés némítva.", "figyelem");
-    }
-}
-
-function frissitGongGombUI() {
-    const btn = document.getElementById('btnGongHangToggle');
-    if (!btn) return;
-    btn.innerHTML = gongHangBekapcsolva
-        ? `${TatamiMaster.icon('volume', 16)} <span>Hangjelzés: BE</span>`
-        : `${TatamiMaster.icon('volume-x', 16)} <span>Hangjelzés: NÉMA</span>`;
-    btn.style.borderColor = gongHangBekapcsolva ? '#18181B' : '#CFC9BC';
-}
 
 function initKataGyorsBillentyuzet() {
     const mezok = document.querySelectorAll('.kata-pont');
@@ -554,13 +531,7 @@ function idoInditas() {
             idoMasodpercben--;
             frissitTimerKijelzo();
 
-            // 15 másodperces figyelmeztetés (Shibaraku) és 00:00 végső Gong
-            if (idoMasodpercben === 15 && gongHangBekapcsolva) {
-                TatamiMaster.lejatszGongHang('figyelmeztetes');
-            } else if (idoMasodpercben === 0) {
-                if (gongHangBekapcsolva) {
-                    TatamiMaster.lejatszGongHang('gong');
-                }
+            if (idoMasodpercben === 0) {
                 idoMegallitas();
                 if (akaPont === shiroPont) {
                     if (aktivIdoSzabaly && aktivFazisIndex + 1 < aktivIdoSzabaly.fazisok.length) {
