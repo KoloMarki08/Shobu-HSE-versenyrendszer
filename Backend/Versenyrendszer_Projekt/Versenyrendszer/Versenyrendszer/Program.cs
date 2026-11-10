@@ -7,8 +7,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 // --- INNEN INDUL AZ ADATBÁZIS BEÁLLÍTÁS ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+ServerVersion serverVersion;
+try
+{
+    serverVersion = ServerVersion.AutoDetect(connectionString);
+}
+catch
+{
+    // Ha az adatbázis (shobu_verseny_db) még nem létezik az első induláskor, alapértelmezett MariaDB/MySQL verzióval indulunk,
+    // hogy a lenti db.Database.Migrate() automatikusan létre tudja hozni magát az adatbázist és a táblákat is!
+    serverVersion = new MariaDbServerVersion(new Version(10, 4, 32));
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, serverVersion));
 // --- ITT A VÉGE AZ ADATBÁZIS BEÁLLÍTÁSNAK ---
 
 // Add services to the container.
@@ -28,6 +40,53 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Automatikus adatbázis- és táblalétrehozás (EF Core Migrations) + alapadatok feltöltése induláskor,
+// így új szerveren (pl. Szerverem.hu) külön SQL importálás vagy Update-Database parancs nélkül is azonnal felépül minden!
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+
+        if (!db.Users.Any())
+        {
+            db.Users.AddRange(
+                new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" },
+                new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" },
+                new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" }
+            );
+            db.SaveChanges();
+        }
+
+        if (!db.Tournaments.Any())
+        {
+            db.Tournaments.Add(new Tournament
+            {
+                Name = "Shobu HSE Országos Bajnokság 2026",
+                Date = new DateTime(2026, 5, 20),
+                Status = "ÉLŐ / NYITVA",
+                Organizer = "Vácrátóti HSE - Tornai Bálint"
+            });
+            db.SaveChanges();
+        }
+
+        if (!db.Tatamis.Any())
+        {
+            db.Tatamis.AddRange(
+                new Tatami { Name = "Tatami A" },
+                new Tatami { Name = "Tatami B" },
+                new Tatami { Name = "Tatami C" }
+            );
+            db.SaveChanges();
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ADATBÁZIS AUTOMATIKUS INICIALIZÁLÁS FIGYELMEZTETÉS]: {ex.Message}");
+    }
+}
 
 // CORS engedélyezése legelsőként, hogy minden válaszra (SSE stream, SignalR, OPTIONS preflight, hibakódok) rákerüljön
 app.UseCors("AllowAll");
