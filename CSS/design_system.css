@@ -809,132 +809,167 @@ input:disabled, select:disabled, textarea:disabled {
 }
 
 /* ==========================================================================
-   "NEM VAGYOK ROBOT" ELLENŐRZŐ DOBOZ (REGISZTRÁCIÓ)
+   hCaptcha "EMBER VAGYOK" ELLENŐRZŐ DOBOZ (BELÉPÉS ÉS REGISZTRÁCIÓ)
    ========================================================================== */
-.robot-verify-card {
-    background: var(--bg-cream);
-    border: 1.5px solid var(--border-strong);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    cursor: pointer;
-    user-select: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+.hcaptcha-box,
+.hcaptcha-box * {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 
-.robot-verify-card:hover {
-    border-color: var(--mono-800);
-    background: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(24, 24, 27, 0.06);
-}
-
-.robot-verify-card.verified {
-    border-color: var(--mono-900);
-    background: #FFFFFF;
-    box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.07);
-}
-
-.robot-check-visual {
-    width: 26px;
-    height: 26px;
-    border: 2px solid var(--mono-600);
+.hcaptcha-box {
+    background: #FAFAFA;
+    border: 1px solid #DCDCDC;
     border-radius: 6px;
-    background: #FFFFFF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
-
-.robot-verify-card:hover .robot-check-visual {
-    border-color: var(--mono-900);
-}
-
-.robot-verify-card.verified .robot-check-visual {
-    background: var(--mono-900);
-    border-color: var(--mono-900);
-    color: #FAF8F5;
-}
-
-.robot-spinner {
-    width: 15px;
-    height: 15px;
-    border: 2px solid var(--border-strong);
-    border-top-color: var(--mono-900);
-    border-radius: 50%;
-    animation: robotSpin 0.55s linear infinite;
-}
-
-@keyframes robotSpin {
-    to { transform: rotate(360deg); }
-}
-
-/* reCAPTCHA v3 háttérbeli (frictionless) viselkedésalapú ellenőrző kártya & lebegő jelvény */
-.recaptcha-v3-card {
-    background: var(--bg-cream);
-    border: 1.5px solid var(--border-strong);
-    border-radius: 10px;
-    padding: 12px 16px;
+    min-height: 74px;
+    padding: 10px 14px 10px 16px;
     margin-bottom: 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    transition: all 0.22s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    user-select: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.recaptcha-v3-card.verified {
-    background: #FFFFFF;
-    border-color: var(--mono-900);
-    box-shadow: 0 4px 14px rgba(24, 24, 27, 0.06);
+.hcaptcha-box:hover {
+    border-color: #C6C6C6;
 }
 
-.recaptcha-v3-card.failed {
-    background: #FAF5F5;
-    border-color: var(--kyokushin-red);
+.hcaptcha-box.verified {
+    background: #FAFAFA;
+    border-color: #DCDCDC;
 }
 
-.recaptcha-v3-score-pill {
-    background: var(--mono-900);
-    color: #FAF8F5;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+.hcaptcha-box.error {
+    border-color: #991B1B;
+    background: #FFF9F9;
+    box-shadow: 0 0 0 3px rgba(153, 27, 27, 0.1);
+    animation: hcaptchaShake 0.34s ease;
 }
 
-.recaptcha-v3-floating-badge {
-    position: fixed;
-    bottom: 18px;
-    right: 0;
-    z-index: 950;
-    background: #FFFFFF;
-    border: 1.5px solid var(--border-strong);
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-    box-shadow: -4px 6px 20px rgba(24, 24, 27, 0.12);
+@keyframes hcaptchaShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-3px); }
+}
+
+.hcaptcha-left {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 14px;
-    transform: translateX(calc(100% - 54px));
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+    gap: 14px;
     cursor: pointer;
-    user-select: none;
+    padding: 6px 4px 6px 0;
+    outline: none;
+    border-radius: 4px;
 }
 
-.recaptcha-v3-floating-badge:hover {
-    transform: translateX(0);
-    border-color: var(--mono-900);
+.hcaptcha-left:focus-visible .hcaptcha-checkbox {
+    border-color: #00838F;
+    box-shadow: 0 0 0 3px rgba(0, 151, 167, 0.22);
+}
+
+.hcaptcha-checkbox {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid #555555;
+    border-radius: 4px;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.hcaptcha-left:hover .hcaptcha-checkbox {
+    border-color: #00838F;
+    box-shadow: 0 0 0 3px rgba(0, 172, 193, 0.12);
+}
+
+.hcaptcha-box.verifying .hcaptcha-checkbox,
+.hcaptcha-box.verified .hcaptcha-checkbox {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+.hcaptcha-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2.6px solid #D5ECEE;
+    border-top-color: #0097A7;
+    border-radius: 50%;
+    animation: hcaptchaSpin 0.6s linear infinite;
+}
+
+@keyframes hcaptchaSpin {
+    to { transform: rotate(360deg); }
+}
+
+.hcaptcha-check-icon {
+    width: 26px;
+    height: 26px;
+    color: #00838F;
+    animation: hcaptchaCheckPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes hcaptchaCheckPop {
+    from { transform: scale(0.65); opacity: 0.3; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.hcaptcha-label {
+    font-size: 15px;
+    font-weight: 400;
+    color: #4A4A4A;
+    line-height: 1.25;
+    letter-spacing: 0.1px;
+}
+
+.hcaptcha-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.hcaptcha-logo-svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+.hcaptcha-brand-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #555555;
+    line-height: 1.15;
+    margin-top: 2px;
+    letter-spacing: 0.1px;
+}
+
+.hcaptcha-links {
+    font-size: 8.8px;
+    font-weight: 400;
+    color: #757575;
+    line-height: 1.15;
+    margin-top: 1px;
+    white-space: nowrap;
+}
+
+.hcaptcha-links a {
+    color: #757575;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.hcaptcha-links a:hover {
+    color: #333333;
+    text-decoration: underline;
 }
 
 /* --- TOAST ÉRTESÍTÉSEK (MONOKRÓM) --- */

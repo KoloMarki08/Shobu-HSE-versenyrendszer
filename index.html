@@ -8,8 +8,8 @@
     <title>TATAMI MASTER™ - Kyokushin Karate Versenyrendszer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="CSS/stlye.css?v=20261107_v6">
-    <link rel="stylesheet" href="CSS/design_system.css?v=20261107_v6">
+    <link rel="stylesheet" href="CSS/stlye.css?v=20261108_v8">
+    <link rel="stylesheet" href="CSS/design_system.css?v=20261108_v8">
     <style>
         .auth-tabs {
             display: flex;
@@ -111,6 +111,78 @@
 </head>
 <body>
 
+    <!-- hCaptcha pixeles türkiz-kék mozaik + fehér nyitott kéz SVG szimbólum -->
+    <svg style="display: none;" aria-hidden="true">
+        <symbol id="hcaptchaLogoSymbol" viewBox="0 0 64 64">
+            <g shape-rendering="crispEdges">
+                <!-- 0. sor (4 pixel) -->
+                <rect x="16" y="0" width="8" height="8" fill="#7CE6DF"/>
+                <rect x="24" y="0" width="8" height="8" fill="#4CDAD2"/>
+                <rect x="32" y="0" width="8" height="8" fill="#4CDAD2"/>
+                <rect x="40" y="0" width="8" height="8" fill="#7CE6DF"/>
+                <!-- 1. sor (6 pixel) -->
+                <rect x="8" y="8" width="8" height="8" fill="#73DFDB"/>
+                <rect x="16" y="8" width="8" height="8" fill="#26D0C9"/>
+                <rect x="24" y="8" width="8" height="8" fill="#00C4BC"/>
+                <rect x="32" y="8" width="8" height="8" fill="#00C4BC"/>
+                <rect x="40" y="8" width="8" height="8" fill="#26D0C9"/>
+                <rect x="48" y="8" width="8" height="8" fill="#73DFDB"/>
+                <!-- 2. sor (8 pixel) -->
+                <rect x="0" y="16" width="8" height="8" fill="#73D6D8"/>
+                <rect x="8" y="16" width="8" height="8" fill="#24C4C5"/>
+                <rect x="16" y="16" width="8" height="8" fill="#00B7BE"/>
+                <rect x="24" y="16" width="8" height="8" fill="#00B2BC"/>
+                <rect x="32" y="16" width="8" height="8" fill="#00B2BC"/>
+                <rect x="40" y="16" width="8" height="8" fill="#00B7BE"/>
+                <rect x="48" y="16" width="8" height="8" fill="#24C4C5"/>
+                <rect x="56" y="16" width="8" height="8" fill="#73D6D8"/>
+                <!-- 3. sor (8 pixel) -->
+                <rect x="0" y="24" width="8" height="8" fill="#6AC9D2"/>
+                <rect x="8" y="24" width="8" height="8" fill="#1BB3BE"/>
+                <rect x="16" y="24" width="8" height="8" fill="#00A6B8"/>
+                <rect x="24" y="24" width="8" height="8" fill="#009FB4"/>
+                <rect x="32" y="24" width="8" height="8" fill="#009FB4"/>
+                <rect x="40" y="24" width="8" height="8" fill="#00A6B8"/>
+                <rect x="48" y="24" width="8" height="8" fill="#1BB3BE"/>
+                <rect x="56" y="24" width="8" height="8" fill="#6AC9D2"/>
+                <!-- 4. sor (8 pixel) -->
+                <rect x="0" y="32" width="8" height="8" fill="#63BCCC"/>
+                <rect x="8" y="32" width="8" height="8" fill="#16A1B6"/>
+                <rect x="16" y="32" width="8" height="8" fill="#0093AF"/>
+                <rect x="24" y="32" width="8" height="8" fill="#008CAD"/>
+                <rect x="32" y="32" width="8" height="8" fill="#008CAD"/>
+                <rect x="40" y="32" width="8" height="8" fill="#0093AF"/>
+                <rect x="48" y="32" width="8" height="8" fill="#16A1B6"/>
+                <rect x="56" y="32" width="8" height="8" fill="#63BCCC"/>
+                <!-- 5. sor (8 pixel) -->
+                <rect x="0" y="40" width="8" height="8" fill="#5FAEC6"/>
+                <rect x="8" y="40" width="8" height="8" fill="#178FAF"/>
+                <rect x="16" y="40" width="8" height="8" fill="#0480A6"/>
+                <rect x="24" y="40" width="8" height="8" fill="#0279A4"/>
+                <rect x="32" y="40" width="8" height="8" fill="#0279A4"/>
+                <rect x="40" y="40" width="8" height="8" fill="#0480A6"/>
+                <rect x="48" y="40" width="8" height="8" fill="#178FAF"/>
+                <rect x="56" y="40" width="8" height="8" fill="#5FAEC6"/>
+                <!-- 6. sor (6 pixel) -->
+                <rect x="8" y="48" width="8" height="8" fill="#62A2C2"/>
+                <rect x="16" y="48" width="8" height="8" fill="#1D7CA6"/>
+                <rect x="24" y="48" width="8" height="8" fill="#0D6FA0"/>
+                <rect x="32" y="48" width="8" height="8" fill="#0D6FA0"/>
+                <rect x="40" y="48" width="8" height="8" fill="#1D7CA6"/>
+                <rect x="48" y="48" width="8" height="8" fill="#62A2C2"/>
+                <!-- 7. sor (4 pixel) -->
+                <rect x="16" y="56" width="8" height="8" fill="#6C9EC0"/>
+                <rect x="24" y="56" width="8" height="8" fill="#2F75A2"/>
+                <rect x="32" y="56" width="8" height="8" fill="#2F75A2"/>
+                <rect x="40" y="56" width="8" height="8" fill="#6C9EC0"/>
+            </g>
+            <!-- Fehér döntött nyitott tenyér -->
+            <g transform="translate(-2.2, 2.2) rotate(38 32 32)">
+                <path fill="#FFFFFF" d="M 22 37.5 L 15.4 27.2 A 2.15 2.15 0 0 1 19.1 25.0 L 21.0 30.8 Q 21.9 32.0 22.4 30.5 L 22.4 16.5 A 1.9 1.9 0 0 1 26.2 16.5 L 26.2 27.2 A 1.0 1.0 0 0 0 28.2 27.2 L 28.2 13.5 A 1.9 1.9 0 0 1 32.0 13.5 L 32.0 27.0 A 1.0 1.0 0 0 0 34.0 27.0 L 34.0 15.5 A 1.9 1.9 0 0 1 37.8 15.5 L 37.8 28.6 A 1.0 1.0 0 0 0 39.8 28.6 L 39.8 20.0 A 1.8 1.8 0 0 1 43.4 20.0 L 43.4 35.5 C 43.4 43.2 38.4 47.5 32.2 47.5 C 26.0 47.5 22.0 43.4 22.0 37.5 Z"/>
+            </g>
+        </symbol>
+    </svg>
+
     <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
         <h1>
             <svg class="tm-brand-logo" width="30" height="30" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TATAMI MASTER™ Hivatalos Védjegy Logó">
@@ -199,9 +271,29 @@
                         <input type="text" id="loginUsername" class="reg-input" placeholder="E-mail cím vagy felhasználónév" required>
                     </div>
 
-                    <div class="reg-group" style="margin-bottom: 22px;">
+                    <div class="reg-group" style="margin-bottom: 18px;">
                         <label class="reg-label">Jelszó<span class="req">*</span></label>
                         <input type="password" id="loginPassword" class="reg-input" placeholder="••••••••" required>
+                    </div>
+
+                    <!-- hCaptcha "Ember vagyok" ellenőrző doboz (Belépés) -->
+                    <input type="hidden" id="hcaptchaToken_login" value="">
+                    <input type="text" id="loginWebsiteHoneypot" name="login_website_hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true">
+
+                    <div id="hcaptchaBox_login" class="hcaptcha-box">
+                        <div class="hcaptcha-left" role="checkbox" tabindex="0" aria-checked="false" aria-label="Ember vagyok" onclick="kattintHCaptcha('login', event)" onkeydown="billentyuHCaptcha('login', event)">
+                            <div id="hcaptchaVisual_login" class="hcaptcha-checkbox"></div>
+                            <span class="hcaptcha-label">Ember vagyok</span>
+                        </div>
+                        <div class="hcaptcha-brand">
+                            <svg class="hcaptcha-logo-svg" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true">
+                                <use href="#hcaptchaLogoSymbol"></use>
+                            </svg>
+                            <div class="hcaptcha-brand-name">hCaptcha</div>
+                            <div class="hcaptcha-links">
+                                <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Adatvédelem</a> - <a href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Feltételek</a>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="loginError" style="color: #991B1B; font-weight: 700; margin-bottom: 14px; display: none; font-size: 0.9rem;"></div>
@@ -230,7 +322,7 @@
                     <span>A regisztrált felhasználók automatikusan megkapják az <strong>Edzői (COACH)</strong> jogosultságot, amellyel benevezhetik klubjuk versenyzőit.</span>
                 </div>
 
-                <form onsubmit="regisztraciokuldese(event)" id="coachRegForm">
+                <form onsubmit="regisztracioKuldese(event)" id="coachRegForm">
 
                     <div class="reg-group">
                         <label class="reg-label">Login (Correct Email)<span class="req">*</span></label>
@@ -354,29 +446,23 @@
                         <input type="password" id="regConfirmPassword" class="reg-input" required>
                     </div>
 
-                    <!-- reCAPTCHA v3 (Automatikus, háttérben futó viselkedésalapú pontozás: 0.0 - 1.0) -->
-                    <input type="hidden" id="recaptchaV3Token" value="">
-                    <input type="hidden" id="recaptchaV3Score" value="0">
+                    <!-- hCaptcha "Ember vagyok" ellenőrző doboz (Regisztráció) -->
+                    <input type="hidden" id="hcaptchaToken_register" value="">
                     <input type="text" id="regWebsiteHoneypot" name="website_url_hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true">
 
-                    <div id="recaptchaV3StatusCard" class="recaptcha-v3-card" onclick="futtatRecaptchaV3Ellenorzes('coach_register')">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div id="recaptchaV3Visual" class="robot-check-visual">
-                                <div class="robot-spinner"></div>
-                            </div>
-                            <div>
-                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <span style="font-weight: 700; font-size: 0.93rem; color: #18181B;">reCAPTCHA v3 Védelem</span>
-                                    <span id="recaptchaV3ScorePill" class="recaptcha-v3-score-pill">Elemzés...</span>
-                                </div>
-                                <div id="recaptchaV3SubText" style="font-size: 0.76rem; color: #71717A; margin-top: 2px;">
-                                    Háttérbeli viselkedésalapú ellenőrzés (képes feladvány nélkül)
-                                </div>
-                            </div>
+                    <div id="hcaptchaBox_register" class="hcaptcha-box">
+                        <div class="hcaptcha-left" role="checkbox" tabindex="0" aria-checked="false" aria-label="Ember vagyok" onclick="kattintHCaptcha('register', event)" onkeydown="billentyuHCaptcha('register', event)">
+                            <div id="hcaptchaVisual_register" class="hcaptcha-checkbox"></div>
+                            <span class="hcaptcha-label">Ember vagyok</span>
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: center; color: #52525B; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.4px; flex-shrink: 0;">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                            <span style="margin-top: 2px;">reCAPTCHA v3</span>
+                        <div class="hcaptcha-brand">
+                            <svg class="hcaptcha-logo-svg" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true">
+                                <use href="#hcaptchaLogoSymbol"></use>
+                            </svg>
+                            <div class="hcaptcha-brand-name">hCaptcha</div>
+                            <div class="hcaptcha-links">
+                                <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Adatvédelem</a> - <a href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Feltételek</a>
+                            </div>
                         </div>
                     </div>
 
@@ -392,20 +478,9 @@
         </div>
     </main>
 
-    <!-- reCAPTCHA v3 jobb alsó sarokban kihúzódó hivatalos jelvény -->
-    <div id="recaptchaV3FloatingBadge" class="recaptcha-v3-floating-badge" onclick="futtatRecaptchaV3Ellenorzes('coach_register')" title="reCAPTCHA v3 aktív védelem">
-        <div style="width: 28px; height: 28px; border-radius: 6px; background: #18181B; color: #FAF8F5; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-        </div>
-        <div style="white-space: nowrap; padding-right: 4px;">
-            <div style="font-size: 0.78rem; font-weight: 800; color: #18181B;">Protected by reCAPTCHA v3</div>
-            <div id="recaptchaV3FloatingMeta" style="font-size: 0.68rem; color: #52525B;">Privacy &bull; Terms &bull; Score: 0.9</div>
-        </div>
-    </div>
-
-    <script src="JS/core.js?v=20261107_v6"></script>
-    <script src="JS/jelszomegjelenito.js?v=20261107_v6"></script>
-    <script src="JS/login.js?v=20261107_v6"></script>
-    <script src="JS/index.js?v=20261107_v6"></script>
+    <script src="JS/core.js?v=20261108_v8"></script>
+    <script src="JS/jelszomegjelenito.js?v=20261108_v8"></script>
+    <script src="JS/login.js?v=20261108_v8"></script>
+    <script src="JS/index.js?v=20261108_v8"></script>
 </body>
 </html>

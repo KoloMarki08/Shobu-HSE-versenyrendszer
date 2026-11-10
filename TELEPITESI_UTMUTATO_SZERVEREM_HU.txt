@@ -1,0 +1,69 @@
+================================================================================
+TATAMI MASTER - KYOKUSHIN KARATE VERSENYRENDSZER
+RENDSZERGAZDAI TELEPÍTÉSI ÚTMUTATÓ (Debian VPS - tatamimaster.hu)
+================================================================================
+
+1. PROJEKT FELÉPÍTÉSE
+---------------------
+- Domain:          tatamimaster.hu (VPS: vps.tatamimaster.hu)
+- Frontend:        Statikus HTML5 / CSS3 / JS alkalmazás a gyökérmappában:
+                   - index.html
+                   - views/ (admin.html, audience.html, biroi_panel.html, kijelzo.html)
+                   - CSS/
+                   - JS/
+- Backend:         C# ASP.NET Core (.NET 10.0) Web API + SignalR + SSE
+                   Mappa: Backend/Versenyrendszer_Projekt/Versenyrendszer/Versenyrendszer
+                   Belső port: http://127.0.0.1:5008
+- Adatbázis:       MySQL / MariaDB
+                   Adatbázis neve: shobu_verseny_db
+                   FONTOS: Külön .sql fájl importálása NEM szükséges!
+                   A C# Backend (Program.cs) az első induláskor automatikusan
+                   létrehozza a `shobu_verseny_db` adatbázist, az összes táblát
+                   (EF Core Migrate), valamint a kezdő belépési fiókokat és
+                   alapadatokat.
+
+2. ADATBÁZIS KAPCSOLAT BEÁLLÍTÁSA
+---------------------------------
+A MySQL / MariaDB hozzáférési adatokat az alábbi fájlban kell megadni:
+Backend/Versenyrendszer_Projekt/Versenyrendszer/Versenyrendszer/appsettings.json
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=127.0.0.1;Database=shobu_verseny_db;User=root;Password=ADATBAZIS_JELSZO;ConvertZeroDateTime=True;AllowZeroDateTime=True;"
+}
+
+3. C# BACKEND FUTTATÁSA (SYSTEMD SZOLGÁLTATÁSKÉNT)
+--------------------------------------------------
+A projektben a `linux-publish/` mappában (vagy `dotnet publish -c Release -r linux-x64 --self-contained true` paranccsal)
+önállóan futtatható (Self-Contained) Linux x64 bináris található, amely nem igényel külön telepített .NET futtatókörnyezetet.
+
+Ajánlott systemd service (`/etc/systemd/system/tatamimaster.service`):
+
+[Unit]
+Description=Tatami Master C# .NET 10.0 Backend API
+After=network.target mysql.service mariadb.service
+
+[Service]
+WorkingDirectory=/var/www/tatamimaster/backend
+ExecStart=/var/www/tatamimaster/backend/Versenyrendszer --urls "http://127.0.0.1:5008"
+Restart=always
+RestartSec=5
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+[Install]
+WantedBy=multi-user.target
+
+4. WEBSZERVER (NGINX / APACHE) REVERSE PROXY BEÁLLÍTÁS
+------------------------------------------------------
+A frontend automatikusan a `https://tatamimaster.hu/api` és `/hubs/arena` végpontokat hívja:
+- Statikus fájlok (`index.html`, `views/`, `CSS/`, `JS/`, `*.svg`, `*.jpg`): kiszolgálás közvetlenül a webgyökérből.
+- `/api/` és `/hubs/` útvonalak: továbbítás (reverse proxy) a `http://127.0.0.1:5008` címre.
+- Élő eredményjelző (SSE stream `/api/LiveArena/stream` és SignalR `/hubs/arena`) miatt fontos:
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection $http_connection;
+  proxy_set_header Host $host;
+  proxy_buffering off;
+  proxy_cache off;
+  proxy_read_timeout 3600s;
+================================================================================
