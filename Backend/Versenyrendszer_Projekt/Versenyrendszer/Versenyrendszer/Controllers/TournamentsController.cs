@@ -60,13 +60,13 @@ namespace Versenyrendszer.Controllers
                 _context.Tournaments.RemoveRange(_context.Tournaments);
                 await _context.SaveChangesAsync();
 
-                // 2. AUTO_INCREMENT ID-k visszaállítása 1-re (ez nem ütközik idegen kulcsba!)
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `matches` AUTO_INCREMENT = 1;");
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `registrations` AUTO_INCREMENT = 1;");
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `competitors` AUTO_INCREMENT = 1;");
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `categories` AUTO_INCREMENT = 1;");
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `tatamis` AUTO_INCREMENT = 1;");
-                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE `tournaments` AUTO_INCREMENT = 1;");
+                // 2. AUTO_INCREMENT ID-k visszaállítása 1-re (Linuxon a táblanevek Case-Sensitive-ek: Matches, Categories...)
+                var tableNames = new[] { "Matches", "Registrations", "Competitors", "Categories", "Tatamis", "Tournaments" };
+                foreach (var table in tableNames)
+                {
+                    try { await _context.Database.ExecuteSqlRawAsync($"ALTER TABLE `{table}` AUTO_INCREMENT = 1;"); } catch {}
+                    try { await _context.Database.ExecuteSqlRawAsync($"ALTER TABLE `{table.ToLower()}` AUTO_INCREMENT = 1;"); } catch {}
+                }
 
                 // 3. Alap felhasználók biztosítása (ha még nincsenek benne)
                 if (!await _context.Users.AnyAsync(u => u.Username == "KoloMarki"))
