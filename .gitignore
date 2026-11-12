@@ -399,3 +399,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Helyi VPS telepítő és build kimenetek
+linux-publish/
+deploy_pkg/
+TatamiMaster_Telepito_Csomag.zip

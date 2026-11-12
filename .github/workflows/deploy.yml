@@ -1,0 +1,66 @@
+name: Deploy to tatamimaster.hu VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Forráskód letöltése
+        uses: actions/checkout@v4
+
+      - name: .NET 10.0 SDK telepítése
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: C# Backend fordítása (Release)
+        run: |
+          dotnet publish Backend/Versenyrendszer_Projekt/Versenyrendszer/Versenyrendszer/Versenyrendszer.csproj -c Release -o ./deploy_pkg/backend
+
+      - name: Frontend fájlok összekészítése
+        run: |
+          mkdir -p ./deploy_pkg/frontend
+          cp -r index.html views CSS JS ./deploy_pkg/frontend/
+          for f in favicon.svg logo.svg logo.jpg eye-fill.svg eye-slash-fill.svg undo.svg redo.svg undo.png redo.png; do
+            if [ -f "$f" ]; then
+              cp "$f" ./deploy_pkg/frontend/
+            fi
+          done
+          tar -czf deploy_pkg.tar.gz -C deploy_pkg .
+
+      - name: Csomag feltöltése a VPS-re
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy_pkg.tar.gz"
+          target: "/tmp"
+
+      - name: Frissítés és újraindítás a VPS-en
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            rm -rf /tmp/deploy_pkg_extract
+            mkdir -p /tmp/deploy_pkg_extract
+            tar -xzf /tmp/deploy_pkg.tar.gz -C /tmp/deploy_pkg_extract
+
+            mkdir -p /var/www/tatamimaster/frontend /var/www/tatamimaster/backend
+            cp -rf /tmp/deploy_pkg_extract/frontend/* /var/www/tatamimaster/frontend/
+            cp -rf /tmp/deploy_pkg_extract/backend/* /var/www/tatamimaster/backend/
+
+            chown -R www-data:www-data /var/www/tatamimaster
+            systemctl restart tatamimaster.service
+
+            rm -rf /tmp/deploy_pkg_extract /tmp/deploy_pkg.tar.gz
+            systemctl is-active tatamimaster.service
