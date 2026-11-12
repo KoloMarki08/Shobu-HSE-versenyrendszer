@@ -679,7 +679,150 @@ const TatamiMaster = {
     isKumiteAgrajz: function(katMeccsek) {
         if (!Array.isArray(katMeccsek) || katMeccsek.length === 0) return false;
         const n = katMeccsek.length;
-        return (n === 7 || n === 15 || n === 31 || n === 63);
+        return (n === 7 || n === 15 || n === 31 || n === 63 || n === 127);
+    },
+
+    /**
+     * Egyenes kieséses (Kumite) ágrajz generálása szabványos kiemeléssel.
+     * - A kiemelt versenyzők elsőbbséget kapnak az erőnyerő (bye) helyekre.
+     * - A kiemelések és erőnyerők a tábla ellentétes ágaira/negyedeibe kerülnek
+     *   (1. kiemelt felül, 2. alul, 3-4. a maradék ellentétes negyedekben stb.),
+     *   így az élmezőny csak a végső fordulókban találkozhat.
+     */
+    generalEgyenesKiesesMeccsek: function(categoryId, tatamiId, kiemeltek = [], tobbiek = [], startOrder = 1) {
+        const ossz = [...kiemeltek, ...tobbiek];
+        if (ossz.length === 0) return [];
+
+        let sorszam = startOrder;
+        if (ossz.length === 1) {
+            return [{
+                categoryId,
+                tatamiId,
+                competitor1Id: ossz[0].id,
+                competitor2Id: null,
+                matchOrder: sorszam,
+                isFinished: true,
+                winnerId: ossz[0].id
+            }];
+        }
+
+        let agrajzMeret = 2;
+        while (agrajzMeret < ossz.length) agrajzMeret *= 2;
+
+        const r1Meret = agrajzMeret / 2;
+        const eronyerokSzama = agrajzMeret - ossz.length;
+
+        // Szabványos ágrajz pozíciók rangsora (pl. 8-as ág / 4 R1 meccs -> [1, 4, 3, 2])
+        let matchSeeds = [1];
+        while (matchSeeds.length < r1Meret) {
+            const nextLen = matchSeeds.length * 2;
+            const mirrorSum = nextLen + 1;
+            const expanded = [];
+            for (let i = 0; i < matchSeeds.length; i++) {
+                const s = matchSeeds[i];
+                if (i % 2 === 0) {
+                    expanded.push(s, mirrorSum - s);
+                } else {
+                    expanded.push(mirrorSum - s, s);
+                }
+            }
+            matchSeeds = expanded;
+        }
+
+        // R1 meccsindexek fontossági sorrendben (1. seed helye, 2. seed helye, ...)
+        const prioritasIndexek = matchSeeds
+            .map((seedRank, idx) => ({ seedRank, idx }))
+            .sort((a, b) => a.seedRank - b.seedRank)
+            .map(item => item.idx);
+
+        const elsoKor = new Array(r1Meret).fill(null);
+        const kiemeltSor = [...kiemeltek];
+        const egyebSor = [...tobbiek];
+
+        // 1. Erőnyerő helyek kiosztása prioritás szerint (kiemeltek előnyt élveznek!)
+        for (let p = 0; p < eronyerokSzama; p++) {
+            const mIdx = prioritasIndexek[p];
+            const versenyzo = kiemeltSor.length > 0 ? kiemeltSor.shift() : egyebSor.shift();
+            elsoKor[mIdx] = {
+                categoryId,
+                tatamiId,
+                competitor1Id: versenyzo.id,
+                competitor2Id: null,
+                isFinished: true,
+                winnerId: versenyzo.id
+            };
+        }
+
+        // 2. Valódi 1. fordulós mérkőzések aka oldalának feltöltése prioritás szerint
+        const valodiSlotok = prioritasIndexek.slice(eronyerokSzama);
+        const akaKiosztas = [];
+        for (let mIdx of valodiSlotok) {
+            const aka = kiemeltSor.length > 0 ? kiemeltSor.shift() : egyebSor.shift();
+            akaKiosztas.push({ mIdx, aka });
+        }
+
+        // Ha több kiemelt volt, mint az összes 1. körös ághely, a fennmaradók a shiro oldal végére kerülnek
+        const kiemeltIdSet = new Set(kiemeltek.map(k => k.id));
+        const shiroPool = [...egyebSor, ...kiemeltSor];
+
+        // 3. Shiro ellenfél választása (klubütközés kerülése + jövőbeli aka klubok figyelembevétele)
+        akaKiosztas.forEach(({ mIdx, aka }, pos) => {
+            const kovAkaKlubok = new Set(akaKiosztas.slice(pos + 1).map(x => x.aka.club));
+            let valasztottIdx = -1;
+
+            // Először az unseeded jelöltek közül keressünk olyan nem-ütközőt, aki segít elkerülni későbbi ütközést
+            for (let i = 0; i < shiroPool.length; i++) {
+                if (shiroPool[i].club === aka.club) continue;
+                if (valasztottIdx === -1) valasztottIdx = i;
+                if (!kiemeltIdSet.has(shiroPool[i].id) && kovAkaKlubok.has(shiroPool[i].club)) {
+                    valasztottIdx = i;
+                    break;
+                }
+            }
+            if (valasztottIdx === -1) valasztottIdx = 0;
+
+            const shiro = shiroPool.splice(valasztottIdx, 1)[0];
+            elsoKor[mIdx] = {
+                categoryId,
+                tatamiId,
+                competitor1Id: aka.id,
+                competitor2Id: shiro.id,
+                isFinished: false,
+                winnerId: null
+            };
+        });
+
+        // 4. Sorba rendezés fentről lefelé az ágrajz sorrendjében és sorszámozás
+        const generalt = [];
+        for (let m of elsoKor) {
+            m.matchOrder = sorszam++;
+            generalt.push(m);
+        }
+
+        // 5. Következő fordulók generálása (automatikus továbbjutással az erőnyerőkről)
+        let elozoKor = elsoKor;
+        let korMeret = agrajzMeret / 4;
+        while (korMeret >= 1) {
+            const ujKor = [];
+            for (let i = 0; i < korMeret; i++) {
+                const m1 = elozoKor[i * 2];
+                const m2 = elozoKor[i * 2 + 1];
+                ujKor.push({
+                    categoryId,
+                    tatamiId,
+                    competitor1Id: (m1 && m1.isFinished) ? m1.winnerId : null,
+                    competitor2Id: (m2 && m2.isFinished) ? m2.winnerId : null,
+                    matchOrder: sorszam++,
+                    isFinished: false,
+                    winnerId: null
+                });
+            }
+            generalt.push(...ujKor);
+            elozoKor = ujKor;
+            korMeret /= 2;
+        }
+
+        return generalt;
     },
 
     // --- EMOJI-MENTESÍTŐ (AUTOMATIKUS KARAKTERTISZTÍTÓ) ---

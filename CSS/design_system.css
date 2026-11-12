@@ -482,6 +482,86 @@ input:disabled, select:disabled, textarea:disabled {
     background-color: var(--bg-cream);
 }
 
+/* --- DRAG & DROP ÉS SORREND VEZÉRLŐK A MENETREND TÁBLÁZATBAN --- */
+.draggable-row {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.draggable-row:active {
+    cursor: grabbing;
+}
+
+.draggable-row.dragging {
+    opacity: 0.45;
+    background-color: #FEF2F2 !important;
+}
+
+.draggable-row.drag-over td {
+    border-top: 2px solid var(--kyokushin-red);
+    border-bottom: 2px solid var(--kyokushin-red);
+    background-color: #FFFBEB !important;
+}
+
+.tatami-group-row td {
+    background-color: var(--bg-cream-alt);
+    color: var(--mono-900);
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-top: 2px solid var(--border-strong);
+}
+
+.order-cell-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.drag-grip {
+    color: var(--mono-500);
+    font-weight: 700;
+    letter-spacing: -1px;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 2px 3px;
+    cursor: grab;
+}
+
+.order-step-group {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 2px;
+}
+
+.order-step-btn {
+    border: 1px solid var(--border-strong);
+    background: var(--bg-card);
+    color: var(--mono-900);
+    border-radius: 4px;
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.order-step-btn:hover:not(:disabled) {
+    background: var(--kyokushin-red);
+    color: #FFFFFF;
+    border-color: var(--kyokushin-red);
+}
+
+.order-step-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
 /* --- FÜLEK (ADMIN TABS) --- */
 .admin-tabs {
     display: flex;

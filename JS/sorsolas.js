@@ -100,55 +100,7 @@ async function dedikaltSorsolasInditasa() {
             }
         }
     } else {
-        let agrajzMeret = 2;
-        while (agrajzMeret < rendezett.length) agrajzMeret *= 2;
-        let eronyerokSzama = agrajzMeret - rendezett.length;
-        let kuzdok = [...rendezett];
-        let elsoKorMeccsek = [];
-
-        let valodiMeccsekSzama = (rendezett.length - eronyerokSzama) / 2;
-        for (let i = 0; i < valodiMeccsekSzama; i++) {
-            let aka = kuzdok.shift();
-            let shiroIdx = kuzdok.findIndex(v => v.club !== aka.club);
-            if (shiroIdx === -1) shiroIdx = 0;
-            let shiro = kuzdok.splice(shiroIdx, 1)[0];
-
-            elsoKorMeccsek.push({
-                categoryId: katId, tatamiId: tatamiId,
-                competitor1Id: aka.id, competitor2Id: shiro.id,
-                matchOrder: sorszam++, isFinished: false, winnerId: null
-            });
-        }
-
-        while (kuzdok.length > 0) {
-            let v = kuzdok.shift();
-            elsoKorMeccsek.push({
-                categoryId: katId, tatamiId: tatamiId,
-                competitor1Id: v.id, competitor2Id: null,
-                matchOrder: sorszam++, isFinished: true, winnerId: v.id
-            });
-        }
-
-        generaltMeccsek.push(...elsoKorMeccsek);
-        let elozoKorok = elsoKorMeccsek;
-        let aktualisAgMeret = agrajzMeret / 4;
-
-        while (aktualisAgMeret >= 1) {
-            let ujKorMeccsek = [];
-            for (let i = 0; i < aktualisAgMeret; i++) {
-                let m1 = elozoKorok[i * 2];
-                let m2 = elozoKorok[i * 2 + 1];
-                ujKorMeccsek.push({
-                    categoryId: katId, tatamiId: tatamiId,
-                    competitor1Id: (m1 && m1.isFinished) ? m1.winnerId : null,
-                    competitor2Id: (m2 && m2.isFinished) ? m2.winnerId : null,
-                    matchOrder: sorszam++, isFinished: false, winnerId: null
-                });
-            }
-            generaltMeccsek.push(...ujKorMeccsek);
-            elozoKorok = ujKorMeccsek;
-            aktualisAgMeret /= 2;
-        }
+        generaltMeccsek = TatamiMaster.generalEgyenesKiesesMeccsek(katId, tatamiId, kiemeltek, tobbiek, sorszam);
     }
 
     for (let m of generaltMeccsek) {

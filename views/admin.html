@@ -9,7 +9,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261107_v6">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261112_v9">
 </head>
 
 <body>
@@ -624,15 +624,21 @@
 
             <!-- D) KISORSOLT MÉRKŐZÉSEK MENETRENDJE -->
             <div class="admin-section-box" style="margin-bottom: 0;">
-                <div class="admin-section-header">
+                <div class="admin-section-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
                     <div>
                         <h3 class="admin-section-title">
                             <span class="admin-section-num">D) MENETREND TÁBLÁZAT</span>
                             Kisorsolt Mérkőzések Sorrendje
                         </h3>
                         <small style="color: #52525B; display: block; margin-top: 4px;">
-                            Tipp: A sorokat az egérrel megfogva (Drag & Drop) egymásra húzva kézzel is felcserélheted két mérkőzés sorrendjét!
+                            Tipp: A sorokat a bal oldali fogónál (&#8942;&#8942;) megfogva áthúzhatod egy másik mérkőzésre, vagy használhatod a fel/le léptető gombokat!
                         </small>
+                    </div>
+                    <div>
+                        <label for="menetrendTatamiSzuroSelect" style="font-size:0.78rem;font-weight:700;color:#52525B;display:block;margin-bottom:4px;">Tatami szűrő:</label>
+                        <select id="menetrendTatamiSzuroSelect" class="form-control" style="min-width: 220px; width: auto;" onchange="merkozesekBetoltese()">
+                            <option value="ALL">Összes Tatami (csoportosítva)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -703,10 +709,10 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261107_v6"></script>
-    <script src="../JS/auth.js?v=20261107_v6"></script>
-    <script src="../JS/tabs.js?v=20261107_v6"></script>
-    <script src="../JS/admin_adatok.js?v=20261107_v6"></script>
+    <script src="../JS/core.js?v=20261112_v9"></script>
+    <script src="../JS/auth.js?v=20261112_v9"></script>
+    <script src="../JS/tabs.js?v=20261112_v9"></script>
+    <script src="../JS/admin_adatok.js?v=20261112_v9"></script>
 </body>
 
 </html>

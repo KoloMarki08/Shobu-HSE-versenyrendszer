@@ -16,8 +16,9 @@ window.onload = function() {
     mindenAdatFrissitese();
 
     // Valós idejű háttér-szinkronizáció: ha másik gépen (Edzői vagy Bírói pulton) változás történik,
-    // automatikusan frissítjük az Admin Központot is (kivéve ha épp szövegmezőbe gépel az admin)
+    // automatikusan frissítjük az Admin Központot is (kivéve ha épp szövegmezőbe gépel az admin vagy húzza a sort)
     TatamiMaster.on('liveAdatValtozott', function() {
+        if (draggedMatchId !== null) return;
         const aktElem = document.activeElement;
         const gepel = aktElem && ['INPUT', 'SELECT', 'TEXTAREA'].includes(aktElem.tagName);
         if (gepel) return;
@@ -133,7 +134,9 @@ async function mindenAdatFrissitese() {
         globalKategoriak = Array.isArray(k) ? k : [];
         globalNevezesek  = Array.isArray(n) ? n : [];
         globalTatamik    = Array.isArray(t) ? t : [];
-        globalMerkozesek = Array.isArray(m) ? m.sort((a, b) => a.matchOrder - b.matchOrder) : [];
+        globalMerkozesek = Array.isArray(m)
+            ? m.sort((a, b) => (a.tatamiId - b.tatamiId) || (a.matchOrder - b.matchOrder) || (a.id - b.id))
+            : [];
 
         // Automatikus öngyógyító takarítás: ha egy korábbi súlybontás után bent maradt az üres (0 fős) alap kategória
         // vagy duplikált súlycsoport keletkezett, automatikusan letisztítjuk
@@ -1152,8 +1155,20 @@ function tatamikBetoltese() {
 
     const tatSel = document.getElementById('sorsolasTatamiSelect');
     if (tatSel) {
+        const elozoTat = tatSel.value;
         tatSel.innerHTML = '<option value="">-- Válassz Tatamit! --</option>' +
             globalTatamik.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        if (elozoTat && globalTatamik.some(t => String(t.id) === elozoTat)) tatSel.value = elozoTat;
+    }
+
+    const szuroSel = document.getElementById('menetrendTatamiSzuroSelect');
+    if (szuroSel) {
+        const elozoSzuro = szuroSel.value;
+        szuroSel.innerHTML = '<option value="ALL">Összes Tatami (csoportosítva)</option>' +
+            globalTatamik.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        if (elozoSzuro && (elozoSzuro === 'ALL' || globalTatamik.some(t => String(t.id) === elozoSzuro))) {
+            szuroSel.value = elozoSzuro;
+        }
     }
 }
 
@@ -1207,7 +1222,7 @@ function frissitKiemelesValaszto() {
            </div>`;
 
     cont.innerHTML = szabalyBanner +
-        `<div style="margin-bottom:6px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('star', 14)} Kiemelt versenyzők bepipálása (opcionális):</div>` +
+        `<div style="margin-bottom:6px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('star', 14)} Kiemelt versenyzők bepipálása (egyenes kiesésben ők lesznek az erőnyerők és külön ágra kerülnek; Katában a végén indulnak):</div>` +
         `<div class="kat-checkbox-grid">` +
         indulok.map(v => `
             <label class="kat-check-item">
@@ -1269,42 +1284,7 @@ async function kategoriaSorsolasa() {
             }
         }
     } else {
-        let agrajzMeret = 2;
-        while (agrajzMeret < rendezett.length) agrajzMeret *= 2;
-        let eronyerokSzama = agrajzMeret - rendezett.length;
-        let kuzdok = [...rendezett];
-        let elsoKor = [];
-
-        let valodiDb = (rendezett.length - eronyerokSzama) / 2;
-        for (let i = 0; i < valodiDb; i++) {
-            let aka = kuzdok.shift();
-            let shiroIdx = kuzdok.findIndex(v => v.club !== aka.club);
-            if (shiroIdx === -1) shiroIdx = 0;
-            let shiro = kuzdok.splice(shiroIdx, 1)[0];
-            elsoKor.push({ categoryId: katId, tatamiId, competitor1Id: aka.id, competitor2Id: shiro.id, matchOrder: sorszam++, isFinished: false, winnerId: null });
-        }
-        while (kuzdok.length > 0) {
-            let v = kuzdok.shift();
-            elsoKor.push({ categoryId: katId, tatamiId, competitor1Id: v.id, competitor2Id: null, matchOrder: sorszam++, isFinished: true, winnerId: v.id });
-        }
-        generalt.push(...elsoKor);
-        let elozoKor = elsoKor;
-        let korMeret = agrajzMeret / 4;
-        while (korMeret >= 1) {
-            let ujKor = [];
-            for (let i = 0; i < korMeret; i++) {
-                let m1 = elozoKor[i * 2], m2 = elozoKor[i * 2 + 1];
-                ujKor.push({
-                    categoryId: katId, tatamiId,
-                    competitor1Id: (m1 && m1.isFinished) ? m1.winnerId : null,
-                    competitor2Id: (m2 && m2.isFinished) ? m2.winnerId : null,
-                    matchOrder: sorszam++, isFinished: false, winnerId: null
-                });
-            }
-            generalt.push(...ujKor);
-            elozoKor = ujKor;
-            korMeret /= 2;
-        }
+        generalt = TatamiMaster.generalEgyenesKiesesMeccsek(katId, tatamiId, kiemeltek, tobbiek, sorszam);
     }
 
     for (let m of generalt) {
@@ -1315,12 +1295,44 @@ async function kategoriaSorsolasa() {
     await mindenAdatFrissitese();
 }
 
+function epitsTisztaMeccsPayload(m) {
+    return {
+        id: m.id,
+        categoryId: m.categoryId,
+        tatamiId: m.tatamiId,
+        competitor1Id: m.competitor1Id ?? null,
+        competitor2Id: m.competitor2Id ?? null,
+        matchOrder: m.matchOrder,
+        isFinished: Boolean(m.isFinished),
+        winnerId: m.winnerId ?? null
+    };
+}
+
 function merkozesekBetoltese() {
     const tbody = document.getElementById('merkozesekTbody');
     if (!tbody) return;
 
+    const szuroEl = document.getElementById('menetrendTatamiSzuroSelect');
+    const szurtTatamiId = (szuroEl && szuroEl.value && szuroEl.value !== 'ALL') ? parseInt(szuroEl.value) : null;
+    const lista = szurtTatamiId ? globalMerkozesek.filter(m => m.tatamiId === szurtTatamiId) : globalMerkozesek;
+
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#71717A;">Még nincs kisorsolt mérkőzés.</td></tr>`;
+        return;
+    }
+
+    const tatamiMeccsDb = {};
+    const tatamiPozicio = {};
+    for (let m of lista) {
+        if (!tatamiMeccsDb[m.tatamiId]) tatamiMeccsDb[m.tatamiId] = [];
+        tatamiPozicio[m.id] = tatamiMeccsDb[m.tatamiId].length;
+        tatamiMeccsDb[m.tatamiId].push(m);
+    }
+
     let html = "";
-    for (let m of globalMerkozesek) {
+    let elozoTatamiId = null;
+
+    for (let m of lista) {
         const tat = globalTatamik.find(t => t.id === m.tatamiId);
         const kat = globalKategoriak.find(k => k.id === m.categoryId);
         const v1 = globalVersenyzok.find(v => v.id === m.competitor1Id);
@@ -1328,43 +1340,162 @@ function merkozesekBetoltese() {
         const gy = globalVersenyzok.find(v => v.id === m.winnerId);
         const isKata = (kat && kat.matchType && kat.matchType.toUpperCase() === 'KATA');
 
+        if (!szurtTatamiId && m.tatamiId !== elozoTatamiId) {
+            elozoTatamiId = m.tatamiId;
+            const db = tatamiMeccsDb[m.tatamiId] ? tatamiMeccsDb[m.tatamiId].length : 0;
+            html += `<tr class="tatami-group-row">
+                <td colspan="7">${TatamiMaster.icon('shield', 14)} <strong>${tat ? tat.name : 'Tatami #' + m.tatamiId}</strong> &mdash; ${db} mérkőzés</td>
+            </tr>`;
+        }
+
+        const poz = tatamiPozicio[m.id] ?? 0;
+        const osszTatami = tatamiMeccsDb[m.tatamiId] ? tatamiMeccsDb[m.tatamiId].length : 1;
+        const elso = poz === 0;
+        const utolso = poz >= osszTatami - 1;
+
         const statuszHtml = m.isFinished
             ? `<span style="color:#18181B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${TatamiMaster.icon('check', 14)} Kész (${gy ? gy.name : 'Erőnyerő'})</span>`
             : `<span style="color:#52525B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${TatamiMaster.icon('clock', 14)} Várakozik</span>`;
 
-        html += `<tr draggable="true" ondragstart="dragStart(event, ${m.id})" ondragover="dragOver(event)" ondrop="dropMatch(event, ${m.id})" style="cursor:grab;">
-            <td><strong>#${m.matchOrder}</strong></td>
+        html += `<tr class="draggable-row" data-match-id="${m.id}" draggable="true"
+                     ondragstart="dragStart(event, ${m.id})"
+                     ondragenter="dragEnter(event)"
+                     ondragover="dragOver(event)"
+                     ondrop="dropMatch(event, ${m.id})"
+                     ondragend="dragEnd()">
+            <td>
+                <div class="order-cell-wrap">
+                    <span class="drag-grip" title="Fogd meg a sort és húzd egy másik mérkőzésre">&#8942;&#8942;</span>
+                    <strong>#${m.matchOrder}</strong>
+                    <div class="order-step-group">
+                        <button type="button" class="order-step-btn" draggable="false" onmousedown="event.stopPropagation()" onclick="mozgatMeccsSorrend(${m.id}, -1)" title="Előrébb hozás" ${elso ? 'disabled' : ''}>&#9650;</button>
+                        <button type="button" class="order-step-btn" draggable="false" onmousedown="event.stopPropagation()" onclick="mozgatMeccsSorrend(${m.id}, 1)" title="Hátrébb sorolás" ${utolso ? 'disabled' : ''}>&#9660;</button>
+                    </div>
+                </div>
+            </td>
             <td>${tat ? tat.name : '-'}</td>
             <td><strong>${kat ? kat.name : '-'}</strong></td>
             <td style="color:#18181B;font-weight:700;">${v1 ? v1.name + ' <small style="color:#52525B;">(' + v1.club + ')</small>' : 'Várakozik...'}</td>
             <td>${isKata ? '<em>KATA EGYÉNI</em>' : (v2 ? v2.name + ' <small style="color:#52525B;">(' + v2.club + ')</small>' : (m.isFinished ? '<em>Erőnyerő</em>' : 'Várakozik...'))}</td>
             <td>${statuszHtml}</td>
             <td style="white-space:nowrap;">
-                <button class="btn btn-outline" style="padding:4px 8px;font-size:0.8rem;" onclick="meccsUjranyitasaReset(${m.id})">${TatamiMaster.icon('refresh', 13)} Újranyitás</button>
-                <button class="btn btn-danger" style="padding:4px 8px;font-size:0.8rem;" onclick="torolElem('Matches', ${m.id})" title="Mérkőzés törlése">${TatamiMaster.icon('trash', 13)} Törlés</button>
+                <button class="btn btn-outline" draggable="false" onmousedown="event.stopPropagation()" style="padding:4px 8px;font-size:0.8rem;" onclick="meccsUjranyitasaReset(${m.id})">${TatamiMaster.icon('refresh', 13)} Újranyitás</button>
+                <button class="btn btn-danger" draggable="false" onmousedown="event.stopPropagation()" style="padding:4px 8px;font-size:0.8rem;" onclick="torolElem('Matches', ${m.id})" title="Mérkőzés törlése">${TatamiMaster.icon('trash', 13)} Törlés</button>
             </td>
         </tr>`;
     }
-    tbody.innerHTML = html || `<tr><td colspan="7" style="text-align:center;color:#71717A;">Még nincs kisorsolt mérkőzés.</td></tr>`;
+    tbody.innerHTML = html;
 }
 
-function dragStart(ev, matchId) { draggedMatchId = matchId; }
-function dragOver(ev) { ev.preventDefault(); }
+function dragStart(ev, matchId) {
+    draggedMatchId = matchId;
+    const row = ev.currentTarget;
+    if (ev.dataTransfer) {
+        ev.dataTransfer.effectAllowed = 'move';
+        ev.dataTransfer.setData('text/plain', String(matchId));
+    }
+    if (row) {
+        requestAnimationFrame(() => row.classList.add('dragging'));
+    }
+}
+
+function dragEnter(ev) {
+    ev.preventDefault();
+}
+
+function dragOver(ev) {
+    ev.preventDefault();
+    const row = ev.currentTarget;
+    if (!row) return;
+    const targetId = parseInt(row.dataset.matchId);
+    if (!targetId || targetId === draggedMatchId) {
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'none';
+        return;
+    }
+    const m1 = globalMerkozesek.find(m => m.id === draggedMatchId);
+    const m2 = globalMerkozesek.find(m => m.id === targetId);
+    if (m1 && m2 && m1.tatamiId !== m2.tatamiId) {
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'none';
+        return;
+    }
+    if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+    if (!row.classList.contains('drag-over')) {
+        document.querySelectorAll('#merkozesekTbody tr.drag-over').forEach(el => el.classList.remove('drag-over'));
+        row.classList.add('drag-over');
+    }
+}
+
+function dragEnd() {
+    draggedMatchId = null;
+    document.querySelectorAll('#merkozesekTbody tr.dragging, #merkozesekTbody tr.drag-over').forEach(el => {
+        el.classList.remove('dragging', 'drag-over');
+    });
+}
+
 async function dropMatch(ev, targetMatchId) {
     ev.preventDefault();
-    if (!draggedMatchId || draggedMatchId === targetMatchId) return;
-    const m1 = globalMerkozesek.find(m => m.id === draggedMatchId);
+    const forrasId = draggedMatchId || (ev.dataTransfer ? parseInt(ev.dataTransfer.getData('text/plain')) : null);
+    dragEnd();
+
+    if (!forrasId || forrasId === targetMatchId) return;
+    const m1 = globalMerkozesek.find(m => m.id === forrasId);
     const m2 = globalMerkozesek.find(m => m.id === targetMatchId);
-    if (!m1 || !m2) return;
+    await cserelMeccsSorrendet(m1, m2);
+}
 
-    const tempOrder = m1.matchOrder;
-    m1.matchOrder = m2.matchOrder;
-    m2.matchOrder = tempOrder;
+async function mozgatMeccsSorrend(matchId, irany) {
+    const m1 = globalMerkozesek.find(m => m.id === matchId);
+    if (!m1) return;
+    const tatamiLista = globalMerkozesek.filter(m => m.tatamiId === m1.tatamiId);
+    const idx = tatamiLista.findIndex(m => m.id === matchId);
+    const celIdx = idx + irany;
+    if (idx === -1 || celIdx < 0 || celIdx >= tatamiLista.length) return;
+    await cserelMeccsSorrendet(tatamiLista[idx], tatamiLista[celIdx]);
+}
 
-    await Promise.all([
-        TatamiMaster.apiSend('Matches/' + m1.id, 'PUT', m1),
-        TatamiMaster.apiSend('Matches/' + m2.id, 'PUT', m2)
-    ]);
+async function cserelMeccsSorrendet(m1, m2) {
+    if (!m1 || !m2 || m1.id === m2.id) return;
+    if (m1.tatamiId !== m2.tatamiId) {
+        TatamiMaster.toast("Csak ugyanazon a tatamin belüli mérkőzések sorrendje cserélhető fel!", "figyelem");
+        return;
+    }
+
+    const tatamiLista = globalMerkozesek.filter(m => m.tatamiId === m1.tatamiId);
+    const vanDuplaSorszam = new Set(tatamiLista.map(x => x.matchOrder)).size < tatamiLista.length;
+    const modositandok = [];
+
+    if (!vanDuplaSorszam && m1.matchOrder !== m2.matchOrder) {
+        const tempOrder = m1.matchOrder;
+        m1.matchOrder = m2.matchOrder;
+        m2.matchOrder = tempOrder;
+        modositandok.push(m1, m2);
+    } else {
+        const idx1 = tatamiLista.findIndex(m => m.id === m1.id);
+        const idx2 = tatamiLista.findIndex(m => m.id === m2.id);
+        if (idx1 === -1 || idx2 === -1) return;
+
+        const ujSorszamok = tatamiLista.map((_, i) => i + 1);
+        const tmp = ujSorszamok[idx1];
+        ujSorszamok[idx1] = ujSorszamok[idx2];
+        ujSorszamok[idx2] = tmp;
+
+        tatamiLista.forEach((meccs, i) => {
+            if (meccs.matchOrder !== ujSorszamok[i]) {
+                meccs.matchOrder = ujSorszamok[i];
+                modositandok.push(meccs);
+            }
+        });
+    }
+
+    const valaszok = await Promise.all(
+        modositandok.map(m => TatamiMaster.apiSend('Matches/' + m.id, 'PUT', epitsTisztaMeccsPayload(m)))
+    );
+
+    if (valaszok.some(r => !r || !r.ok)) {
+        TatamiMaster.toast("Hiba történt a mérkőzés sorrendjének mentésekor!", "hiba");
+    } else {
+        TatamiMaster.toast(`Sorrend módosítva (#${m2.matchOrder} <-> #${m1.matchOrder})`);
+    }
     await mindenAdatFrissitese();
 }
 
@@ -1841,42 +1972,8 @@ async function osszesKategoriaAutomatikusSorsolasa() {
                 }
             }
         } else {
-            let agrajzMeret = 2;
-            while (agrajzMeret < kevert.length) agrajzMeret *= 2;
-            let eronyerokSzama = agrajzMeret - kevert.length;
-            let kuzdok = [...kevert];
-            let elsoKor = [];
-
-            let valodiDb = (kevert.length - eronyerokSzama) / 2;
-            for (let i = 0; i < valodiDb; i++) {
-                let aka = kuzdok.shift();
-                let shiroIdx = kuzdok.findIndex(v => v.club !== aka.club);
-                if (shiroIdx === -1) shiroIdx = 0;
-                let shiro = kuzdok.splice(shiroIdx, 1)[0];
-                elsoKor.push({ categoryId: kat.id, tatamiId: tId, competitor1Id: aka.id, competitor2Id: shiro.id, matchOrder: sorszamMap[tId]++, isFinished: false, winnerId: null });
-            }
-            while (kuzdok.length > 0) {
-                let v = kuzdok.shift();
-                elsoKor.push({ categoryId: kat.id, tatamiId: tId, competitor1Id: v.id, competitor2Id: null, matchOrder: sorszamMap[tId]++, isFinished: true, winnerId: v.id });
-            }
-            generalt.push(...elsoKor);
-            let elozoKor = elsoKor;
-            let korMeret = agrajzMeret / 4;
-            while (korMeret >= 1) {
-                let ujKor = [];
-                for (let i = 0; i < korMeret; i++) {
-                    let m1 = elozoKor[i * 2], m2 = elozoKor[i * 2 + 1];
-                    ujKor.push({
-                        categoryId: kat.id, tatamiId: tId,
-                        competitor1Id: (m1 && m1.isFinished) ? m1.winnerId : null,
-                        competitor2Id: (m2 && m2.isFinished) ? m2.winnerId : null,
-                        matchOrder: sorszamMap[tId]++, isFinished: false, winnerId: null
-                    });
-                }
-                generalt.push(...ujKor);
-                elozoKor = ujKor;
-                korMeret /= 2;
-            }
+            generalt = TatamiMaster.generalEgyenesKiesesMeccsek(kat.id, tId, [], kevert, sorszamMap[tId]);
+            sorszamMap[tId] += generalt.length;
         }
 
         for (let m of generalt) {
