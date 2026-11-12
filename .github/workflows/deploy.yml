@@ -59,8 +59,8 @@ jobs:
             cp -rf /tmp/deploy_pkg_extract/frontend/* /var/www/tatamimaster/frontend/
             cp -rf /tmp/deploy_pkg_extract/backend/* /var/www/tatamimaster/backend/
 
-            chown -R www-data:www-data /var/www/tatamimaster
-            systemctl restart tatamimaster.service
+            chmod -R g+rwX,o+rX /var/www/tatamimaster
+            sudo systemctl restart tatamimaster.service
 
             rm -rf /tmp/deploy_pkg_extract /tmp/deploy_pkg.tar.gz
-            systemctl is-active tatamimaster.service
+            sudo systemctl is-active tatamimaster.service
