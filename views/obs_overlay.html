@@ -40,19 +40,6 @@
         }
         @keyframes blink { 50% { opacity: 0.25; } }
 
-        .obs-round-pill {
-            background: #27272A;
-            color: #FAF8F5;
-            padding: 3px 10px;
-            border-radius: 6px;
-            font-size: 0.92rem;
-            font-weight: 800;
-            border: 1px solid rgba(255,255,255,0.25);
-        }
-        .obs-round-pill.overtime {
-            background: #991B1B;
-        }
-
         /* ALSÓ TELEVÍZIÓS SCOREBOARD (LOWER THIRD) */
         .obs-lower-bar {
             position: fixed;
@@ -132,14 +119,6 @@
             line-height: 1;
             font-variant-numeric: tabular-nums;
         }
-        .obs-subround {
-            font-size: 0.78rem;
-            font-weight: 800;
-            color: #E4E0D7;
-            letter-spacing: 0.8px;
-            margin-top: 4px;
-            text-transform: uppercase;
-        }
         /* KATA NÉZET OBS-BEN */
         .obs-kata-row {
             display: none;
@@ -168,7 +147,6 @@
     <div class="obs-top-badge">
         <div class="obs-live-dot"></div>
         <span id="obsMatchInfo">1. TATAMI — ÉLŐ KÖZVETÍTÉS</span>
-        <span id="obsRoundBadge" class="obs-round-pill">ALAPIDŐ</span>
     </div>
 
     <div class="obs-lower-bar">
@@ -181,7 +159,6 @@
             <div id="obsAkaScore" class="obs-score">0</div>
             <div class="obs-timer-cell">
                 <div id="obsTimer" class="obs-timer">02:00</div>
-                <div id="obsSubRound" class="obs-subround">ALAPIDŐ</div>
             </div>
             <div id="obsShiroScore" class="obs-score">0</div>
             <div class="obs-fighter obs-shiro">
@@ -236,19 +213,6 @@
 
                 document.getElementById('obsKumiteRow').style.display = isKata ? 'none' : 'grid';
                 document.getElementById('obsKataRow').style.display = isKata ? 'flex' : 'none';
-
-                const rLabel = d.roundLabel || (isKata ? 'KATA' : 'ALAPIDŐ');
-                const rBadge = document.getElementById('obsRoundBadge');
-                if (rBadge) {
-                    rBadge.innerText = rLabel;
-                    if (d.roundCode && d.roundCode !== 'ALAP' && !isKata) {
-                        rBadge.classList.add('overtime');
-                    } else {
-                        rBadge.classList.remove('overtime');
-                    }
-                }
-                const subR = document.getElementById('obsSubRound');
-                if (subR) subR.innerText = rLabel;
 
                 document.getElementById('obsAkaName').innerText = d.akaName || 'AKA';
                 document.getElementById('obsShiroName').innerText = d.shiroName || 'SHIRO';
