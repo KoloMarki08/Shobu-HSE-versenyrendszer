@@ -3,30 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Kumite Ágrajz Központ</title>
-    <link rel="stylesheet" href="../CSS/stlye.css">
-    <link rel="stylesheet" href="../CSS/design_system.css">
+    <title>TATAMI MASTER™ - Átirányítás...</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <script>
+        (function () {
+            var isAdmin = false;
+            try {
+                var raw = localStorage.getItem('tatamiUser');
+                var user = raw ? JSON.parse(raw) : null;
+                isAdmin = !!(user && user.role && String(user.role).toUpperCase() === 'ADMIN');
+            } catch (e) {}
+            var search = window.location.search || '';
+            var target = isAdmin ? ('admin.html' + search + '#tab-agrajz') : ('audience.html' + search);
+            window.location.replace(target);
+        })();
+    </script>
 </head>
-<body id="pageKumite">
-    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1 style="display:flex;align-items:center;gap:10px;">
-            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-            <em>TATAMI MASTER</em> <span class="red-text">KUMITE ÁGRAJZ & NYOMTATÁSI KÖZPONT</span>
-        </h1>
-        <div style="display:flex;gap:10px;">
-            <select id="kumiteHubSelect" class="input-field" style="min-width:260px;" onchange="rajzolDedikaltKumiteAgrajz()"></select>
-            <button class="btn btn-outline-blue" onclick="window.print()">
-                <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Ágrajz Nyomtatása
-            </button>
-        </div>
-    </header>
-    <main class="admin-container">
-        <div id="kumiteHubContainer" style="background:#FFFFFF;padding:24px;border-radius:10px;border:1px solid #E4E0D7;"></div>
-    </main>
-    <script src="../JS/core.js?v=20261107_v6"></script>
-    <script src="../JS/auth.js?v=20261107_v6"></script>
-    <script src="../JS/KUMITE.js?v=20261107_v6"></script>
-    <script src="../JS/data.js?v=20261107_v6"></script>
+<body style="font-family:system-ui,-apple-system,sans-serif;padding:40px;text-align:center;background:#FAF8F5;color:#18181B;">
+    <p>A Kumite ágrajzok és mérkőzések megtekintése az Admin Központban és az Élő Követés felületen érhető el. Átirányítás...</p>
+    <p><a id="fallbackLink" href="audience.html" style="color:#18181B;font-weight:700;">Tovább a megfelelő felületre</a></p>
+    <script>
+        (function () {
+            var a = document.getElementById('fallbackLink');
+            if (!a) return;
+            try {
+                var raw = localStorage.getItem('tatamiUser');
+                var user = raw ? JSON.parse(raw) : null;
+                var search = window.location.search || '';
+                a.href = (user && user.role && String(user.role).toUpperCase() === 'ADMIN')
+                    ? ('admin.html' + search + '#tab-agrajz')
+                    : ('audience.html' + search);
+            } catch (e) {}
+        })();
+    </script>
 </body>
 </html>

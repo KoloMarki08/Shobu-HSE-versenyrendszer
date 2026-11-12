@@ -1836,6 +1836,91 @@ const TatamiMaster = {
         return 0;
     },
 
+    // Övfokozat szövegből (pl. "4. kyu", "1. dan") numerikus kyu-szám (Dan = 0)
+    parseKyuSzam: function(beltStr) {
+        if (!beltStr) return 10;
+        const s = String(beltStr).toLowerCase().trim();
+        if (s.includes('dan')) return 0;
+        const szam = parseInt(s.replace(/[^0-9]/g, ''), 10);
+        return isNaN(szam) ? 10 : szam;
+    },
+
+    // Közös 5 bírás Kata ranglista és döntős táblázat HTML (Admin 6. menü és Nézői nézet számára)
+    epitsKataRanglistaHtml: function(katMeccsek, versenyzok, kataTarolo = null) {
+        const tarolo = kataTarolo || this.lekerKataEredmenyek();
+        const selejtezo = katMeccsek.filter(m => !this.isKataDontoMeccs(m.id));
+        const donto = katMeccsek.filter(m => this.isKataDontoMeccs(m.id));
+
+        const epitsTabla = (meccsTomb, cim, ikonNev, isSelejtezoTabla) => {
+            const lista = meccsTomb.map(m => {
+                const v = versenyzok.find(x => x.id === m.competitor1Id);
+                const er = tarolo[m.id] || {
+                    kesz: false, osszeg: 0, minErtek: 0, maxErtek: 0, vezetoBiro: 0,
+                    pontok: ['-', '-', '-', '-', '-'], minIdx: -1, maxIdx: -1
+                };
+                return { meccs: m, versenyzo: v, ...er };
+            });
+
+            const lepontozottak = lista.filter(x => x.kesz).sort(this.kataSorrendHasonlito);
+            const varakozok = lista.filter(x => !x.kesz);
+            const teljesSorrend = lepontozottak.concat(varakozok);
+
+            let tHtml = `<h3 style="margin-top: 22px; margin-bottom: 10px; color: #18181B; display:flex; align-items:center; gap:8px;">${this.icon(ikonNev, 18)}<span>${cim}</span></h3>`;
+            tHtml += '<div style="overflow-x: auto;"><table class="data-table">';
+            tHtml += '<tr><th>Helyezés</th><th>Versenyző / Csapat</th><th>B1 (Vezető)</th><th>B2</th><th>B3</th><th>B4</th><th>B5</th><th>Min (Kieső)</th><th>Max (Kieső)</th><th>ÖSSZPONTSZÁM</th><th>Státusz</th></tr>';
+
+            for (let i = 0; i < teljesSorrend.length; i++) {
+                const item = teljesSorrend[i];
+                const vNev = item.versenyzo
+                    ? `<strong>${this.escapeHtml(item.versenyzo.name)}</strong> <small style="color:#52525B;">(${this.escapeHtml(item.versenyzo.club || '')}${item.versenyzo.belt ? ' - ' + this.escapeHtml(item.versenyzo.belt) : ''})</small>`
+                    : '-';
+
+                let ujrakatazas = false;
+                if (item.kesz) {
+                    if (i > 0 && teljesSorrend[i - 1].kesz && this.kataSorrendHasonlito(item, teljesSorrend[i - 1]) === 0) ujrakatazas = true;
+                    if (i < teljesSorrend.length - 1 && teljesSorrend[i + 1].kesz && this.kataSorrendHasonlito(item, teljesSorrend[i + 1]) === 0) ujrakatazas = true;
+                }
+
+                const top6Jeloles = (isSelejtezoTabla && item.kesz && i < 6);
+                const eremJel = (!isSelejtezoTabla && item.kesz && i < 3)
+                    ? `${this.icon('medal', 15)} ${i + 1}.`
+                    : (item.kesz ? (i + 1) + '.' : '-');
+                const sorStilus = (top6Jeloles || (!isSelejtezoTabla && item.kesz && i < 3)) ? 'background-color: #FAF8F5;' : '';
+
+                tHtml += `<tr style="${sorStilus}">`;
+                tHtml += `<td><strong>${eremJel}</strong></td>`;
+                tHtml += `<td>${vNev}${top6Jeloles ? ' <span style="background:#18181B;color:#FAF8F5;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">TOP 6 DÖNTŐS</span>' : ''}</td>`;
+
+                for (let b = 0; b < 5; b++) {
+                    const p = (item.pontok && item.pontok[b] !== undefined && item.pontok[b] !== null) ? item.pontok[b] : '-';
+                    const st = (b === item.minIdx || b === item.maxIdx) ? 'text-decoration: line-through; color: #A1A1AA;' : 'font-weight: 700; color: #18181B;';
+                    tHtml += `<td style="${st}">${p}</td>`;
+                }
+
+                tHtml += `<td style="color: #71717A;">${item.kesz ? Number(item.minErtek).toFixed(1) : '-'}</td>`;
+                tHtml += `<td style="color: #71717A;">${item.kesz ? Number(item.maxErtek).toFixed(1) : '-'}</td>`;
+                tHtml += `<td style="font-size: 1.2rem; font-weight: 800; color: #18181B;">${item.kesz ? Number(item.osszeg).toFixed(1) : '-'}</td>`;
+                tHtml += `<td>${ujrakatazas
+                    ? `<span style="background:#991B1B;color:white;padding:3px 8px;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${this.icon('alert', 13)} ÚJRAKATÁZÁS!</span>`
+                    : (item.kesz
+                        ? `<span style="color:#18181B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${this.icon('check', 14)} Értékelve</span>`
+                        : `<span style="color:#52525B;display:inline-flex;align-items:center;gap:4px;">${this.icon('clock', 13)} Rajtszám: #${item.meccs.matchOrder}</span>`)}</td>`;
+                tHtml += '</tr>';
+            }
+            tHtml += '</table></div>';
+            return tHtml;
+        };
+
+        let html = `<p style="font-size: 0.86rem; color: #52525B; margin-top: 12px; display:flex; align-items:center; gap:6px;">${this.icon('info', 15)} <em>Kata szabály: Az 5 bírói pontszámból a legmagasabb és a legalacsonyabb kiesik, a középső 3 összege adja a pontszámot. A selejtező legjobb 6 versenyzője (Top 6) a döntőben 0 pontról indulva újra katázik!</em></p>`;
+        if (donto.length > 0) {
+            html += epitsTabla(donto, '2. Kör: TOP 6 DÖNTŐ (Éremcsata - 0 pontról)', 'trophy', false);
+        }
+        if (selejtezo.length > 0) {
+            html += epitsTabla(selejtezo, '1. Kör: Selejtező Ranglista', 'clipboard', true);
+        }
+        return html;
+    },
+
     mentKataEredmeny: function(matchId, competitorId, ertekeles) {
         let tarolo = this.safeJsonParse('kataEredmenyek', {});
         const rekord = { matchId: matchId, competitorId: competitorId, ...ertekeles };

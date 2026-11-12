@@ -3,71 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Sorsolási & Kiemelési Központ</title>
-    <link rel="stylesheet" href="../CSS/stlye.css">
-    <link rel="stylesheet" href="../CSS/design_system.css">
+    <title>TATAMI MASTER™ - Átirányítás...</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <script>
+        (function () {
+            var isAdmin = false;
+            try {
+                var raw = localStorage.getItem('tatamiUser');
+                var user = raw ? JSON.parse(raw) : null;
+                isAdmin = !!(user && user.role && String(user.role).toUpperCase() === 'ADMIN');
+            } catch (e) {}
+            var search = window.location.search || '';
+            var target = isAdmin ? ('admin.html' + search + '#tab-tatamik') : '../index.html';
+            window.location.replace(target);
+        })();
+    </script>
 </head>
-<body id="pageKiemeles">
-    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1 style="display:flex;align-items:center;gap:10px;">
-            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-            <em>TATAMI MASTER</em> <span class="red-text">SORSOLÁSI & KIEMELÉSI KÖZPONT</span>
-        </h1>
-        <button class="btn btn-outline" onclick="window.location.href='admin.html'">
-            <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Vissza az Admin Főpanelre
-        </button>
-    </header>
-
-    <main class="admin-container">
-        <div style="background:#FFFFFF;padding:25px;border-radius:10px;border:1px solid #E4E0D7;box-shadow:0 2px 10px rgba(24,24,27,0.03);margin-bottom:25px;">
-            <h2 style="margin-top:0;display:flex;align-items:center;gap:8px;color:#18181B;">
-                <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
-                Kategória Sorsolása és Kiemeltek Beállítása
-            </h2>
-            <p style="color:#52525B;font-size:0.95rem;margin-bottom:20px;">
-                Válaszd ki a kategóriát és a tatamit! A pipával megjelölt <strong>kiemelt versenyzők</strong> Kumitében külön ágra kerülnek (hogy ne találkozzanak az 1. fordulóban), Katában pedig a rajtlista végén lépnek tatamira.
-            </p>
-
-            <div style="display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px;">
-                <div style="flex:1;min-width:240px;">
-                    <label style="font-weight:bold;display:block;margin-bottom:6px;">Sorsolandó Kategória:</label>
-                    <select id="dedSorsolasKatSelect" class="input-field" style="width:100%;" onchange="dedikaltIndulokBetoltese()"></select>
-                </div>
-                <div style="flex:1;min-width:180px;">
-                    <label style="font-weight:bold;display:block;margin-bottom:6px;">Cél Tatami:</label>
-                    <select id="dedSorsolasTatamiSelect" class="input-field" style="width:100%;"></select>
-                </div>
-                <div style="flex:1;min-width:220px;">
-                    <label style="font-weight:bold;display:block;margin-bottom:6px;">Lebonyolítási Formátum (Kumite: 5 főig körmeccs, 6+ fő egyenes kiesés):</label>
-                    <select id="dedSorsolasFormatumSelect" class="input-field" style="width:100%;">
-                        <option value="auto">Automatikus (5 főig Körmérkőzés / 6+ fő Egyenes kiesés)</option>
-                        <option value="kormeccs">Körmérkőzés (Mindenki mindenkivel, 2–5 fő)</option>
-                        <option value="egyenes">Egyenes kiesés (Ágrajz 6+ főtől / Kata Rajtlista)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:16px;margin-bottom:20px;">
-                <h4 style="margin:0 0 10px 0;color:#18181B;display:flex;align-items:center;gap:6px;">
-                    <svg class="tm-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    Benevezett indulók (Pipáld be a kiemelteket!):
-                </h4>
-                <div id="dedKiemelesLista" style="display:flex;gap:12px;flex-wrap:wrap;">
-                    <span style="color:#8E8A82;">Válassz egy kategóriát a nevezettek megjelenítéséhez...</span>
-                </div>
-            </div>
-
-            <button class="btn btn-outline-green" style="padding:12px 25px;font-size:1.05rem;" onclick="dedikaltSorsolasInditasa()">
-                <svg class="tm-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Kategória Kisorsolása Most
-            </button>
-        </div>
-    </main>
-
-    <script src="../JS/core.js?v=20261112_v9"></script>
-    <script src="../JS/auth.js?v=20261112_v9"></script>
-    <script src="../JS/sorsolas.js?v=20261112_v9"></script>
-    <script src="../JS/data.js?v=20261112_v9"></script>
+<body style="font-family:system-ui,-apple-system,sans-serif;padding:40px;text-align:center;background:#FAF8F5;color:#18181B;">
+    <p>Ez az oldal összevonásra került az Admin Központ Sorsolás és Kiemelés menüjével. Átirányítás folyamatban...</p>
+    <p><a id="fallbackLink" href="../index.html" style="color:#18181B;font-weight:700;">Tovább a megfelelő felületre</a></p>
+    <script>
+        (function () {
+            var a = document.getElementById('fallbackLink');
+            if (!a) return;
+            try {
+                var raw = localStorage.getItem('tatamiUser');
+                var user = raw ? JSON.parse(raw) : null;
+                if (user && user.role && String(user.role).toUpperCase() === 'ADMIN') {
+                    a.href = 'admin.html' + (window.location.search || '') + '#tab-tatamik';
+                }
+            } catch (e) {}
+        })();
+    </script>
 </body>
 </html>

@@ -110,3 +110,13 @@ function collapseAllAdminTabs() {
 function ugorjAdminTabra(tabId, scrollToTabs = true) {
     openTab(null, tabId, scrollToTabs);
 }
+
+function nyisdHashTabHaVan() {
+    const hash = window.location.hash ? window.location.hash.replace(/^#/, '') : '';
+    if (hash && hash.startsWith('tab-') && document.getElementById(hash)) {
+        openTab(null, hash, true);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', nyisdHashTabHaVan);
+window.addEventListener('hashchange', nyisdHashTabHaVan);

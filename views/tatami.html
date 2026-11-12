@@ -3,25 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tatami Master - Pástszéli Felvezető Lista</title>
-    <link rel="stylesheet" href="../CSS/stlye.css">
-    <link rel="stylesheet" href="../CSS/design_system.css">
+    <title>TATAMI MASTER™ - Átirányítás...</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <script>
+        (function () {
+            var isAdmin = false;
+            try {
+                var raw = localStorage.getItem('tatamiUser');
+                var user = raw ? JSON.parse(raw) : null;
+                isAdmin = !!(user && user.role && String(user.role).toUpperCase() === 'ADMIN');
+            } catch (e) {}
+            var search = window.location.search || '';
+            var target = isAdmin ? ('admin.html' + search + '#tab-tatamik') : ('audience.html' + search);
+            window.location.replace(target);
+        })();
+    </script>
 </head>
-<body id="pageTatami">
-    <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
-        <h1 style="display:flex;align-items:center;gap:10px;">
-            <svg class="tm-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
-            <em>TATAMI MASTER</em> <span class="red-text">PÁSTSZÉLI FELVEZETŐ (SZÓLÍTÓ LISTA)</span>
-        </h1>
-        <select id="pastTatamiSelect" class="input-field" style="min-width:180px;font-weight:bold;" onchange="initTatamiPage()"></select>
-    </header>
-
-    <main class="admin-container">
-        <div id="pastListaContainer" style="background:#FFFFFF;padding:20px;border-radius:10px;border:1px solid #E4E0D7;"></div>
-    </main>
-
-    <script src="../JS/core.js?v=20261107_v6"></script>
-    <script src="../JS/auth.js?v=20261107_v6"></script>
-    <script src="../JS/data.js?v=20261107_v6"></script>
+<body style="font-family:system-ui,-apple-system,sans-serif;padding:40px;text-align:center;background:#FAF8F5;color:#18181B;">
+    <p>A Tatami pástok és szólítások az Admin Központban és az Élő Követés felületen érhetők el. Átirányítás...</p>
+    <p><a id="fallbackLink" href="audience.html" style="color:#18181B;font-weight:700;">Tovább a megfelelő felületre</a></p>
+    <script>
+        (function () {
+            var a = document.getElementById('fallbackLink');
+            if (!a) return;
+            try {
+                var raw = localStorage.getItem('tatamiUser');
+                var user = raw ? JSON.parse(raw) : null;
+                var search = window.location.search || '';
+                a.href = (user && user.role && String(user.role).toUpperCase() === 'ADMIN')
+                    ? ('admin.html' + search + '#tab-tatamik')
+                    : ('audience.html' + search);
+            } catch (e) {}
+        })();
+    </script>
 </body>
 </html>

@@ -904,74 +904,7 @@ function audienceAgrajzFrissites() {
     }
 
     if (isKata) {
-        const kataTarolo = TatamiMaster.lekerKataEredmenyek();
-        let selejtezoMeccsek = katMeccsek.filter(m => !TatamiMaster.isKataDontoMeccs(m.id));
-        let dontoMeccsek = katMeccsek.filter(m => TatamiMaster.isKataDontoMeccs(m.id));
-
-        function epitsAudienceKataTabla(meccsTomb, cim, ikonNev, isSelejtezoTabla) {
-            let lista = meccsTomb.map(m => {
-                let v = audVersenyzok.find(x => x.id === m.competitor1Id);
-                let eredmeny = kataTarolo[m.id] || {
-                    kesz: false, osszeg: 0, minErtek: 0, maxErtek: 0, vezetoBiro: 0,
-                    pontok: ['-', '-', '-', '-', '-'], minIdx: -1, maxIdx: -1
-                };
-                return { meccs: m, versenyzo: v, ...eredmeny };
-            });
-
-            let lepontozottak = lista.filter(x => x.kesz).sort(TatamiMaster.kataSorrendHasonlito);
-            let varakozok = lista.filter(x => !x.kesz);
-            let teljesSorrend = lepontozottak.concat(varakozok);
-
-            let tHtml = '<h3 style="margin-top: 22px; margin-bottom: 10px; color: #18181B; display:flex; align-items:center; gap:8px;">' + TatamiMaster.icon(ikonNev, 18) + '<span>' + cim + '</span></h3>';
-            tHtml += '<div style="overflow-x: auto;"><table class="data-table">';
-            tHtml += '<tr><th>Helyezés</th><th>Versenyző / Csapat</th><th>B1 (Vezető)</th><th>B2</th><th>B3</th><th>B4</th><th>B5</th><th>Min (Kieső)</th><th>Max (Kieső)</th><th>ÖSSZPONTSZÁM</th><th>Státusz</th></tr>';
-
-            for (let i = 0; i < teljesSorrend.length; i++) {
-                let item = teljesSorrend[i];
-                let vNev = item.versenyzo
-                    ? ('<strong>' + TatamiMaster.escapeHtml(item.versenyzo.name) + '</strong> <small style="color:#52525B;">(' + TatamiMaster.escapeHtml(item.versenyzo.club) + ' - ' + TatamiMaster.escapeHtml(item.versenyzo.belt || '') + ')</small>')
-                    : '-';
-
-                let ujrakatazas = false;
-                if (item.kesz) {
-                    if (i > 0 && teljesSorrend[i - 1].kesz && TatamiMaster.kataSorrendHasonlito(item, teljesSorrend[i - 1]) === 0) ujrakatazas = true;
-                    if (i < teljesSorrend.length - 1 && teljesSorrend[i + 1].kesz && TatamiMaster.kataSorrendHasonlito(item, teljesSorrend[i + 1]) === 0) ujrakatazas = true;
-                }
-
-                let top6Jeloles = (isSelejtezoTabla && item.kesz && i < 6);
-                let eremJel = (!isSelejtezoTabla && item.kesz && i < 3)
-                    ? `${TatamiMaster.icon('medal', 15)} ${i + 1}.`
-                    : (item.kesz ? (i + 1) + '.' : '-');
-                let sorStilus = (top6Jeloles || (!isSelejtezoTabla && item.kesz && i < 3)) ? 'background-color: #FAF8F5;' : '';
-
-                tHtml += '<tr style="' + sorStilus + '">';
-                tHtml += '<td><strong>' + eremJel + '</strong></td>';
-                tHtml += '<td>' + vNev + (top6Jeloles ? ' <span style="background:#18181B;color:#FAF8F5;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">TOP 6 DÖNTŐS</span>' : '') + '</td>';
-
-                for (let b = 0; b < 5; b++) {
-                    let p = (item.pontok && item.pontok[b] !== undefined && item.pontok[b] !== null) ? item.pontok[b] : '-';
-                    let st = (b === item.minIdx || b === item.maxIdx) ? 'text-decoration: line-through; color: #A1A1AA;' : 'font-weight: 700; color: #18181B;';
-                    tHtml += '<td style="' + st + '">' + p + '</td>';
-                }
-
-                tHtml += '<td style="color: #71717A;">' + (item.kesz ? item.minErtek.toFixed(1) : '-') + '</td>';
-                tHtml += '<td style="color: #71717A;">' + (item.kesz ? item.maxErtek.toFixed(1) : '-') + '</td>';
-                tHtml += '<td style="font-size: 1.2rem; font-weight: 800; color: #18181B;">' + (item.kesz ? item.osszeg.toFixed(1) : '-') + '</td>';
-                tHtml += '<td>' + (ujrakatazas
-                    ? '<span style="background:#991B1B;color:white;padding:3px 8px;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">' + TatamiMaster.icon('alert', 13) + ' ÚJRAKATÁZÁS!</span>'
-                    : (item.kesz ? '<span style="color:#18181B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">' + TatamiMaster.icon('check', 14) + ' Értékelve</span>' : '<span style="color:#52525B;display:inline-flex;align-items:center;gap:4px;">' + TatamiMaster.icon('clock', 13) + ' Rajtszám: #' + item.meccs.matchOrder + '</span>')) + '</td>';
-                tHtml += '</tr>';
-            }
-            tHtml += '</table></div>';
-            return tHtml;
-        }
-
-        let html = '<p style="font-size: 0.86rem; color: #52525B; margin-top: 12px; display:flex; align-items:center; gap:6px;">' + TatamiMaster.icon('info', 15) + ' <em>Kata szabály: Az 5 bírói pontszámból a legmagasabb és a legalacsonyabb kiesik, a középső 3 összege adja a pontszámot. A selejtező legjobb 6 versenyzője (Top 6) a döntőben 0 pontról indulva újra katázik!</em></p>';
-        if (dontoMeccsek.length > 0) {
-            html += epitsAudienceKataTabla(dontoMeccsek, 'KATA DÖNTŐ (TOP 6)', 'trophy', false);
-        }
-        html += epitsAudienceKataTabla(selejtezoMeccsek, '1. Kör: Selejtező Ranglista (Top 6 jut a döntőbe)', 'clipboard', true);
-        container.innerHTML = html;
+        container.innerHTML = TatamiMaster.epitsKataRanglistaHtml(katMeccsek, audVersenyzok);
         return;
     }
 

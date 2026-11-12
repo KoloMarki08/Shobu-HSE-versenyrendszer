@@ -9,7 +9,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261112_v9">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261112_v10">
 </head>
 
 <body>
@@ -324,10 +324,6 @@
                         <span class="admin-section-num">A) ÚJ KATEGÓRIA</span>
                         Új Kategória Hozzáadása (Kata vagy Kumite)
                     </h3>
-                    <a href="kategoriak.html" class="btn btn-outline-blue" style="padding: 7px 14px; font-size: 0.84rem;">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        Kata Övfokozat (Kyu A/B/C) Bontó Varázsló megnyitása &rarr;
-                    </a>
                 </div>
 
                 <div class="add-form-container" style="margin-bottom: 0;">
@@ -410,11 +406,43 @@
                 <div id="sulyBontasElonezetContainer" style="margin-top: 14px;"></div>
             </div>
 
-            <!-- C) JELENLEGI KATEGÓRIÁK TÁBLÁZATA -->
+            <!-- C) KATA KYU-BONTÓ -->
+            <div class="admin-section-box">
+                <div class="admin-section-header">
+                    <h3 class="admin-section-title">
+                        <span class="admin-section-num">C) KATA KYU-BONTÓ</span>
+                        Kata Övfokozat (A / B / C) Csoportbontó Varázsló
+                    </h3>
+                </div>
+                <p style="margin: 0 0 12px; color: #52525B; font-size: 0.86rem;">
+                    Nagy létszámú Kata kategória automatikus szétbontása a benevezett versenyzők övfokozata (Dan / Kyu) alapján.
+                </p>
+                <div class="add-form-container" style="margin-bottom: 0; align-items: flex-end;">
+                    <div class="admin-field-group" style="flex: 1.4; min-width: 240px;">
+                        <label class="admin-field-label" for="kyuBontoKatSelectAdmin">Bontandó Kata kategória</label>
+                        <select id="kyuBontoKatSelectAdmin" class="input-field">
+                            <option value="">-- Válassz Kata kategóriát! --</option>
+                        </select>
+                    </div>
+                    <div class="admin-field-group" style="flex: 1.2; min-width: 220px;">
+                        <label class="admin-field-label" for="kyuBontasModSelectAdmin">Csoportosítás módja</label>
+                        <select id="kyuBontasModSelectAdmin" class="input-field">
+                            <option value="ABC">A / B / C (2. kyu–Dan | 6–3. kyu | 10–7. kyu)</option>
+                            <option value="AB">A / B (5. kyu–Dan | 10–6. kyu)</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-outline-blue" style="padding: 11px 22px;" onclick="kataKyuBontasVegrehajtasAdmin()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Kyu-bontás Végrehajtása
+                    </button>
+                </div>
+            </div>
+
+            <!-- D) JELENLEGI KATEGÓRIÁK TÁBLÁZATA -->
             <div class="admin-section-box" style="margin-bottom: 0;">
                 <div class="admin-section-header">
                     <h3 class="admin-section-title">
-                        <span class="admin-section-num">C) KATEGÓRIA LISTA</span>
+                        <span class="admin-section-num">D) KATEGÓRIA LISTA</span>
                         Meghirdetett Versenykategóriák és Indulók Létszáma
                     </h3>
                 </div>
@@ -447,9 +475,9 @@
                     <div class="admin-acc-title-wrap">
                         <span class="admin-acc-title">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-                            Leadott Nevezések Ellenőrzése és Pótnevezés
+                            Leadott Nevezések Ellenőrzése
                         </span>
-                        <span class="admin-acc-subtitle">Versenyző–kategória párosítások áttekintése, utólagos benevezés vagy törlés</span>
+                        <span class="admin-acc-subtitle">Versenyző–kategória párosítások áttekintése és törlése (új nevezés/módosítás a 2. Menüben)</span>
                     </div>
                 </div>
                 <div class="admin-accordion-right">
@@ -461,36 +489,11 @@
                 </div>
             </button>
         <section id="tab-nevezesek" class="tab-content pro-card" style="display: none;">
-            <!-- A) UTÓLAGOS BENEVEZÉS -->
-            <div class="admin-section-box">
-                <div class="admin-section-header">
-                    <h3 class="admin-section-title">
-                        <span class="admin-section-num">A) PÓTNEVEZÉS</span>
-                        Meglévő Versenyző Benevezése További Kategóriába
-                    </h3>
-                </div>
-
-                <div id="adminUtolagosNevezesForm" class="add-form-container" style="margin-bottom: 0; align-items: flex-end;">
-                    <div class="admin-field-group" style="flex: 1; min-width: 240px;">
-                        <label class="admin-field-label" for="ujNevezesVersenyzo">1. Válaszd ki a versenyzőt</label>
-                        <select id="ujNevezesVersenyzo" class="input-field"></select>
-                    </div>
-                    <div class="admin-field-group" style="flex: 1; min-width: 240px;">
-                        <label class="admin-field-label" for="ujNevezesKategoria">2. Válaszd ki a kategóriát, amibe benevezed</label>
-                        <select id="ujNevezesKategoria" class="input-field"></select>
-                    </div>
-                    <button class="btn btn-outline-green" style="padding: 11px 22px;" onclick="hozzadNevezes()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Benevezés Rögzítése
-                    </button>
-                </div>
-            </div>
-
-            <!-- B) LEADOTT NEVEZÉSEK TÁBLÁZATA -->
+            <!-- A) LEADOTT NEVEZÉSEK TÁBLÁZATA -->
             <div class="admin-section-box" style="margin-bottom: 0;">
                 <div class="admin-section-header">
                     <h3 class="admin-section-title">
-                        <span class="admin-section-num">B) NEVEZÉSI LISTA</span>
+                        <span class="admin-section-num">A) NEVEZÉSI LISTA</span>
                         Rögzített Nevezések (Versenyző és Kategória Párosítások)
                     </h3>
                 </div>
@@ -709,10 +712,10 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261112_v9"></script>
-    <script src="../JS/auth.js?v=20261112_v9"></script>
-    <script src="../JS/tabs.js?v=20261112_v9"></script>
-    <script src="../JS/admin_adatok.js?v=20261112_v9"></script>
+    <script src="../JS/core.js?v=20261112_v10"></script>
+    <script src="../JS/auth.js?v=20261112_v10"></script>
+    <script src="../JS/tabs.js?v=20261112_v10"></script>
+    <script src="../JS/admin_adatok.js?v=20261112_v10"></script>
 </body>
 
 </html>
