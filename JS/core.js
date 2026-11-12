@@ -1103,6 +1103,12 @@ const TatamiMaster = {
 
     // --- NYOMTATHATÓ A4 CSARNOK QR-PLAKÁT MODAL („MIKOR KÜZDÖK?” ÉS ÉLŐ KÖVETÉS) ---
     nyitQrPlakatModal: async function(versenyObj = null) {
+        const aktUser = this.lekerBejelentkezes();
+        if (!aktUser || !aktUser.role || String(aktUser.role).toUpperCase() !== 'ADMIN') {
+            this.toast('A QR-kód plakát csak adminisztrátorok számára érhető el.', true);
+            return;
+        }
+
         let modal = document.getElementById('tmQrPosterModal');
         if (modal) modal.remove();
 

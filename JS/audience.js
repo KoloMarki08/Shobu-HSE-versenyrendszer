@@ -37,12 +37,6 @@ window.onload = function() {
     setInterval(audienceAdatokBetoltese, 4000);
 };
 
-function nyitAudienceQrPlakat() {
-    const aktId = TatamiMaster.lekerAktualisVersenyId();
-    const aktVerseny = audVersenyek.find(v => v.id === aktId) || null;
-    TatamiMaster.nyitQrPlakatModal(aktVerseny);
-}
-
 function lekerKovetettVersenyzoIdk() {
     const vId = TatamiMaster.lekerAktualisVersenyId();
     const tomb = TatamiMaster.safeJsonParse('tatamiKovetettVersenyzok_' + vId, []);
@@ -277,12 +271,10 @@ function frissitAudienceVersenyBar() {
             const plakatGomb = extra.plakat
                 ? `<button type="button" class="btn btn-outline" style="padding:3px 9px;font-size:0.76rem;" onclick="mutatAudiencePlakatNagyban('${safeNameAttr}')">${TatamiMaster.icon('image', 13)} Plakát megtekintése</button>`
                 : '';
-            const qrPlakatGomb = `<button type="button" class="btn btn-outline-blue" style="padding:3px 9px;font-size:0.76rem;" onclick="nyitAudienceQrPlakat()">${TatamiMaster.icon('qr', 13)} Csarnok QR-Plakát</button>`;
 
             metaEl.innerHTML = `
                 <span>${TatamiMaster.icon('calendar', 14)} Dátum: <strong>${datumSzoveg}</strong></span>
                 <span>&bull; ${TatamiMaster.icon('user', 14)} Szervező: <strong>${szervezoSzoveg}</strong></span>
-                ${qrPlakatGomb}
                 ${kiirasGomb}
                 ${plakatGomb}
             `;
