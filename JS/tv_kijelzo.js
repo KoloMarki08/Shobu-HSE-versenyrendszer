@@ -9,13 +9,6 @@ window.addEventListener('DOMContentLoaded', function() {
         TatamiMaster.on('liveTatamiFrissult', function() {
             tvKijelzoFrissites();
         });
-        TatamiMaster.on('liveKapcsolatValtozott', function(st) {
-            const dot = document.getElementById('tvLiveSyncDot');
-            if (dot) {
-                dot.innerText = st && st.connected ? 'ÉLŐ SZINKRON AKTÍV' : 'HELYI SZINKRON';
-                dot.style.color = st && st.connected ? '#18181B' : '#71717A';
-            }
-        });
     }
 
     setInterval(tvKijelzoFrissites, 250);

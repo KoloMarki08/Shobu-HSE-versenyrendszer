@@ -25,7 +25,7 @@ function dedikaltIndulokBetoltese() {
                                   .filter(Boolean);
 
     if (nevezettek.length === 0) {
-        listaDiv.innerHTML = '<span style="color:#991B1B;font-weight:bold;">Ebben a kategóriában még nincs benevezett versenyző!</span>';
+        listaDiv.innerHTML = '<span style="color:#990000;font-weight:bold;">Ebben a kategóriában még nincs benevezett versenyző!</span>';
         return;
     }
 

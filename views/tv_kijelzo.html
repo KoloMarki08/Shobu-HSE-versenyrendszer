@@ -43,7 +43,7 @@
             padding: 45px 50px;
         }
         .tv-aka {
-            background: linear-gradient(145deg, #881313 0%, #5C0D0D 100%);
+            background: linear-gradient(145deg, #990000 0%, #660000 100%);
             border-right: 4px solid #18181B;
         }
         .tv-shiro {
@@ -75,7 +75,7 @@
         }
         .tv-shiro .tv-penalty-bar {
             background: rgba(24, 24, 27, 0.08);
-            color: #991B1B;
+            color: #990000;
         }
         /* KÖZÉPSŐ LEBEGŐ ÓRA */
         .tv-center-stack {
@@ -144,6 +144,92 @@
             align-items: center;
             justify-content: space-between;
             gap: 15px;
+        }
+
+        /* MOBIL ÉS KISEBB KÉPERNYŐS KOMPATIBILITÁS */
+        @media (max-width: 960px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            .tv-top-bar {
+                padding: 12px 16px;
+                font-size: 1.15rem;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            #tvKumiteView {
+                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
+            }
+            .tv-side {
+                padding: 24px 20px;
+                min-height: 220px;
+            }
+            .tv-aka {
+                border-right: none;
+                border-bottom: 3px solid #18181B;
+            }
+            .tv-fighter-name {
+                font-size: 1.85rem;
+            }
+            .tv-score-huge {
+                font-size: 5.5rem;
+                margin: 6px 0;
+            }
+            .tv-penalty-bar {
+                font-size: 1.1rem;
+                padding: 8px 14px;
+            }
+            .tv-center-stack {
+                position: relative;
+                top: auto;
+                left: auto;
+                transform: none;
+                background: #0F0F12;
+                padding: 14px;
+                width: 100%;
+                border-top: 2px solid #27272A;
+                border-bottom: 2px solid #27272A;
+            }
+            .tv-center-clock {
+                font-size: 3.4rem;
+                padding: 10px 28px;
+                border-radius: 14px;
+            }
+            #tvKataView {
+                padding: 20px 14px;
+            }
+            #tvKataName {
+                font-size: 2rem !important;
+            }
+            .tv-kata-judges {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+                margin: 20px 0;
+            }
+            .tv-judge-card {
+                padding: 14px 16px;
+                min-width: 95px;
+                flex: 1 1 calc(33.33% - 10px);
+            }
+            .tv-judge-score {
+                font-size: 2.2rem;
+            }
+            #tvKataTotal {
+                font-size: 4.8rem !important;
+            }
+            .tv-bottom-prep {
+                padding: 12px 16px;
+                font-size: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
         }
     </style>
 </head>
@@ -215,10 +301,9 @@
     <!-- ALSÓ FELKÉSZÜL SÁV -->
     <div class="tv-bottom-prep">
         <span id="tvNextMatchBar">FELKÉSZÜL: Várakozás a következő mérkőzésre...</span>
-        <span id="tvLiveSyncDot" style="font-size:0.9rem;color:#52525B;font-weight:700;">ÉLŐ KAPCSOLAT</span>
     </div>
 
-    <script src="../JS/core.js?v=20261112_v12"></script>
-    <script src="../JS/tv_kijelzo.js?v=20261112_v12"></script>
+    <script src="../JS/core.js?v=20261113_mobile3"></script>
+    <script src="../JS/tv_kijelzo.js?v=20261113_mobile3"></script>
 </body>
 </html>

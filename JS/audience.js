@@ -26,13 +26,6 @@ window.onload = function() {
         }, 220);
     });
 
-    TatamiMaster.on('liveKapcsolatValtozott', function(st) {
-        const badge = document.getElementById('audienceLiveSyncBadge');
-        if (!badge) return;
-        const ok = st && st.connected;
-        badge.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${ok ? '#22C55E' : '#F59E0B'};display:inline-block;"></span><span>${ok ? 'ÉLŐ SZINKRON AKTÍV' : 'AUTOMATIKUS FRISSÍTÉS'}</span>`;
-    });
-
     // Biztonsági háttérfrissítés 4 másodpercenként arra az esetre is, ha offline hálózaton szakadozna a Wi-Fi
     setInterval(audienceAdatokBetoltese, 4000);
 };
@@ -108,7 +101,7 @@ function frissitEdzoiNevezesZarolasUI() {
     }
     if (statusBadge) {
         statusBadge.innerHTML = lezarva
-            ? `<span style="background:#991B1B;color:#FAF8F5;padding:5px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${TatamiMaster.icon('lock', 14)} NEVEZÉS LEZÁRVA</span>`
+            ? `<span style="background:#990000;color:#FAF8F5;padding:5px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${TatamiMaster.icon('lock', 14)} NEVEZÉS LEZÁRVA</span>`
             : `<span style="background:#18181B;color:#FAF8F5;padding:5px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${TatamiMaster.icon('unlock', 14)} NEVEZÉS NYITVA</span>`;
     }
     if (urlapok) {
@@ -125,31 +118,52 @@ function ellenorizEdzoiMod() {
     const edzoPanel = document.getElementById('edzoiNevezesPanel');
     const badge = document.getElementById('loggedCoachBadge');
     const headerSub = document.getElementById('audienceHeaderSub');
+    const loginBtn = document.getElementById('audienceLoginBtn');
+    const regBtn = document.getElementById('audienceRegisterBtn');
+    const logoutBtn = document.getElementById('audienceLogoutBtn');
+    const adminBtn = document.getElementById('audienceAdminBtn');
 
-    if (user && (user.role.toUpperCase() === 'COACH' || user.role.toUpperCase() === 'EDZO' || user.role.toUpperCase() === 'ADMIN')) {
-        if (edzoPanel) edzoPanel.style.display = 'block';
-        if (badge) {
-            badge.style.display = 'inline-flex';
-            badge.style.alignItems = 'center';
-            badge.style.gap = '6px';
-            const nev = TatamiMaster.escapeHtml(user.displayName || user.username);
-            const klubInfo = user.club ? ` - ${TatamiMaster.escapeHtml(user.club)}` : '';
-            const ovInfo = user.degree ? ` (${TatamiMaster.escapeHtml(user.degree)})` : '';
-            badge.innerHTML = `${TatamiMaster.icon('user', 14)} <span>${nev}${ovInfo}${klubInfo} [EDZŐ]</span>`;
-        }
-        if (headerSub) headerSub.innerText = 'EDZŐI NEVEZÉS & ÉLŐ KÖVETÉS';
+    if (user && user.role) {
+        const r = user.role.toUpperCase();
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (regBtn) regBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+        if (adminBtn) adminBtn.style.display = r === 'ADMIN' ? 'inline-flex' : 'none';
 
-        const klubInput = document.getElementById('coachUjKlub');
-        if (klubInput && user.club && !klubInput.value) {
-            klubInput.value = user.club;
+        if (r === 'COACH' || r === 'EDZO' || r === 'ADMIN') {
+            if (edzoPanel) edzoPanel.style.display = 'block';
+            if (badge) {
+                badge.style.display = 'inline-flex';
+                badge.style.alignItems = 'center';
+                badge.style.gap = '6px';
+                const nev = TatamiMaster.escapeHtml(user.displayName || user.username);
+                const klubInfo = user.club ? ` - ${TatamiMaster.escapeHtml(user.club)}` : '';
+                const ovInfo = user.degree ? ` (${TatamiMaster.escapeHtml(user.degree)})` : '';
+                const szerepCimke = r === 'ADMIN' ? 'ADMIN' : 'EDZŐ';
+                badge.innerHTML = `${TatamiMaster.icon('user', 14)} <span>${nev}${ovInfo}${klubInfo} [${szerepCimke}]</span>`;
+            }
+            if (headerSub) headerSub.innerText = 'EDZŐI NEVEZÉS & ÉLŐ KÖVETÉS';
+
+            const klubInput = document.getElementById('coachUjKlub');
+            if (klubInput && user.club && !klubInput.value) {
+                klubInput.value = user.club;
+            }
+            const teamInput = document.getElementById('teamKataCsapatNev');
+            if (teamInput && user.club && !teamInput.value) {
+                teamInput.value = user.club + ' - A csapat';
+            }
+            frissitEdzoiNevezesZarolasUI();
+        } else {
+            if (edzoPanel) edzoPanel.style.display = 'none';
         }
-        const teamInput = document.getElementById('teamKataCsapatNev');
-        if (teamInput && user.club && !teamInput.value) {
-            teamInput.value = user.club + ' - A csapat';
-        }
-        frissitEdzoiNevezesZarolasUI();
     } else {
         if (edzoPanel) edzoPanel.style.display = 'none';
+        if (badge) badge.style.display = 'none';
+        if (adminBtn) adminBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = 'inline-flex';
+        if (regBtn) regBtn.style.display = 'inline-flex';
+        if (headerSub) headerSub.innerText = 'ÉLŐ KÖVETÉS & ÁGRAJZOK';
     }
 }
 
@@ -247,7 +261,7 @@ function frissitAudienceVersenyBar() {
         if (nevEl) nevEl.innerText = tisztaNev;
         if (statuszEl) {
             statuszEl.innerText = TatamiMaster.isNevezesLezarva(aktVerseny.id) ? 'NEVEZÉS LEZÁRVA' : statuszSzoveg;
-            statuszEl.style.background = isLezart ? '#991B1B' : '#18181B';
+            statuszEl.style.background = '#990000';
         }
 
         const mellekletek = TatamiMaster.lekerVersenyMellekletek();
@@ -512,7 +526,7 @@ function frissitMikorKuzdokPanel() {
     const kataTarolo = TatamiMaster.lekerKataEredmenyek();
     const kumiteAdatok = TatamiMaster.lekerKumiteReszletek();
 
-    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:14px;">`;
+    let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 280px), 1fr));gap:14px;">`;
 
     for (const v of celVersenyzok) {
         const kovetve = kovetettIdk.includes(v.id);
@@ -554,10 +568,10 @@ function frissitMikorKuzdokPanel() {
                 let keretSzin = '#E4E0D7';
 
                 if (info.statuszKod === 'MOST') {
-                    keretSzin = '#991B1B';
-                    statuszBadge = `<span style="background:#991B1B;color:#FAF8F5;padding:3px 9px;border-radius:5px;font-size:0.76rem;font-weight:800;">MOST A TATAMIN!</span>`;
+                    keretSzin = '#990000';
+                    statuszBadge = `<span style="background:#990000;color:#FAF8F5;padding:3px 9px;border-radius:5px;font-size:0.76rem;font-weight:800;">MOST A TATAMIN!</span>`;
                     const live = info.liveTatami;
-                    idoSor = `<div style="color:#991B1B;font-weight:800;font-size:0.88rem;">Jelenleg zajlik a mérkőzés${live && live.timer ? ` (Óra: ${TatamiMaster.escapeHtml(live.timer)} • ${TatamiMaster.escapeHtml(live.roundLabel || 'ALAPIDŐ')})` : ''}!</div>`;
+                    idoSor = `<div style="color:#990000;font-weight:800;font-size:0.88rem;">Jelenleg zajlik a mérkőzés${live && live.timer ? ` (Óra: ${TatamiMaster.escapeHtml(live.timer)} • ${TatamiMaster.escapeHtml(live.roundLabel || 'ALAPIDŐ')})` : ''}!</div>`;
                 } else if (info.statuszKod === 'FELKESZUL') {
                     keretSzin = '#18181B';
                     statuszBadge = `<span style="background:#18181B;color:#FAF8F5;padding:3px 9px;border-radius:5px;font-size:0.76rem;font-weight:800;">FELKÉSZÜL! (KÖVETKEZŐ)</span>`;
@@ -788,7 +802,7 @@ function rajzolTatamiKartyak() {
         html += '<span style="display:inline-flex;align-items:center;gap:8px;">' + TatamiMaster.icon('shield', 16) + '<span>' + TatamiMaster.escapeHtml(t.name) + '</span></span>';
         if (liveErvenyes && liveAdat.roundLabel) {
             const isOvertime = liveAdat.roundCode && liveAdat.roundCode !== 'ALAP' && liveAdat.roundCode !== 'KATA';
-            html += `<span style="background:${isOvertime ? '#991B1B' : '#27272A'};color:#FAF8F5;border:1px solid rgba(255,255,255,0.25);padding:2px 9px;border-radius:999px;font-size:0.74rem;font-weight:800;">${TatamiMaster.escapeHtml(liveAdat.roundLabel)}</span>`;
+            html += `<span style="background:${isOvertime ? '#990000' : '#27272A'};color:#FAF8F5;border:1px solid rgba(255,255,255,0.25);padding:2px 9px;border-radius:999px;font-size:0.74rem;font-weight:800;">${TatamiMaster.escapeHtml(liveAdat.roundLabel)}</span>`;
         }
         html += '</div>';
         html += '<div style="padding: 18px;">';

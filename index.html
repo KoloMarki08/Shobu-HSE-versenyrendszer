@@ -3,13 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#18181B">
     <meta name="copyright" content="© 2026 TATAMI MASTER™ - Shobu HSE. Minden jog fenntartva (All Rights Reserved).">
     <meta name="application-name" content="TATAMI MASTER™">
-    <title>TATAMI MASTER™ - Kyokushin Karate Versenyrendszer</title>
+    <title>TATAMI MASTER™ - Bejelentkezés &amp; Edzői Regisztráció</title>
+    <script>
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var h = (window.location.hash || '').toLowerCase();
+            if (!params.has('login') && !params.has('tab') && h !== '#login' && h !== '#register') {
+                var q = params.toString();
+                window.location.replace('views/audience.html' + (q ? '?' + q : ''));
+            }
+        })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="CSS/stlye.css?v=20261112_v10">
-    <link rel="stylesheet" href="CSS/design_system.css?v=20261112_v10">
+    <link rel="stylesheet" href="CSS/stlye.css?v=20261113_mobile3">
+    <link rel="stylesheet" href="CSS/design_system.css?v=20261113_mobile3">
     <style>
         .auth-tabs {
             display: flex;
@@ -55,7 +66,7 @@
             letter-spacing: 0.2px;
         }
         .reg-label .req {
-            color: #991B1B;
+            color: #990000;
             margin-left: 3px;
         }
         .reg-group {
@@ -194,12 +205,14 @@
                 <path d="M32 24.5V46" stroke="#FAF8F5" stroke-width="2.8" stroke-linecap="round"/>
                 <path d="M22.5 41.5V29.5L32 37.5L41.5 29.5V41.5" stroke="#FAF8F5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <em>TATAMI MASTER<sup class="tm-trademark" title="TATAMI MASTER™ – Védjegyoltalom alatt álló márkanév és logó">™</sup></em> <span class="red-text">KYOKUSHIN KARATE</span>
+            <em>TATAMI MASTER<sup class="tm-trademark" title="TATAMI MASTER™ – Védjegyoltalom alatt álló márkanév és logó">™</sup></em> <span class="red-text">BELÉPÉS &amp; EDZŐI FIÓK</span>
         </h1>
-        <button class="btn btn-outline-blue" style="font-weight: 700; padding: 8px 16px;" onclick="window.location.href='views/audience.html'">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            Élő Eredmények & Ágrajzok (Nézői felület)
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-outline-blue" style="font-weight: 700; padding: 8px 16px;" onclick="window.location.href='views/audience.html'">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Élő Eredmények &amp; Ágrajzok (Nézői felület)
+            </button>
+        </div>
     </header>
 
     <!-- BAL OLDALRA RAGASZTOTT (MOBILON LEBEGŐ BUBORÉK) AKTUÁLIS VERSENYEK PANEL -->
@@ -296,7 +309,7 @@
                         </div>
                     </div>
 
-                    <div id="loginError" style="color: #991B1B; font-weight: 700; margin-bottom: 14px; display: none; font-size: 0.9rem;"></div>
+                    <div id="loginError" style="color: #990000; font-weight: 700; margin-bottom: 14px; display: none; font-size: 0.9rem;"></div>
 
                     <button type="submit" class="btn btn-outline-green" style="width: 100%; padding: 12px 18px; font-size: 1rem; font-weight: 700;">
                         <span>Bejelentkezés</span>
@@ -456,7 +469,7 @@
                         </div>
                     </div>
 
-                    <div id="regError" style="color: #991B1B; font-weight: 700; margin-bottom: 14px; display: none; font-size: 0.9rem;"></div>
+                    <div id="regError" style="color: #990000; font-weight: 700; margin-bottom: 14px; display: none; font-size: 0.9rem;"></div>
 
                     <button type="submit" class="btn btn-outline-green" style="width: 100%; padding: 12px 18px; font-size: 1rem; font-weight: 700;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -468,9 +481,9 @@
         </div>
     </main>
 
-    <script src="JS/core.js?v=20261112_v11"></script>
-    <script src="JS/jelszomegjelenito.js?v=20261112_v11"></script>
-    <script src="JS/login.js?v=20261112_v11"></script>
-    <script src="JS/index.js?v=20261112_v11"></script>
+    <script src="JS/core.js?v=20261113_mobile3"></script>
+    <script src="JS/jelszomegjelenito.js?v=20261113_mobile3"></script>
+    <script src="JS/login.js?v=20261113_mobile3"></script>
+    <script src="JS/index.js?v=20261113_mobile3"></script>
 </body>
 </html>

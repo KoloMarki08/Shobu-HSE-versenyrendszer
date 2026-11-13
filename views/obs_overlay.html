@@ -13,33 +13,6 @@
             height: 100vh;
             user-select: none;
         }
-        /* FELSŐ KATEGÓRIA JELZŐ (BAL FELSŐ SAROK) */
-        .obs-top-badge {
-            position: fixed;
-            top: 32px;
-            left: 48px;
-            background: rgba(24, 24, 27, 0.94);
-            color: #FAF8F5;
-            padding: 10px 22px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            font-size: 1.25rem;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.45);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .obs-live-dot {
-            width: 10px;
-            height: 10px;
-            background: #991B1B;
-            border-radius: 50%;
-            animation: blink 1.2s infinite;
-        }
-        @keyframes blink { 50% { opacity: 0.25; } }
-
         /* ALSÓ TELEVÍZIÓS SCOREBOARD (LOWER THIRD) */
         .obs-lower-bar {
             position: fixed;
@@ -68,7 +41,7 @@
             height: 100%;
         }
         .obs-aka {
-            background: linear-gradient(90deg, rgba(136, 19, 19, 0.95) 0%, rgba(92, 13, 13, 0.88) 100%);
+            background: linear-gradient(90deg, #990000 0%, #660000 100%);
             color: #fff;
         }
         .obs-shiro {
@@ -144,11 +117,6 @@
 </head>
 <body>
 
-    <div class="obs-top-badge">
-        <div class="obs-live-dot"></div>
-        <span id="obsMatchInfo">1. TATAMI — ÉLŐ KÖZVETÍTÉS</span>
-    </div>
-
     <div class="obs-lower-bar">
         <!-- KUMITE SÁV -->
         <div id="obsKumiteRow" class="obs-kumite-row">
@@ -163,7 +131,7 @@
             <div id="obsShiroScore" class="obs-score">0</div>
             <div class="obs-fighter obs-shiro">
                 <div id="obsShiroName" class="obs-name">SHIRO Versenyző</div>
-                <div id="obsShiroPen" class="obs-pen" style="color:#991B1B;">Chui / Genten: 0</div>
+                <div id="obsShiroPen" class="obs-pen" style="color:#990000;">Chui / Genten: 0</div>
             </div>
         </div>
 
@@ -208,7 +176,8 @@
             if (!d) return;
 
             try {
-                document.getElementById('obsMatchInfo').innerText = d.matchInfo || 'TATAMI ÉLŐ STREAM';
+                const infoEl = document.getElementById('obsMatchInfo');
+                if (infoEl) infoEl.innerText = d.matchInfo || 'TATAMI ÉLŐ STREAM';
                 const isKata = (d.mode && d.mode.toUpperCase() === 'KATA');
 
                 document.getElementById('obsKumiteRow').style.display = isKata ? 'none' : 'grid';

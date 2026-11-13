@@ -275,7 +275,7 @@ function frissitKumiteFazisUI() {
 
     if (cimke) {
         cimke.innerHTML = `${TatamiMaster.icon(fazis.isMerlegeles ? 'scale' : 'clock', 15)} <span>${TatamiMaster.escapeHtml(fazis.nev)} &bull; ${TatamiMaster.escapeHtml(aktivIdoSzabaly.korcsoportNev)}</span>`;
-        cimke.style.color = (aktivFazisIndex === 0) ? '#18181B' : '#991B1B';
+        cimke.style.color = (aktivFazisIndex === 0) ? '#18181B' : '#990000';
     }
 
     if (merlegBox) {
@@ -290,10 +290,10 @@ function frissitKumiteFazisUI() {
             const kov = aktivIdoSzabaly.fazisok[aktivFazisIndex + 1];
             kovBtn.innerHTML = `${TatamiMaster.icon('arrow-right', 15)} <span>Döntetlen (Hikiwake) &rarr; ${TatamiMaster.escapeHtml(kov.nev)}</span>`;
             kovBtn.style.background = '#FAF8F5';
-            kovBtn.style.color = '#991B1B';
+            kovBtn.style.color = '#990000';
         } else {
             kovBtn.innerHTML = `${TatamiMaster.icon('award', 15)} <span>Utolsó menet &rarr; Kötelező Bírói Döntés (HANTEI)</span>`;
-            kovBtn.style.background = '#991B1B';
+            kovBtn.style.background = '#990000';
             kovBtn.style.color = '#FAF8F5';
         }
     }
@@ -317,7 +317,7 @@ function frissitMerlegelesKiertekeles() {
     const kulonbseg = Math.round(Math.abs(akaKg - shiroKg) * 10) / 10;
     if (kulonbseg >= kuszob && akaKg !== shiroKg) {
         const konnyebbOldal = akaKg < shiroKg ? 'AKA (Piros)' : 'SHIRO (Fehér)';
-        kiirEl.innerHTML = `<span style="color:#991B1B;">Súlykülönbség: ${kulonbseg.toFixed(1)} kg (&ge; ${kuszob} kg)!</span><br>A könnyebb küzdő (<strong>${konnyebbOldal}</strong>) mérlegeléssel győz!`;
+        kiirEl.innerHTML = `<span style="color:#990000;">Súlykülönbség: ${kulonbseg.toFixed(1)} kg (&ge; ${kuszob} kg)!</span><br>A könnyebb küzdő (<strong>${konnyebbOldal}</strong>) mérlegeléssel győz!`;
         if (gyozBtn) {
             gyozBtn.disabled = false;
             gyozBtn.innerText = `${konnyebbOldal} győz mérlegeléssel`;

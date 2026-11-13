@@ -1095,7 +1095,7 @@ const TatamiMaster = {
                 }
             }
         }
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${pixelMeret}" height="${pixelMeret}" viewBox="0 0 ${totalMods} ${totalMods}" shape-rendering="crispEdges" role="img" aria-label="QR-kód">
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${pixelMeret}" height="${pixelMeret}" style="max-width:100%;height:auto;" viewBox="0 0 ${totalMods} ${totalMods}" shape-rendering="crispEdges" role="img" aria-label="QR-kód">
             <rect width="100%" height="100%" fill="#FFFFFF"/>
             <path d="${pathD}" fill="#18181B"/>
         </svg>`;
@@ -1220,31 +1220,31 @@ const TatamiMaster = {
                 </div>
 
                 <!-- NYOMTATHATÓ A4 PLAKÁT LAP -->
-                <div id="tmQrPosterSheet" style="background:#FFFFFF;border:3px solid #18181B;border-radius:12px;padding:32px 28px;text-align:center;">
-                    <div style="display:inline-flex;align-items:center;gap:12px;background:#18181B;color:#FAF8F5;padding:8px 20px;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:0.9rem;margin-bottom:14px;">
-                        ${this.brandLogoSvg(26)}
+                <div id="tmQrPosterSheet" style="background:#FFFFFF;border:3px solid #18181B;border-radius:12px;padding:24px 16px;text-align:center;">
+                    <div style="display:inline-flex;align-items:center;gap:10px;background:#18181B;color:#FAF8F5;padding:8px 16px;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:0.85rem;margin-bottom:14px;max-width:100%;">
+                        ${this.brandLogoSvg(24)}
                         <span>TATAMI MASTER&trade; &bull; ÉLŐ VERSENYKÖVETÉS</span>
                     </div>
 
-                    <h1 style="margin:6px 0 8px 0;font-size:2rem;line-height:1.2;color:#18181B;text-transform:uppercase;letter-spacing:0.5px;">
+                    <h1 style="margin:6px 0 8px 0;font-size:clamp(1.35rem, 4.5vw, 2rem);line-height:1.2;color:#18181B;text-transform:uppercase;letter-spacing:0.5px;">
                         ${this.escapeHtml(vAdat.name || 'Karate Bajnokság')}
                     </h1>
-                    <div style="font-size:0.98rem;color:#52525B;font-weight:700;margin-bottom:20px;">
+                    <div style="font-size:0.95rem;color:#52525B;font-weight:700;margin-bottom:20px;">
                         Dátum: ${this.escapeHtml(datumSzoveg)} &bull; Szervező: ${this.escapeHtml(vAdat.organizer || 'Shobu HSE')}
                     </div>
 
-                    <div id="tmQrSvgBox" style="display:inline-block;padding:14px;border:3px solid #18181B;border-radius:14px;background:#FFFFFF;margin-bottom:16px;">
+                    <div id="tmQrSvgBox" style="display:inline-block;padding:14px;border:3px solid #18181B;border-radius:14px;background:#FFFFFF;margin-bottom:16px;max-width:100%;">
                         ${this.generalQrSvg(alapUrl, 270)}
                     </div>
 
-                    <div style="font-size:1.35rem;font-weight:800;color:#991B1B;letter-spacing:0.4px;margin-bottom:6px;text-transform:uppercase;">
+                    <div style="font-size:1.25rem;font-weight:800;color:#990000;letter-spacing:0.4px;margin-bottom:6px;text-transform:uppercase;">
                         Olvasd be a telefonod kamerájával!
                     </div>
-                    <div id="tmQrUrlCaption" style="font-family:Consolas,monospace;font-size:0.84rem;color:#3F3F46;background:#FAF8F5;border:1px solid #E4E0D7;display:inline-block;padding:5px 12px;border-radius:6px;margin-bottom:20px;word-break:break-all;">
+                    <div id="tmQrUrlCaption" style="font-family:Consolas,monospace;font-size:0.82rem;color:#3F3F46;background:#FAF8F5;border:1px solid #E4E0D7;display:inline-block;padding:5px 12px;border-radius:6px;margin-bottom:20px;word-break:break-all;max-width:100%;">
                         ${this.escapeHtml(alapUrl)}
                     </div>
 
-                    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;text-align:left;border-top:2px solid #E4E0D7;padding-top:18px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 190px), 1fr));gap:12px;text-align:left;border-top:2px solid #E4E0D7;padding-top:18px;">
                         <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
                             <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
                                 ${this.icon('clock', 16)} 1. „Mikor küzdök?”
@@ -1353,7 +1353,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css';
+            link.href = prefix + 'design_system.css?v=20261113_mobile3';
             document.head.appendChild(link);
         }
 
@@ -1760,7 +1760,7 @@ const TatamiMaster = {
     kijelentkezes: function() {
         localStorage.removeItem('tatamiUser');
         const isViews = window.location.pathname.toLowerCase().includes('/views/');
-        window.location.href = isViews ? '../index.html' : 'index.html';
+        window.location.href = isViews ? 'audience.html' : 'views/audience.html';
     },
 
     ellenorizJogosultsag: function() {
@@ -1769,11 +1769,11 @@ const TatamiMaster = {
 
         if (utvonal.includes('admin.html') || utvonal.includes('kategoriak.html') || utvonal.includes('kiemeles.html')) {
             if (!user || user.role.toUpperCase() !== 'ADMIN') {
-                window.location.href = '../index.html';
+                window.location.href = '../index.html?login=1';
             }
         } else if (utvonal.includes('biroi_panel.html')) {
             if (!user || (user.role.toUpperCase() !== 'ADMIN' && user.role.toUpperCase() !== 'JUDGE' && user.role.toUpperCase() !== 'BIRO')) {
-                window.location.href = '../index.html';
+                window.location.href = '../index.html?login=1';
             }
         }
     },
@@ -1907,7 +1907,7 @@ const TatamiMaster = {
                 tHtml += `<td style="color: #71717A;">${item.kesz ? Number(item.maxErtek).toFixed(1) : '-'}</td>`;
                 tHtml += `<td style="font-size: 1.2rem; font-weight: 800; color: #18181B;">${item.kesz ? Number(item.osszeg).toFixed(1) : '-'}</td>`;
                 tHtml += `<td>${ujrakatazas
-                    ? `<span style="background:#991B1B;color:white;padding:3px 8px;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${this.icon('alert', 13)} ÚJRAKATÁZÁS!</span>`
+                    ? `<span style="background:#990000;color:white;padding:3px 8px;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${this.icon('alert', 13)} ÚJRAKATÁZÁS!</span>`
                     : (item.kesz
                         ? `<span style="color:#18181B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${this.icon('check', 14)} Értékelve</span>`
                         : `<span style="color:#52525B;display:inline-flex;align-items:center;gap:4px;">${this.icon('clock', 13)} Rajtszám: #${item.meccs.matchOrder}</span>`)}</td>`;

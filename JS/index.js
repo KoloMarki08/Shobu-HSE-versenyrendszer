@@ -1,6 +1,13 @@
 let indexLiveDebounce = null;
 
 window.onload = function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'register' || window.location.hash === '#register') {
+        if (typeof valtsAuthFul === 'function') {
+            valtsAuthFul('register');
+        }
+    }
+
     versenyekBetoltese();
 
     if (window.TatamiMaster && typeof TatamiMaster.initLiveSync === 'function') {
@@ -89,19 +96,19 @@ async function versenyekBetoltese() {
                 : '';
 
             let autoBadgeHtml = isAutoAktiv
-                ? `<span style="background: #18181B; color: #FAF8F5; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.4px; display: inline-flex; align-items: center; gap: 4px;">${TatamiMaster.icon('check', 11)} AKTUÁLIS VERSENY</span>`
+                ? `<span style="background: #990000; color: #FAF8F5; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.4px; display: inline-flex; align-items: center; gap: 4px;">${TatamiMaster.icon('check', 11)} AKTUÁLIS VERSENY</span>`
                 : '';
 
             html += `
-                <div style="border: ${isAutoAktiv ? '2px solid #18181B' : '1px solid #E4E0D7'}; border-radius: 10px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 14px; background: ${isAutoAktiv ? '#FFFFFF' : '#FAF8F5'}; transition: border-color 0.2s, box-shadow 0.2s;">
-                    <div style="display:flex; gap:14px; align-items:center;">
+                <div style="border: ${isAutoAktiv ? '2px solid #990000' : '1px solid #E4E0D7'}; border-radius: 10px; padding: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: ${isAutoAktiv ? '#FFFFFF' : '#FAF8F5'}; transition: border-color 0.2s, box-shadow 0.2s;">
+                    <div style="display:flex; gap:12px; align-items:center; flex: 1 1 220px; min-width: 0;">
                         ${plakatThumb}
-                        <div>
-                            <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <div style="min-width: 0; flex: 1;">
+                            <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                 ${autoBadgeHtml}
                                 <span style="background: #27272A; color: #FAF8F5; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">${statuszSzoveg}</span>
                                 <span style="background: #F3F0EA; border: 1px solid #CFC9BC; color: #18181B; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">${versenyzoDb} versenyző</span>
-                                <strong style="font-size: 1.05rem; color: #18181B; display: inline-flex; align-items: center; gap: 6px;">${TatamiMaster.icon('shield', 15)} ${tisztaNev}</strong>
+                                <strong style="font-size: 1.02rem; color: #18181B; display: inline-flex; align-items: center; gap: 6px; word-break: break-word;">${TatamiMaster.icon('shield', 15)} ${tisztaNev}</strong>
                             </div>
                             <small style="color: #52525B; display: block; margin-bottom: 8px;">${TatamiMaster.icon('calendar', 13)} ${datumSzoveg}${szervezoSzoveg}</small>
                             <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -110,7 +117,7 @@ async function versenyekBetoltese() {
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-outline-blue" style="font-weight: 700; flex-shrink:0; padding: 8px 14px; font-size: 0.85rem;" onclick="versenyMegnyitasa(${v.id}, '${(v.name || '').replace(/'/g, "")}')">
+                    <button class="btn btn-outline-blue" style="font-weight: 700; flex: 1 0 auto; justify-content: center; padding: 9px 14px; font-size: 0.85rem;" onclick="versenyMegnyitasa(${v.id}, '${(v.name || '').replace(/'/g, "")}')">
                         <span>Élő Követés</span>
                         ${TatamiMaster.icon('arrow-right', 15)}
                     </button>
@@ -118,7 +125,7 @@ async function versenyekBetoltese() {
         }
         container.innerHTML = html;
     } catch (e) {
-        container.innerHTML = `<p style="color: #991B1B; font-size: 0.9rem;">Nem sikerült betölteni a versenyeket az adatbázisból.</p>`;
+        container.innerHTML = `<p style="color: #990000; font-size: 0.9rem;">Nem sikerült betölteni a versenyeket az adatbázisból.</p>`;
     }
 }
 

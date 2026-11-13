@@ -373,7 +373,7 @@ function initTatamiPage() {
         let v2 = exVersenyzok.find(v => v.id === m.competitor2Id);
         let parositas = isKata
             ? `${TatamiMaster.icon('award', 15)} <strong>${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</strong>`
-            : `<span style="color:#991B1B;font-weight:bold;"><span class="fighter-tag aka-tag">AKA</span> ${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</span> vs. <strong><span class="fighter-tag shiro-tag">SHIRO</span> ${v2 ? v2.name + ' (' + v2.club + ')' : 'Várakozik...'}</strong>`;
+            : `<span style="color:#990000;font-weight:bold;"><span class="fighter-tag aka-tag">AKA</span> ${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</span> vs. <strong><span class="fighter-tag shiro-tag">SHIRO</span> ${v2 ? v2.name + ' (' + v2.club + ')' : 'Várakozik...'}</strong>`;
 
         html += `<tr style="${m.isFinished ? 'opacity:0.55;background:#F3F0EA;' : ''}">
             <td><strong>#${m.matchOrder}</strong></td>

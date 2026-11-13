@@ -31,8 +31,8 @@ body {
 
 .top-header .red-text {
     color: #FAF8F5;
-    background: rgba(250, 248, 245, 0.12);
-    border: 1px solid rgba(250, 248, 245, 0.22);
+    background: #990000;
+    border: 1px solid #B30000;
     padding: 3px 10px;
     border-radius: 6px;
     font-style: normal;
@@ -431,9 +431,9 @@ body {
 }
 
 .aka-card {
-    background-color: #7F1D1D;
+    background-color: #990000;
     color: #FAF8F5;
-    border: 2px solid #991B1B;
+    border: 2px solid #990000;
 }
 
 .shiro-card {
@@ -660,7 +660,7 @@ body {
 }
 
 .flag-aka {
-    background-color: #991B1B;
+    background-color: #990000;
     color: white;
     border-color: white;
 }
@@ -693,7 +693,7 @@ body {
 }
 
 .live-badge {
-    background: #18181B;
+    background: #990000;
     color: #FAF8F5;
     padding: 4px 10px;
     border-radius: 6px;
@@ -746,4 +746,42 @@ body {
     text-decoration: line-through;
     border-color: #3F3F46;
     color: #A1A1AA;
+}
+
+/* --- MOBIL KOMPATIBILITÁS (<= 768px) --- */
+@media (max-width: 768px) {
+    .tatami-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+
+    .bracket-round {
+        min-width: 235px;
+    }
+
+    .flag-container {
+        gap: 10px;
+    }
+
+    .flag-btn {
+        width: 54px;
+        height: 54px;
+        font-size: 0.95rem;
+    }
+
+    .kata-judges-row {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .kata-score-input {
+        width: 56px;
+        font-size: 1rem;
+    }
+
+    .tv-judge-box {
+        font-size: 1.15rem;
+        padding: 6px 10px;
+        min-width: 50px;
+    }
 }

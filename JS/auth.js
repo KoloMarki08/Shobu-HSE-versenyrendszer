@@ -24,10 +24,10 @@ const Auth = {
         if (document.getElementById('tatamiQuickNavBar')) return;
 
         const items = [
-            { href: 'admin.html',       icon: 'home',    label: 'Admin Főpanel' },
+            { href: 'admin.html',       icon: 'home',    label: 'Admin Központ' },
             { href: 'nevezes.html',     icon: 'scale',   label: 'Mérlegelő' },
-            { href: 'eredmenyek.html',  icon: 'trophy',  label: 'Eredmények & Oklevél' },
-            { href: 'biroi_panel.html', icon: 'monitor', label: 'Bírói Vezérlő' }
+            { href: 'eredmenyek.html',  icon: 'trophy',  label: 'Eredmények' },
+            { href: 'biroi_panel.html', icon: 'monitor', label: 'Bírói Pult' }
         ];
 
         const nav = document.createElement('nav');
@@ -54,6 +54,7 @@ const Auth = {
 
         nav.innerHTML = html;
         document.body.appendChild(nav);
+        document.body.classList.add('has-quick-nav');
     }
 };
 

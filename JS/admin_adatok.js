@@ -65,17 +65,17 @@ function frissitNevezesZarolasUI() {
     }
 
     document.querySelectorAll('.nevezes-zarolas-bar').forEach(bar => {
-        bar.style.borderColor = lezarva ? '#991B1B' : '#E4E0D7';
+        bar.style.borderColor = lezarva ? '#990000' : '#E4E0D7';
         bar.style.background = lezarva ? '#FAF5F5' : '#FAF8F5';
     });
 
     document.querySelectorAll('.nevezes-zarolas-status').forEach(st => {
         if (lezarva) {
             st.innerHTML = `
-                <span style="background:#991B1B;color:#FAF8F5;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:5px;">
+                <span style="background:#990000;color:#FAF8F5;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:5px;">
                     ${TatamiMaster.icon('lock', 14)} NEVEZÉS LEZÁRVA
                 </span>
-                <span style="color:#991B1B;font-weight:600;">Új versenyzők és nevezések leadása jelenleg zárolva van (edzői és admin felületen is).</span>
+                <span style="color:#990000;font-weight:600;">Új versenyzők és nevezések leadása jelenleg zárolva van (edzői és admin felületen is).</span>
             `;
         } else {
             st.innerHTML = `
@@ -214,7 +214,7 @@ function frissitAdminAktivVersenyBar() {
             </span>
             <span>${TatamiMaster.icon('calendar', 14)} <strong>${datumSzoveg}</strong></span>
             <span>&bull; ${TatamiMaster.icon('user', 14)} Szervező: <strong>${szervezoSzoveg}</strong></span>
-            <span style="color:${lezarva ? '#991B1B' : '#18181B'};font-weight:700;">
+            <span style="color:${lezarva ? '#990000' : '#18181B'};font-weight:700;">
                 &bull; ${lezarva ? `${TatamiMaster.icon('lock', 13)} Nevezés lezárva` : `${TatamiMaster.icon('unlock', 13)} Nevezés nyitva`}
             </span>
         `;
@@ -337,7 +337,7 @@ function versenyekAdminBetoltese() {
             <td>${TatamiMaster.escapeHtml(v.organizer || '-')}</td>
             <td>${TatamiMaster.icon('calendar', 14)} ${datumSzoveg}</td>
             <td>
-                <span style="background:${isLezart ? '#991B1B' : '#18181B'};color:#FAF8F5;padding:3px 9px;border-radius:6px;font-weight:700;font-size:0.78rem;">
+                <span style="background:${isLezart ? '#990000' : '#18181B'};color:#FAF8F5;padding:3px 9px;border-radius:6px;font-weight:700;font-size:0.78rem;">
                     ${statuszSzoveg}
                 </span>
             </td>
@@ -823,7 +823,7 @@ function elonezetSulyBontas() {
     const aktivSavok = savok.filter(s => s.nevezesek.length > 0 || s.eredetiEgyedulVolt);
 
     if (aktivSavok.length === 0) {
-        cont.innerHTML = `<div style="color:#991B1B;font-weight:700;padding:8px;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('alert', 16)} Ebben a kategóriában jelenleg nincs benevezett versenyző!</div>`;
+        cont.innerHTML = `<div style="color:#990000;font-weight:700;padding:8px;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('alert', 16)} Ebben a kategóriában jelenleg nincs benevezett versenyző!</div>`;
         return;
     }
 
@@ -847,9 +847,9 @@ function elonezetSulyBontas() {
         let statuszBadge = `<span style="background:#18181B;color:#FAF8F5;padding:2px 7px;border-radius:10px;font-size:0.75rem;font-weight:700;">${TatamiMaster.icon('check', 12)} ${db} fő (${kumiteModSzoveg})</span>`;
 
         if (egyedulMaradtMost) {
-            keretSzin = '#991B1B';
+            keretSzin = '#990000';
             hatterSzin = '#FAF5F5';
-            statuszBadge = `<span style="background:#991B1B;color:white;padding:2px 7px;border-radius:10px;font-size:0.75rem;font-weight:700;">${TatamiMaster.icon('alert', 12)} EGYEDÜL VAN (1 fő)!</span>`;
+            statuszBadge = `<span style="background:#990000;color:white;padding:2px 7px;border-radius:10px;font-size:0.75rem;font-weight:700;">${TatamiMaster.icon('alert', 12)} EGYEDÜL VAN (1 fő)!</span>`;
         } else if (voltEgyedulDeOsszevonva) {
             keretSzin = '#A1A1AA';
             hatterSzin = '#F3F0EA';
@@ -1249,7 +1249,7 @@ function frissitKiemelesValaszto() {
                                    .filter(Boolean);
 
     if (indulok.length === 0) {
-        cont.innerHTML = `<span style="color:#991B1B;font-weight:bold;">Nincs benevezett versenyző ebben a kategóriában!</span>`;
+        cont.innerHTML = `<span style="color:#990000;font-weight:bold;">Nincs benevezett versenyző ebben a kategóriában!</span>`;
         return;
     }
 
@@ -1750,9 +1750,9 @@ function szerkesztVersenyzoTeljes(id) {
     modal.onclick = (e) => { if (e.target === modal) bezarVersenyzoEditModal(); };
 
     modal.innerHTML = `
-        <div style="background:#FFFFFF; border:1px solid #E4E4E7; border-radius:12px; width:100%; max-width:620px; max-height:90vh; overflow-y:auto; padding:22px; box-shadow:0 20px 45px rgba(0,0,0,0.22);">
+        <div style="background:#FFFFFF; border:1px solid #E4E4E7; border-radius:12px; width:100%; max-width:620px; max-height:90vh; overflow-y:auto; padding:18px 16px; box-shadow:0 20px 45px rgba(0,0,0,0.22);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #E4E4E7; padding-bottom:10px;">
-                <h3 style="margin:0; font-size:1.08rem; font-weight:700; color:#18181B; display:flex; align-items:center; gap:8px;">
+                <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#18181B; display:flex; align-items:center; gap:8px;">
                     ${TatamiMaster.icon('edit', 18)} Versenyző és Nevezések Szerkesztése
                 </h3>
                 <button type="button" onclick="bezarVersenyzoEditModal()" style="background:transparent; border:none; cursor:pointer; color:#71717A; padding:4px;" aria-label="Bezárás">
@@ -1760,7 +1760,7 @@ function szerkesztVersenyzoTeljes(id) {
                 </button>
             </div>
             <form onsubmit="event.preventDefault(); mentVersenyzoEsNevezesekModal(${id});">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap:12px; margin-bottom:14px;">
                     <div>
                         <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Versenyző neve</label>
                         <input type="text" id="editVersenyzoNev" class="form-control" value="${esc(v.name || '')}" required>
@@ -1786,11 +1786,11 @@ function szerkesztVersenyzoTeljes(id) {
                 </div>
                 <div style="margin-bottom:16px;">
                     <label style="display:block; font-size:0.82rem; font-weight:700; color:#18181B; margin-bottom:6px;">Indulási Kategóriák (Pótnevezés / Módosítás)</label>
-                    <div id="editVersenyzoKatCheckboxes" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:8px; max-height:220px; overflow-y:auto; padding:8px; border:1px solid #E4E4E7; border-radius:8px; background:#F8FAFC;">
+                    <div id="editVersenyzoKatCheckboxes" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap:8px; max-height:220px; overflow-y:auto; padding:8px; border:1px solid #E4E4E7; border-radius:8px; background:#F8FAFC;">
                         ${katCheckboxokHtml}
                     </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <div style="display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px;">
                     <button type="button" class="btn btn-outline" onclick="bezarVersenyzoEditModal()">Mégse</button>
                     <button type="submit" id="editVersenyzoMentBtn" class="btn btn-success" style="display:inline-flex; align-items:center; gap:6px;">
                         ${TatamiMaster.icon('check', 16)} Adatok és Nevezések Mentése
