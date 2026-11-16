@@ -218,10 +218,12 @@ function frissitAdminAktivVersenyBar() {
                 &bull; ${lezarva ? `${TatamiMaster.icon('lock', 13)} Nevezés lezárva` : `${TatamiMaster.icon('unlock', 13)} Nevezés nyitva`}
             </span>
         `;
+    } else if (meta) {
+        meta.innerHTML = `<span style="color:#71717A;font-weight:700;">Nincs aktív verseny — hozz létre egy újat az 1. Menüben!</span>`;
     }
 
     if (eloLink) {
-        eloLink.href = `audience.html?versenyId=${aktId}`;
+        eloLink.href = globalVersenyek.length > 0 ? `audience.html?versenyId=${aktId}` : 'audience.html';
     }
 }
 
@@ -360,6 +362,9 @@ function versenyekAdminBetoltese() {
                     </a>
                     <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:0.8rem;" onclick="nyitAdminQrPlakat(${v.id})" title="Nyomtatható A4 csarnok QR-plakát ehhez a versenyhez">
                         ${TatamiMaster.icon('qr', 14)} QR-Plakát
+                    </button>
+                    <button type="button" class="btn btn-outline-blue" style="padding:5px 10px;font-size:0.8rem;" onclick="nyitAdminOklevelSablon(${v.id})" title="Oklevél sablon szerkesztése és nyomtatása ehhez a versenyhez">
+                        ${TatamiMaster.icon('award', 14)} Oklevél Sablon
                     </button>
                     <button class="btn btn-outline" style="padding:5px 10px;font-size:0.8rem;" onclick="szerkesztVersenyTeljes(${v.id})">${TatamiMaster.icon('edit', 14)} Szerkesztés</button>
                     <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="torolElem('Tournaments', ${v.id})" title="Verseny törlése">${TatamiMaster.icon('trash', 14)} Törlés</button>
@@ -671,6 +676,7 @@ function kategoriakBetoltese() {
                 <td>${k.minAge || 0} – ${k.maxAge || 99} év</td>
                 <td><strong>${indulokDb} fő</strong>${formatumHint}</td>
                 <td style="white-space:nowrap;">
+                    <button type="button" class="btn btn-outline-blue" style="padding:5px 10px;font-size:0.8rem;" onclick="nyomtatKategoriaAgrajz(${k.id})" title="Kategória ágrajzának és indulóinak tiszta nyomtatása">${TatamiMaster.icon('print', 14)} Nyomtatás</button>
                     <button class="btn btn-outline" style="padding:5px 10px;font-size:0.8rem;" onclick="szerkesztKategoriaTeljes(${k.id})">${TatamiMaster.icon('edit', 14)} Szerkesztés</button>
                     <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="torolElem('Categories', ${k.id})" title="Kategória törlése">${TatamiMaster.icon('trash', 14)} Törlés</button>
                 </td>
@@ -1620,11 +1626,11 @@ function rajzolAgrajz() {
     }
 
     let formatumFejlec = isAgrajz
-        ? `<div style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
+        ? `<div class="tm-print-hide-note" style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
             ${TatamiMaster.icon('git-branch', 15)}
             <span><strong>Lebonyolítási forma: Egyenes kieséses ágrajz</strong> (5 fő feletti Kumite kategória – összesen ${n} mérkőzés).</span>
            </div>`
-        : `<div style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
+        : `<div class="tm-print-hide-note" style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
             ${TatamiMaster.icon('refresh', 15)}
             <span><strong>Lebonyolítási forma: Körmérkőzés (Mindenki mindenkivel)</strong> – 5 fő vagy 5 fő alatti Kumite kategória (${n} mérkőzés + élő tabella).</span>
            </div>`;
@@ -1710,6 +1716,163 @@ function rajzolAgrajz() {
     }
 
     cont.innerHTML = html;
+}
+
+function osszeallitKategoriaNyomtatoHtml(katId) {
+    const kId = parseInt(katId, 10);
+    const kat = (globalKategoriak || []).find(k => k.id === kId);
+    if (!kat) return null;
+
+    const esc = (s) => TatamiMaster.escapeHtml(s);
+    const aktId = TatamiMaster.lekerAktualisVersenyId();
+    const vObj = (globalVersenyek || []).find(v => v.id === aktId);
+    const versenyNev = (vObj && vObj.name) ? vObj.name : TatamiMaster.lekerAktualisVersenyNev();
+
+    const nevKatIdk = new Set((globalNevezesek || []).filter(n => n.categoryId === kId).map(n => n.competitorId));
+    const katMeccsek = (globalMerkozesek || []).filter(m => m.categoryId === kId).sort((a, b) => a.id - b.id);
+    for (const m of katMeccsek) {
+        if (m.competitor1Id) nevKatIdk.add(m.competitor1Id);
+        if (m.competitor2Id) nevKatIdk.add(m.competitor2Id);
+    }
+
+    const indulok = (globalVersenyzok || [])
+        .filter(v => nevKatIdk.has(v.id))
+        .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'hu'));
+
+    const isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+    const isAgrajz = !isKata && TatamiMaster.isKumiteAgrajz(katMeccsek);
+
+    const sel = document.getElementById('agrajzKategoriaSelect');
+    if (sel) sel.value = String(kId);
+    rajzolAgrajz();
+    const cont = document.getElementById('bracketContainer');
+    let agrajzHtml = cont ? cont.innerHTML : '';
+
+    if (katMeccsek.length === 0) {
+        agrajzHtml = '<div style="padding:12px;border:1px dashed #CFC9BC;border-radius:8px;color:#52525B;font-size:0.86rem;">Ehhez a kategóriához még nem készült kisorsolt ágrajz / rajtlista.</div>';
+    }
+
+    const indulokHtml = indulok.length > 0
+        ? `<div class="tm-cat-print-fighters-grid">
+            ${indulok.map((v, i) => `
+                <div class="tm-cat-print-fighter-item">
+                    <span><strong>${i + 1}. ${esc(v.name || '')}</strong> <span style="color:#52525B;">(${esc(v.club || '')})</span></span>
+                    <span style="color:#52525B;white-space:nowrap;">${v.weight ? esc(String(v.weight) + ' kg') : ''} ${v.belt ? esc(v.belt) : ''}</span>
+                </div>`).join('')}
+           </div>`
+        : '<div style="color:#71717A;font-size:0.84rem;">Nincs benevezett versenyző ebben a kategóriában.</div>';
+
+    let roundCount = 1;
+    if (isAgrajz && katMeccsek.length > 0) {
+        roundCount = Math.round(Math.log2(katMeccsek.length + 1));
+    }
+    const scaleStyle = (isAgrajz && roundCount >= 4)
+        ? `zoom:${roundCount >= 5 ? '0.68' : '0.82'};`
+        : '';
+
+    const html = `
+        <div class="tm-cat-print-header">
+            <div>
+                <div style="font-size:0.78rem;font-weight:700;color:#52525B;text-transform:uppercase;">${esc(versenyNev)}</div>
+                <h2 style="margin:2px 0 0 0;font-size:1.25rem;color:#18181B;">${esc(kat.name || '')}</h2>
+            </div>
+            <div style="text-align:right;font-size:0.82rem;font-weight:700;color:#27272A;">
+                ${esc(kat.matchType || 'KUMITE')} &bull; ${indulok.length} induló
+            </div>
+        </div>
+        <div class="tm-cat-print-fighters">
+            <div style="font-size:0.76rem;font-weight:800;text-transform:uppercase;color:#3F3F46;margin-bottom:5px;letter-spacing:0.5px;">Kategóriában induló versenyzők</div>
+            ${indulokHtml}
+        </div>
+        <div style="${scaleStyle}">
+            ${agrajzHtml}
+        </div>
+    `;
+
+    return {
+        html,
+        orientacio: (isAgrajz || (isKata && katMeccsek.length > 0)) ? 'landscape' : 'portrait'
+    };
+}
+
+function nyomtatKategoriaAgrajz(katIdOverride = null) {
+    const sel = document.getElementById('agrajzKategoriaSelect');
+    const katId = parseInt(katIdOverride || (sel && sel.value) || (globalKategoriak[0] ? globalKategoriak[0].id : 0), 10);
+    if (!katId) {
+        TatamiMaster.toast('Először válassz ki egy kategóriát a nyomtatáshoz!', 'figyelem');
+        return;
+    }
+
+    const csomag = osszeallitKategoriaNyomtatoHtml(katId);
+    if (!csomag) {
+        TatamiMaster.toast('A kiválasztott kategória nem található!', 'hiba');
+        return;
+    }
+
+    let pageStyle = document.getElementById('tmCategoryPageSizeStyle');
+    if (!pageStyle) {
+        pageStyle = document.createElement('style');
+        pageStyle.id = 'tmCategoryPageSizeStyle';
+        document.head.appendChild(pageStyle);
+    }
+    pageStyle.textContent = `@media print { @page { size: A4 ${csomag.orientacio}; margin: 8mm; } }`;
+
+    let root = document.getElementById('tmCategoryPrintRoot');
+    if (root) root.remove();
+    root = document.createElement('div');
+    root.id = 'tmCategoryPrintRoot';
+    root.innerHTML = csomag.html;
+    document.body.appendChild(root);
+
+    document.body.classList.add('tm-printing-category-sheet');
+
+    const cleanup = () => {
+        document.body.classList.remove('tm-printing-category-sheet');
+        const r = document.getElementById('tmCategoryPrintRoot');
+        if (r) r.remove();
+        const ps = document.getElementById('tmCategoryPageSizeStyle');
+        if (ps) ps.remove();
+        window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+
+    setTimeout(() => {
+        window.print();
+        setTimeout(cleanup, 1200);
+    }, 100);
+}
+
+async function nyitAdminOklevelSablon(versenyId) {
+    const vObj = (globalVersenyek || []).find(v => v.id === versenyId) || null;
+    TatamiMaster.nyitOklevelSablonModal(vObj, async (celVersenyId, celVersenyObj) => {
+        await nyomtatAdminVersenyOsszesOklevel(celVersenyId, celVersenyObj);
+    });
+}
+
+async function nyomtatAdminVersenyOsszesOklevel(versenyId, versenyObj = null) {
+    const [k, m, v] = await Promise.all([
+        TatamiMaster.apiGet('Categories', { versenyId }),
+        TatamiMaster.apiGet('Matches', { versenyId }),
+        TatamiMaster.apiGet('Competitors', { versenyId })
+    ]);
+    const { kategoriaEredmenyek } = TatamiMaster.szamolDobogosokEsKlubok(k, m, v);
+    const lista = [];
+    for (const ke of kategoriaEredmenyek) {
+        for (const d of ke.dobogosok) {
+            if (!d.v) continue;
+            lista.push({
+                nev: d.v.name,
+                klub: d.v.club,
+                kategoria: ke.kategoria.name,
+                helyezes: d.hely
+            });
+        }
+    }
+    if (lista.length === 0) {
+        TatamiMaster.toast('Ennél a versenynél még nincs lezárt dobogós eredmény oklevélnyomtatáshoz.', 'figyelem');
+        return;
+    }
+    TatamiMaster.nyomtatOklevelek(versenyId, lista, versenyObj);
 }
 
 // =========================================================
@@ -1925,6 +2088,24 @@ async function nagyTesztAdatbazisReset() {
         await mindenAdatFrissitese();
     } else {
         TatamiMaster.toast("Hiba történt a tesztadatok visszaállításakor!", "hiba");
+    }
+}
+
+async function adatbazisTeljesLenullazas() {
+    if (!confirm("FIGYELEM! ADATBÁZIS LENULLÁZÁSA (0-RA ÁLLÍTÁS):\n\nBiztosan törölsz MINDEN versenyt, kategóriát, versenyzőt, nevezést, tatamit, mérkőzést és élő eredményt?\n\n(A belépési felhasználói fiókok megmaradnak, de minden versenyadat véglegesen törlődik!)")) {
+        return;
+    }
+    if (!confirm("Megerősítés: Valóban teljesen üres, 0 adatos adatbázissal szeretnél indulni?")) {
+        return;
+    }
+
+    const res = await TatamiMaster.apiSend('Tournaments/reset-empty', 'POST', {});
+    if (res.ok) {
+        TatamiMaster.toast("Az adatbázis teljes versenyadata lenullázva (0 rekord)!");
+        await mindenAdatFrissitese();
+        ugorjVersenyekFulre();
+    } else {
+        TatamiMaster.toast("Hiba történt az adatbázis lenullázásakor!", "hiba");
     }
 }
 

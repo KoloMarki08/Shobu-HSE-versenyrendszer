@@ -5,6 +5,24 @@ let idoMasodpercben = 120;
 let idozitoInterval = null;
 
 let kumiteHistory = { aka: [], shiro: [] };
+let utolsoIppon = { aka: false, shiro: false };
+
+function isKumiteBefejezettAllapot() {
+    return akaPont >= 2 || shiroPont >= 2 || akaBuntetes >= 4 || shiroBuntetes >= 4;
+}
+
+function epitsTisztaBiroiMeccsPayload(m) {
+    return {
+        id: m.id,
+        categoryId: m.categoryId,
+        tatamiId: m.tatamiId,
+        competitor1Id: m.competitor1Id,
+        competitor2Id: m.competitor2Id,
+        matchOrder: m.matchOrder,
+        isFinished: !!m.isFinished,
+        winnerId: m.winnerId || null
+    };
+}
 
 // Korcsoporthoz igazított Kyokushin küzdőidő és hosszabbítás állapot
 let aktivIdoSzabaly = TatamiMaster.KUMITE_IDO_SZABALYOK['FELNOTT'];
@@ -138,6 +156,16 @@ function tatamiMeccsekBetoltese(megtartAktualisMeccs = false) {
     if (elsoAktivId !== null) {
         meccsSelect.value = elsoAktivId;
         meccsKivalasztva();
+    } else {
+        aktualisMeccs = null;
+        const kategInp = document.getElementById('meccsKategoriaInput');
+        if (kategInp) kategInp.value = tatamiMeccsei.length > 0 ? 'Minden mérkőzés lezárva ezen a tatamin' : 'Nincs kisorsolt mérkőzés';
+        const akaInp = document.getElementById('akaNevInput');
+        const shiroInp = document.getElementById('shiroNevInput');
+        if (akaInp) akaInp.value = 'AKA Versenyző';
+        if (shiroInp) shiroInp.value = 'SHIRO Versenyző';
+        kovetkezoMeccsSzoveg = 'FELKÉSZÜL: Nincs több várakozó mérkőzés ezen a tatamin.';
+        nullazasMeccsre();
     }
 }
 
@@ -222,13 +250,17 @@ function valtsKumiteFazisIndexre(ujIndex, nullazPontokat = false) {
 
     const fazis = aktivIdoSzabaly.fazisok[aktivFazisIndex];
     if (nullazPontokat) {
-        // Új hosszabbítási menet (Encho-sen) elején a menetpontok 0:0-ról indulnak
+        // Új hosszabbítási menet (Encho-sen) elején a menetpontok 0:0-ról indulnak (a büntetések tovább öröklődnek)
         akaPont = 0;
         shiroPont = 0;
+        utolsoIppon = { aka: false, shiro: false };
+        kumiteHistory = { aka: [], shiro: [] };
         document.getElementById('akaPontDisplay').innerText = 0;
         document.getElementById('shiroPontDisplay').innerText = 0;
         const modSel = document.getElementById('gyozelemModSelect');
         if (modSel) modSel.value = 'HANTEI';
+        frissitBuntetesGombokEsKijelzo();
+        ellenorizAutomatikusGyozelem();
     }
 
     idoMasodpercben = fazis.mp || 0;
@@ -356,15 +388,34 @@ function modValtas(mod) {
 }
 
 function pontValtoztatas(kuzdo, ertek) {
-    kumiteHistory[kuzdo].push({ akaPont, shiroPont, akaBuntetes, shiroBuntetes });
+    if (kuzdo !== 'aka' && kuzdo !== 'shiro') return;
+    if (isKumiteBefejezettAllapot()) {
+        TatamiMaster.toast("A mérkőzés már eldőlt (Ippon / Leléptetés)! Módosításhoz használd az Undo gombot.", "figyelem");
+        return;
+    }
+
+    const regiPont = (kuzdo === 'aka') ? akaPont : shiroPont;
+    const regiBuntetes = (kuzdo === 'aka') ? akaBuntetes : shiroBuntetes;
+    kumiteHistory[kuzdo].push({ pont: regiPont, buntetes: regiBuntetes, ippon: utolsoIppon[kuzdo] });
+
+    let ujPont;
+    if (ertek >= 2) {
+        ujPont = 2;
+        utolsoIppon[kuzdo] = true;
+    } else {
+        ujPont = Math.max(0, Math.min(2, regiPont + ertek));
+        utolsoIppon[kuzdo] = false;
+    }
 
     if (kuzdo === 'aka') {
-        akaPont = Math.max(0, akaPont + ertek);
+        akaPont = ujPont;
         document.getElementById('akaPontDisplay').innerText = akaPont;
     } else {
-        shiroPont = Math.max(0, shiroPont + ertek);
+        shiroPont = ujPont;
         document.getElementById('shiroPontDisplay').innerText = shiroPont;
     }
+
+    frissitBuntetesGombokEsKijelzo();
     ellenorizAutomatikusGyozelem();
     adatokMentese();
 }
@@ -382,43 +433,65 @@ function frissitBuntetesGombokEsKijelzo() {
     document.getElementById('akaBuntetesDisplay').innerText = formazPanelBuntetes(akaBuntetes);
     document.getElementById('shiroBuntetesDisplay').innerText = formazPanelBuntetes(shiroBuntetes);
 
-    const akaChuiBtn = document.getElementById('akaChuiBtn');
-    if (akaChuiBtn) {
-        akaChuiBtn.disabled = (akaBuntetes >= 3);
-        akaChuiBtn.style.opacity = (akaBuntetes >= 3) ? '0.35' : '1';
-        akaChuiBtn.style.cursor = (akaBuntetes >= 3) ? 'not-allowed' : 'pointer';
-        akaChuiBtn.innerHTML = (akaBuntetes >= 3)
-            ? `${TatamiMaster.icon('lock', 14)} Chui lezárva (1G után)`
-            : `${TatamiMaster.icon('alert', 14)} +1 Chui (Figyelmeztetés)`;
-    }
+    const befejezett = isKumiteBefejezettAllapot();
 
-    const shiroChuiBtn = document.getElementById('shiroChuiBtn');
-    if (shiroChuiBtn) {
-        shiroChuiBtn.disabled = (shiroBuntetes >= 3);
-        shiroChuiBtn.style.opacity = (shiroBuntetes >= 3) ? '0.35' : '1';
-        shiroChuiBtn.style.cursor = (shiroBuntetes >= 3) ? 'not-allowed' : 'pointer';
-        shiroChuiBtn.innerHTML = (shiroBuntetes >= 3)
-            ? `${TatamiMaster.icon('lock', 14)} Chui lezárva (1G után)`
-            : `${TatamiMaster.icon('alert', 14)} +1 Chui (Figyelmeztetés)`;
-    }
+    ['aka', 'shiro'].forEach(oldal => {
+        const bunt = (oldal === 'aka') ? akaBuntetes : shiroBuntetes;
+        const wazaBtn = document.getElementById(oldal + 'WazaBtn');
+        const ipponBtn = document.getElementById(oldal + 'IpponBtn');
+        const chuiBtn = document.getElementById(oldal + 'ChuiBtn');
+        const gentenBtn = document.getElementById(oldal + 'GentenBtn');
+
+        if (wazaBtn) {
+            wazaBtn.disabled = befejezett;
+            wazaBtn.style.opacity = befejezett ? '0.4' : '1';
+            wazaBtn.style.cursor = befejezett ? 'not-allowed' : 'pointer';
+        }
+        if (ipponBtn) {
+            ipponBtn.disabled = befejezett;
+            ipponBtn.style.opacity = befejezett ? '0.4' : '1';
+            ipponBtn.style.cursor = befejezett ? 'not-allowed' : 'pointer';
+        }
+        if (chuiBtn) {
+            const chuiTiltva = befejezett || (bunt >= 3);
+            chuiBtn.disabled = chuiTiltva;
+            chuiBtn.style.opacity = chuiTiltva ? '0.35' : '1';
+            chuiBtn.style.cursor = chuiTiltva ? 'not-allowed' : 'pointer';
+            chuiBtn.innerHTML = (bunt >= 3)
+                ? `${TatamiMaster.icon('lock', 14)} Chui lezárva (1G után)`
+                : `${TatamiMaster.icon('alert', 14)} +1 Chui (Figyelmeztetés)`;
+        }
+        if (gentenBtn) {
+            gentenBtn.disabled = befejezett;
+            gentenBtn.style.opacity = befejezett ? '0.4' : '1';
+            gentenBtn.style.cursor = befejezett ? 'not-allowed' : 'pointer';
+        }
+    });
 }
 
 function buntetesValtoztatas(kuzdo, tipus) {
-    kumiteHistory[kuzdo].push({ akaPont, shiroPont, akaBuntetes, shiroBuntetes });
+    if (kuzdo !== 'aka' && kuzdo !== 'shiro') return;
+    if (isKumiteBefejezettAllapot()) {
+        TatamiMaster.toast("A mérkőzés már eldőlt (Ippon / Leléptetés)! Módosításhoz használd az Undo gombot.", "figyelem");
+        return;
+    }
 
-    let aktualis = (kuzdo === 'aka') ? akaBuntetes : shiroBuntetes;
+    const regiPont = (kuzdo === 'aka') ? akaPont : shiroPont;
+    const regiBuntetes = (kuzdo === 'aka') ? akaBuntetes : shiroBuntetes;
+    kumiteHistory[kuzdo].push({ pont: regiPont, buntetes: regiBuntetes, ippon: utolsoIppon[kuzdo] });
 
+    let aktualis = regiBuntetes;
     if (tipus === 'CHUI' || tipus === 1) {
         if (aktualis < 3) {
             aktualis++;
             if (aktualis === 3) {
-                TatamiMaster.toast(`3. Chui = 1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
+                TatamiMaster.toast("3. Chui = 1 GENTEN! Innentől már csak Gentent lehet adni!", "figyelem");
             }
         }
     } else if (tipus === 'GENTEN' || tipus >= 2) {
         if (aktualis < 3) {
             aktualis = 3;
-            TatamiMaster.toast(`1 GENTEN! Innentől már csak Gentent lehet adni!`, "figyelem");
+            TatamiMaster.toast("1 GENTEN! Innentől már csak Gentent lehet adni!", "figyelem");
         } else {
             aktualis = 4;
         }
@@ -438,55 +511,155 @@ function kumiteUndo(kuzdo) {
         return;
     }
     const elozo = kumiteHistory[kuzdo].pop();
-    akaPont = elozo.akaPont;
-    shiroPont = elozo.shiroPont;
-    akaBuntetes = elozo.akaBuntetes;
-    shiroBuntetes = elozo.shiroBuntetes;
+    if (kuzdo === 'aka') {
+        akaPont = elozo.pont;
+        akaBuntetes = elozo.buntetes;
+        utolsoIppon.aka = !!elozo.ippon;
+        document.getElementById('akaPontDisplay').innerText = akaPont;
+    } else {
+        shiroPont = elozo.pont;
+        shiroBuntetes = elozo.buntetes;
+        utolsoIppon.shiro = !!elozo.ippon;
+        document.getElementById('shiroPontDisplay').innerText = shiroPont;
+    }
 
-    document.getElementById('akaPontDisplay').innerText = akaPont;
-    document.getElementById('shiroPontDisplay').innerText = shiroPont;
     frissitBuntetesGombokEsKijelzo();
-
     ellenorizAutomatikusGyozelem();
     adatokMentese();
+}
+
+function validalKumiteLezaras(allapot) {
+    const aP = Number(allapot?.akaPont) || 0;
+    const sP = Number(allapot?.shiroPont) || 0;
+    const aB = Number(allapot?.akaBuntetes) || 0;
+    const sB = Number(allapot?.shiroBuntetes) || 0;
+    const gyoztesOldal = allapot?.gyoztesOldal;
+    const gyozelemMod = allapot?.gyozelemMod;
+
+    if (gyoztesOldal !== 'aka' && gyoztesOldal !== 'shiro') {
+        return { ok: false, hiba: 'Válaszd ki a mérkőzés győztesét (AKA vagy SHIRO)!' };
+    }
+
+    if (aB >= 4 && sB >= 4) {
+        return { ok: false, hiba: 'Nem lehet mindkét küzdő SIKAKU állapotban egyszerre!' };
+    }
+    if (aB >= 4) {
+        if (gyoztesOldal !== 'shiro') return { ok: false, hiba: 'AKA elérte a 2 Gentent (SIKAKU) — kizárólag SHIRO lehet a győztes!' };
+        if (gyozelemMod !== 'SIKAKU') return { ok: false, hiba: '2 Genten leléptetésnél a győzelem jogcíme kizárólag SIKAKU lehet!' };
+        return { ok: true };
+    }
+    if (sB >= 4) {
+        if (gyoztesOldal !== 'aka') return { ok: false, hiba: 'SHIRO elérte a 2 Gentent (SIKAKU) — kizárólag AKA lehet a győztes!' };
+        if (gyozelemMod !== 'SIKAKU') return { ok: false, hiba: '2 Genten leléptetésnél a győzelem jogcíme kizárólag SIKAKU lehet!' };
+        return { ok: true };
+    }
+
+    if (gyozelemMod === 'SIKAKU' || gyozelemMod === 'KIKEN') {
+        return { ok: true };
+    }
+
+    if (aP >= 2) {
+        if (gyoztesOldal !== 'aka') return { ok: false, hiba: 'AKA elérte a 2 pontot (Ippon / Awasete Ippon) — SHIRO nem jelölhető ki győztesnek!' };
+        if (gyozelemMod !== 'IPPON' && gyozelemMod !== 'AWASETE') return { ok: false, hiba: '2 pontnál a győzelem jogcíme Ippon vagy Awasete Ippon lehet!' };
+        return { ok: true };
+    }
+    if (sP >= 2) {
+        if (gyoztesOldal !== 'shiro') return { ok: false, hiba: 'SHIRO elérte a 2 pontot (Ippon / Awasete Ippon) — AKA nem jelölhető ki győztesnek!' };
+        if (gyozelemMod !== 'IPPON' && gyozelemMod !== 'AWASETE') return { ok: false, hiba: '2 pontnál a győzelem jogcíme Ippon vagy Awasete Ippon lehet!' };
+        return { ok: true };
+    }
+
+    if (aP > sP) {
+        if (gyoztesOldal !== 'aka') return { ok: false, hiba: `AKA vezet pontszámmal (${aP}–${sP}) — ilyen pontállásnál nem nyerhet SHIRO!` };
+        if (gyozelemMod !== 'WAZAARI') return { ok: false, hiba: '1x Waza-ari előnynél az „1x Waza-ari előny” jogcímet kell választani!' };
+        return { ok: true };
+    }
+    if (sP > aP) {
+        if (gyoztesOldal !== 'shiro') return { ok: false, hiba: `SHIRO vezet pontszámmal (${aP}–${sP}) — ilyen pontállásnál nem nyerhet AKA!` };
+        if (gyozelemMod !== 'WAZAARI') return { ok: false, hiba: '1x Waza-ari előnynél az „1x Waza-ari előny” jogcímet kell választani!' };
+        return { ok: true };
+    }
+
+    // Egyenlő pontállás (0–0 vagy 1–1)
+    if (gyozelemMod === 'IPPON' || gyozelemMod === 'AWASETE') {
+        return { ok: false, hiba: 'Ippon / Awasete Ippon lezáráshoz használd előbb a győztes +2 Ippon vagy 2x Waza-ari gombját!' };
+    }
+    if (gyozelemMod === 'WAZAARI') {
+        return { ok: false, hiba: `Egyenlő pontállásnál (${aP}–${sP}) nem választható az 1x Waza-ari előny!` };
+    }
+
+    const gyoztesBunt = (gyoztesOldal === 'aka') ? aB : sB;
+    const vesztesBunt = (gyoztesOldal === 'aka') ? sB : aB;
+    if (gyozelemMod === 'HANTEI' && gyoztesBunt >= 3 && vesztesBunt < 3) {
+        return { ok: false, hiba: '1 Genten (levonás) büntetéssel sújtott küzdő egyenlő pontállásnál nem nyerhet Hantei-jel Genten nélküli ellenféllel szemben!' };
+    }
+
+    return { ok: true };
 }
 
 function ellenorizAutomatikusGyozelem() {
     const gyoztesSel = document.getElementById('gyoztesSelect');
     const modSel = document.getElementById('gyozelemModSelect');
+    const infoEl = document.getElementById('kumiteDontesInfo');
     if (!gyoztesSel || !modSel) return;
+
+    let statuszSzoveg = '';
+    let statuszSzin = '#52525B';
 
     if (akaBuntetes >= 4) {
         idoMegallitas();
         gyoztesSel.value = 'shiro';
         modSel.value = 'SIKAKU';
+        statuszSzoveg = 'SIKAKU (2 Genten AKA): SHIRO nyert leléptetéssel.';
+        statuszSzin = '#990000';
         TatamiMaster.toast("SIKAKU! AKA elérte a 2 Gentent — SHIRO győzött leléptetéssel!", "hiba");
-        return;
-    }
-    if (shiroBuntetes >= 4) {
+    } else if (shiroBuntetes >= 4) {
         idoMegallitas();
         gyoztesSel.value = 'aka';
         modSel.value = 'SIKAKU';
+        statuszSzoveg = 'SIKAKU (2 Genten SHIRO): AKA nyert leléptetéssel.';
+        statuszSzin = '#990000';
         TatamiMaster.toast("SIKAKU! SHIRO elérte a 2 Gentent — AKA győzött leléptetéssel!", "hiba");
-        return;
-    }
-
-    if (akaPont >= 2) {
+    } else if (akaPont >= 2) {
         idoMegallitas();
         gyoztesSel.value = 'aka';
-        if (modSel.value !== 'IPPON') modSel.value = 'AWASETE';
+        modSel.value = utolsoIppon.aka ? 'IPPON' : 'AWASETE';
+        statuszSzoveg = utolsoIppon.aka ? 'IPPON: AKA győzött (mérkőzés lezárva).' : 'AWASETE IPPON (2 Waza-ari): AKA győzött.';
+        statuszSzin = '#18181B';
     } else if (shiroPont >= 2) {
         idoMegallitas();
         gyoztesSel.value = 'shiro';
-        if (modSel.value !== 'IPPON') modSel.value = 'AWASETE';
-    } else if (akaPont === 1 && shiroPont === 0) {
+        modSel.value = utolsoIppon.shiro ? 'IPPON' : 'AWASETE';
+        statuszSzoveg = utolsoIppon.shiro ? 'IPPON: SHIRO győzött (mérkőzés lezárva).' : 'AWASETE IPPON (2 Waza-ari): SHIRO győzött.';
+        statuszSzin = '#18181B';
+    } else if (akaPont > shiroPont) {
         gyoztesSel.value = 'aka';
         modSel.value = 'WAZAARI';
-    } else if (shiroPont === 1 && akaPont === 0) {
+        statuszSzoveg = 'Pontelőny: AKA (+1 Waza-ari).';
+        statuszSzin = '#18181B';
+    } else if (shiroPont > akaPont) {
         gyoztesSel.value = 'shiro';
         modSel.value = 'WAZAARI';
+        statuszSzoveg = 'Pontelőny: SHIRO (+1 Waza-ari).';
+        statuszSzin = '#18181B';
     } else {
         modSel.value = 'HANTEI';
+        if (akaBuntetes >= 3 && shiroBuntetes < 3) {
+            gyoztesSel.value = 'shiro';
+            statuszSzoveg = 'Figyelem: AKA-nak 1 Genten levonása van — egyenlő állásnál SHIRO az előnyben!';
+            statuszSzin = '#990000';
+        } else if (shiroBuntetes >= 3 && akaBuntetes < 3) {
+            gyoztesSel.value = 'aka';
+            statuszSzoveg = 'Figyelem: SHIRO-nak 1 Genten levonása van — egyenlő állásnál AKA az előnyben!';
+            statuszSzin = '#990000';
+        } else {
+            statuszSzoveg = `Döntetlen (${akaPont}–${shiroPont}): idő lejárta után hosszabbítás vagy HANTEI dönt.`;
+        }
+    }
+
+    if (infoEl) {
+        infoEl.innerText = statuszSzoveg;
+        infoEl.style.color = statuszSzin;
     }
 }
 
@@ -540,6 +713,8 @@ function idoInditas() {
                     } else {
                         TatamiMaster.toast("Lejárt az utolsó hosszabbítás is (00:00)! Kötelező Bírói Döntés (HANTEI)!", "figyelem");
                     }
+                } else {
+                    TatamiMaster.toast(`Lejárt a küzdőidő (00:00)! Pontelőnnyel győzött: ${akaPont > shiroPont ? 'AKA' : 'SHIRO'}.`);
                 }
             }
             adatokMentese();
@@ -562,6 +737,7 @@ function nullazasMeccsre() {
     idoMegallitas();
     akaPont = 0; shiroPont = 0;
     akaBuntetes = 0; shiroBuntetes = 0;
+    utolsoIppon = { aka: false, shiro: false };
     kumiteHistory = { aka: [], shiro: [] };
     aktivFazisIndex = 0;
 
@@ -574,12 +750,16 @@ function nullazasMeccsre() {
     document.getElementById('shiroPontDisplay').innerText = 0;
     document.getElementById('akaBuntetesDisplay').innerText = 0;
     document.getElementById('shiroBuntetesDisplay').innerText = 0;
+
+    const gyoztesSel = document.getElementById('gyoztesSelect');
+    const modSel = document.getElementById('gyozelemModSelect');
+    if (gyoztesSel) gyoztesSel.value = 'aka';
+    if (modSel) modSel.value = 'HANTEI';
+
     frissitBuntetesGombokEsKijelzo();
+    ellenorizAutomatikusGyozelem();
     frissitTimerKijelzo();
     frissitKumiteFazisUI();
-
-    const modSel = document.getElementById('gyozelemModSelect');
-    if (modSel) modSel.value = 'HANTEI';
 
     document.querySelectorAll('.kata-pont').forEach(inp => inp.value = '');
     document.getElementById('kataOsszpontDisplay').innerText = "0.0";
@@ -661,7 +841,7 @@ async function meccsMentese() {
             TatamiMaster.mentKataEredmeny(aktualisMeccs.id, aktualisMeccs.competitor1Id, ertekeles);
             aktualisMeccs.isFinished = true;
             aktualisMeccs.winnerId = aktualisMeccs.competitor1Id;
-            await TatamiMaster.apiSend('Matches/' + aktualisMeccs.id, 'PUT', aktualisMeccs);
+            await TatamiMaster.apiSend('Matches/' + aktualisMeccs.id, 'PUT', epitsTisztaBiroiMeccsPayload(aktualisMeccs));
 
             await ellenorizKataSelejtezoEsTop6Donto(aktualisMeccs.categoryId, aktualisMeccs.tatamiId);
             await biroiAdatokFrissitese();
@@ -670,7 +850,24 @@ async function meccsMentese() {
 
         const gyoztesOldal = document.getElementById('gyoztesSelect').value;
         const gyozelemMod = document.getElementById('gyozelemModSelect').value;
+        const ellenorzes = validalKumiteLezaras({
+            akaPont,
+            shiroPont,
+            akaBuntetes,
+            shiroBuntetes,
+            gyoztesOldal,
+            gyozelemMod
+        });
+        if (!ellenorzes.ok) {
+            TatamiMaster.toast(ellenorzes.hiba, "hiba");
+            return;
+        }
+
         const gyoztesId = (gyoztesOldal === 'aka') ? aktualisMeccs.competitor1Id : aktualisMeccs.competitor2Id;
+        if (!gyoztesId) {
+            TatamiMaster.toast("A kiválasztott oldalon nincs érvényes versenyző-azonosító!", "hiba");
+            return;
+        }
 
         aktualisMeccs.isFinished = true;
         aktualisMeccs.winnerId = gyoztesId;
@@ -689,7 +886,7 @@ async function meccsMentese() {
             endedInRound: fazis ? fazis.rovid : 'ALAPIDŐ'
         });
 
-        await TatamiMaster.apiSend('Matches/' + aktualisMeccs.id, 'PUT', aktualisMeccs);
+        await TatamiMaster.apiSend('Matches/' + aktualisMeccs.id, 'PUT', epitsTisztaBiroiMeccsPayload(aktualisMeccs));
         await tovabbjuttatasKovetkezoForduloba(aktualisMeccs, gyoztesId);
         await TatamiMaster.trigger('afterMatchSave', { match: aktualisMeccs, winnerId: gyoztesId, winType: gyozelemMod });
 
@@ -773,7 +970,7 @@ async function tovabbjuttatasKovetkezoForduloba(lezartMeccs, gyoztesId) {
                     kovMeccs.isFinished = false;
                     kovMeccs.winnerId = null;
                 }
-                await TatamiMaster.apiSend('Matches/' + kovMeccs.id, 'PUT', kovMeccs);
+                await TatamiMaster.apiSend('Matches/' + kovMeccs.id, 'PUT', epitsTisztaBiroiMeccsPayload(kovMeccs));
             }
             break;
         }

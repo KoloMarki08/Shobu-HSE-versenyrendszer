@@ -9,7 +9,7 @@
     <title>TATAMI MASTER™ - Aréna Bírói Vezérlőpult</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261113_mobile3">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261116_v1">
     <style>
         body {
             background-color: #FAF8F5 !important;
@@ -576,8 +576,8 @@
                     </div>
 
                     <div class="action-btn-grid">
-                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('aka', 1)">+1 Waza-ari (Fél pont)</button>
-                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes pont)</button>
+                        <button id="akaWazaBtn" class="arena-btn btn-waza" onclick="pontValtoztatas('aka', 1)">+1 Waza-ari (Fél pont)</button>
+                        <button id="akaIpponBtn" class="arena-btn btn-ippon" onclick="pontValtoztatas('aka', 2)">+2 Ippon (Teljes pont)</button>
                         <button id="akaChuiBtn" class="arena-btn btn-chui" onclick="buntetesValtoztatas('aka', 'CHUI')">+1 Chui (Figyelmeztetés)</button>
                         <button id="akaGentenBtn" class="arena-btn btn-genten" onclick="buntetesValtoztatas('aka', 'GENTEN')">+1 Genten (Levonás)</button>
                         <button class="arena-btn btn-undo" onclick="kumiteUndo('aka')">
@@ -696,8 +696,8 @@
                     </div>
 
                     <div class="action-btn-grid">
-                        <button class="arena-btn btn-waza" onclick="pontValtoztatas('shiro', 1)">+1 Waza-ari (Fél pont)</button>
-                        <button class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes pont)</button>
+                        <button id="shiroWazaBtn" class="arena-btn btn-waza" onclick="pontValtoztatas('shiro', 1)">+1 Waza-ari (Fél pont)</button>
+                        <button id="shiroIpponBtn" class="arena-btn btn-ippon" onclick="pontValtoztatas('shiro', 2)">+2 Ippon (Teljes pont)</button>
                         <button id="shiroChuiBtn" class="arena-btn btn-chui" onclick="buntetesValtoztatas('shiro', 'CHUI')">+1 Chui (Figyelmeztetés)</button>
                         <button id="shiroGentenBtn" class="arena-btn btn-genten" onclick="buntetesValtoztatas('shiro', 'GENTEN')">+1 Genten (Levonás)</button>
                         <button class="arena-btn btn-undo" onclick="kumiteUndo('shiro')">
@@ -787,6 +787,7 @@
                         <option value="KIKEN">Feladás / Nem jelent meg - Kiken (3 pont)</option>
                     </select>
                 </div>
+                <div id="kumiteDontesInfo" style="width: 100%; font-size: 0.84rem; font-weight: 700; color: #52525B;"></div>
             </div>
 
             <button id="mentesGomb" class="btn btn-outline-green" style="font-size: 1.05rem; padding: 15px 26px; flex: 1; min-width: 300px;" onclick="meccsMentese()">
@@ -798,9 +799,9 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261112_v11"></script>
-    <script src="../JS/auth.js?v=20261112_v11"></script>
-    <script src="../JS/biroi_panel.js?v=20261112_v11"></script>
+    <script src="../JS/core.js?v=20261116_v1"></script>
+    <script src="../JS/auth.js?v=20261116_v1"></script>
+    <script src="../JS/biroi_panel.js?v=20261116_v1"></script>
 </body>
 
 </html>

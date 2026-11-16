@@ -191,110 +191,63 @@ async function extraSulyBontas() {
     }
 }
 
-// 2. EREDMENYEK.HTML - DOBOGÓSOK, KLUBRANGLISTA & OKLEVÉL
-function initEredmenyekPage() {
-    const kataTarolo = TatamiMaster.lekerKataEredmenyek();
-    const kumiteAdatok = TatamiMaster.lekerKumiteReszletek();
-    let klubPontok = {};
+// 2. EREDMENYEK.HTML - DOBOGÓSOK, KLUBRANGLISTA & SABLONOS OKLEVÉL
+let eredmenyDobogosLista = [];
 
-    function adKlubErem(versenyzo, helyezes) {
-        if (!versenyzo || !versenyzo.club) return;
-        let klub = versenyzo.club;
-        if (!klubPontok[klub]) klubPontok[klub] = { klub: klub, arany: 0, ezust: 0, bronz: 0, pont: 0 };
-        if (helyezes === 1) { klubPontok[klub].arany++; klubPontok[klub].pont += 5; }
-        if (helyezes === 2) { klubPontok[klub].ezust++; klubPontok[klub].pont += 3; }
-        if (helyezes === 3) { klubPontok[klub].bronz++; klubPontok[klub].pont += 1; }
+function initEredmenyekPage() {
+    const user = TatamiMaster.lekerBejelentkezes();
+    const sablonBtn = document.getElementById('eredmenyekSablonBtn');
+    if (sablonBtn) {
+        sablonBtn.style.display = (user && user.role && String(user.role).toUpperCase() === 'ADMIN') ? 'inline-flex' : 'none';
     }
 
+    const esc = (s) => TatamiMaster.escapeHtml(s);
+    const { kategoriaEredmenyek, klubLista } = TatamiMaster.szamolDobogosokEsKlubok(exKategoriak, exMeccsek, exVersenyzok);
+
+    eredmenyDobogosLista = [];
     let dobogoHtml = '';
 
-    for (let kat of exKategoriak) {
-        let katMeccsek = exMeccsek.filter(m => m.categoryId === kat.id);
-        if (katMeccsek.length === 0) continue;
-
-        let dobogosok = [];
-        let isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
-
-        if (isKata) {
-            let dontoMeccsek = katMeccsek.filter(m => TatamiMaster.isKataDontoMeccs(m.id));
-            let ertekeltMeccsek = (dontoMeccsek.length > 0 ? dontoMeccsek : katMeccsek)
-                .map(m => kataTarolo[m.id] && kataTarolo[m.id].kesz ? { m: m, ...kataTarolo[m.id] } : null)
-                .filter(Boolean)
-                .sort(TatamiMaster.kataSorrendHasonlito);
-
-            if (ertekeltMeccsek[0]) dobogosok.push({ hely: 1, v: exVersenyzok.find(x => x.id === ertekeltMeccsek[0].m.competitor1Id), extra: ertekeltMeccsek[0].osszeg.toFixed(1) + ' p' });
-            if (ertekeltMeccsek[1]) dobogosok.push({ hely: 2, v: exVersenyzok.find(x => x.id === ertekeltMeccsek[1].m.competitor1Id), extra: ertekeltMeccsek[1].osszeg.toFixed(1) + ' p' });
-            if (ertekeltMeccsek[2]) dobogosok.push({ hely: 3, v: exVersenyzok.find(x => x.id === ertekeltMeccsek[2].m.competitor1Id), extra: ertekeltMeccsek[2].osszeg.toFixed(1) + ' p' });
-        } else {
-            let sorted = [...katMeccsek].sort((a, b) => a.id - b.id);
-            let n = sorted.length;
-            let isAgrajz = TatamiMaster.isKumiteAgrajz(sorted);
-
-            if (isAgrajz) {
-                let donto = sorted[n - 1];
-                if (donto && donto.isFinished && donto.winnerId) {
-                    let elsoId = donto.winnerId;
-                    let masodikId = (donto.competitor1Id === elsoId) ? donto.competitor2Id : donto.competitor1Id;
-                    dobogosok.push({ hely: 1, v: exVersenyzok.find(x => x.id === elsoId), extra: 'Döntő győztese' });
-                    if (masodikId) dobogosok.push({ hely: 2, v: exVersenyzok.find(x => x.id === masodikId), extra: 'Döntős' });
-
-                    if (n >= 3) {
-                        [sorted[n - 3], sorted[n - 2]].forEach(ed => {
-                            if (ed && ed.isFinished && ed.competitor1Id && ed.competitor2Id) {
-                                let vesztesId = (ed.winnerId === ed.competitor1Id) ? ed.competitor2Id : ed.competitor1Id;
-                                dobogosok.push({ hely: 3, v: exVersenyzok.find(x => x.id === vesztesId), extra: 'Elődöntős' });
-                            }
-                        });
-                    }
-                }
-            } else {
-                let stat = {};
-                for (let m of katMeccsek) {
-                    if (m.competitor1Id && !stat[m.competitor1Id]) stat[m.competitor1Id] = { id: m.competitor1Id, gy: 0, p: 0 };
-                    if (m.competitor2Id && !stat[m.competitor2Id]) stat[m.competitor2Id] = { id: m.competitor2Id, gy: 0, p: 0 };
-                    if (m.isFinished && m.winnerId && stat[m.winnerId]) {
-                        let r = kumiteAdatok[m.id];
-                        let wt = TatamiMaster.WIN_TYPES[r && r.winType ? r.winType : 'HANTEI'] || { pont: 1 };
-                        stat[m.winnerId].gy++;
-                        stat[m.winnerId].p += wt.pont;
-                    }
-                }
-                let tab = Object.values(stat).sort((a, b) => (b.gy - a.gy) || (b.p - a.p));
-                if (tab[0] && tab[0].gy > 0) dobogosok.push({ hely: 1, v: exVersenyzok.find(x => x.id === tab[0].id), extra: tab[0].p + ' súlypont' });
-                if (tab[1] && tab[1].gy > 0) dobogosok.push({ hely: 2, v: exVersenyzok.find(x => x.id === tab[1].id), extra: tab[1].p + ' súlypont' });
-                if (tab[2] && tab[2].gy > 0) dobogosok.push({ hely: 3, v: exVersenyzok.find(x => x.id === tab[2].id), extra: tab[2].p + ' súlypont' });
-            }
+    for (let ke of kategoriaEredmenyek) {
+        const kat = ke.kategoria;
+        const katNev = esc(kat.name || '');
+        dobogoHtml += `<div style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:18px;margin-bottom:15px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px 0;">
+                <h3 style="margin:0;display:flex;align-items:center;gap:8px;color:#18181B;">${TatamiMaster.icon('trophy', 18)} ${katNev} (${esc(kat.matchType || '')})</h3>
+                <button type="button" class="btn btn-outline-green" style="padding:5px 12px;font-size:0.84rem;" onclick="nyomtatKategoriaOklevelek(${kat.id})">
+                    ${TatamiMaster.icon('print', 14)} Kategória okleveleinek nyomtatása
+                </button>
+            </div>
+            <table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>Klub</th><th>Eredmény</th><th>Oklevél</th></tr>`;
+        for (let d of ke.dobogosok) {
+            if (!d.v) continue;
+            const idx = eredmenyDobogosLista.length;
+            eredmenyDobogosLista.push({
+                categoryId: kat.id,
+                nev: d.v.name,
+                klub: d.v.club,
+                kategoria: kat.name,
+                helyezes: d.hely
+            });
+            let ikon = `${TatamiMaster.icon('medal', 15)} ${d.hely}. hely`;
+            dobogoHtml += `<tr>
+                <td><strong>${ikon}</strong></td>
+                <td><strong>${esc(d.v.name || '')}</strong></td>
+                <td>${esc(d.v.club || '')}</td>
+                <td>${esc(d.extra || '')}</td>
+                <td><button type="button" class="btn btn-outline-blue" style="padding:5px 12px;" onclick="nyomtatOklevelIndex(${idx})">${TatamiMaster.icon('print', 14)} Oklevél nyomtatása</button></td>
+            </tr>`;
         }
-
-        if (dobogosok.length > 0) {
-            dobogoHtml += `<div style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:18px;margin-bottom:15px;">
-                <h3 style="margin:0 0 12px 0;display:flex;align-items:center;gap:8px;color:#18181B;">${TatamiMaster.icon('trophy', 18)} ${kat.name} (${kat.matchType})</h3>
-                <table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>Klub</th><th>Eredmény</th><th>Oklevél</th></tr>`;
-            for (let d of dobogosok) {
-                if (!d.v) continue;
-                adKlubErem(d.v, d.hely);
-                let ikon = `${TatamiMaster.icon('medal', 15)} ${d.hely}. hely`;
-                dobogoHtml += `<tr>
-                    <td><strong>${ikon}</strong></td>
-                    <td><strong>${d.v.name}</strong></td>
-                    <td>${d.v.club}</td>
-                    <td>${d.extra}</td>
-                    <td><button class="btn btn-outline-blue" style="padding:5px 12px;" onclick="nyomtatOklevel('${d.v.name}', '${d.v.club}', '${kat.name}', ${d.hely})">${TatamiMaster.icon('print', 14)} Oklevél nyomtatása</button></td>
-                </tr>`;
-            }
-            dobogoHtml += `</table></div>`;
-        }
+        dobogoHtml += `</table></div>`;
     }
 
     document.getElementById('dobogosokContainer').innerHTML = dobogoHtml || '<p>Még nincs lezárt kategória.</p>';
 
-    let klubLista = Object.values(klubPontok).sort((a, b) => (b.pont - a.pont) || (b.arany - a.arany));
     let kHtml = `<table class="data-table"><tr><th>Helyezés</th><th>Klub / Egyesület</th><th>${TatamiMaster.icon('medal', 14)} Arany (5p)</th><th>${TatamiMaster.icon('medal', 14)} Ezüst (3p)</th><th>${TatamiMaster.icon('medal', 14)} Bronz (1p)</th><th>Összpontszám</th></tr>`;
     for (let i = 0; i < klubLista.length; i++) {
         let k = klubLista[i];
         kHtml += `<tr>
             <td><strong>${i + 1}.</strong></td>
-            <td><strong>${k.klub}</strong></td>
+            <td><strong>${esc(k.klub || '')}</strong></td>
             <td>${k.arany} db</td>
             <td>${k.ezust} db</td>
             <td>${k.bronz} db</td>
@@ -305,34 +258,37 @@ function initEredmenyekPage() {
     document.getElementById('klubRanglistaContainer').innerHTML = klubLista.length > 0 ? kHtml : '<p>Még nincs kiosztott érem.</p>';
 }
 
+function nyitEredmenyekSablonSzerkeszto() {
+    TatamiMaster.nyitOklevelSablonModal(null, () => {
+        nyomtatOsszesOklevelet();
+    });
+}
+
+function nyomtatOklevelIndex(idx) {
+    const t = eredmenyDobogosLista[idx];
+    if (!t) return;
+    TatamiMaster.nyomtatOklevelek(TatamiMaster.lekerAktualisVersenyId(), [t]);
+}
+
+function nyomtatKategoriaOklevelek(categoryId) {
+    const tetelek = eredmenyDobogosLista.filter(t => t.categoryId === categoryId);
+    if (tetelek.length === 0) {
+        TatamiMaster.toast('Ehhez a kategóriához még nincs lezárt dobogós.', 'figyelem');
+        return;
+    }
+    TatamiMaster.nyomtatOklevelek(TatamiMaster.lekerAktualisVersenyId(), tetelek);
+}
+
+function nyomtatOsszesOklevelet() {
+    if (eredmenyDobogosLista.length === 0) {
+        TatamiMaster.toast('Még nincs lezárt kategória oklevélnyomtatáshoz.', 'figyelem');
+        return;
+    }
+    TatamiMaster.nyomtatOklevelek(TatamiMaster.lekerAktualisVersenyId(), eredmenyDobogosLista);
+}
+
 function nyomtatOklevel(nev, klub, kategoria, helyezes) {
-    const versenyNev = localStorage.getItem('aktualisVersenyNev') || 'TATAMI MASTER™ KYOKUSHIN KARATE KUPA';
-    const logoSvg = TatamiMaster.brandLogoSvg(64);
-    const w = window.open('', '_blank');
-    w.document.write(`
-        <html><head><title>Oklevél - ${nev} | TATAMI MASTER™</title></head>
-        <body style="font-family: 'Bahnschrift', 'DIN Alternate', sans-serif; text-align: center; padding: 50px 60px; border: 10px double #18181B; margin: 20px; background: #FAF8F5; color: #18181B;">
-            <div style="margin-bottom: 14px;">${logoSvg}</div>
-            <div style="font-size: 0.85rem; font-weight: 800; letter-spacing: 2px; color: #52525B; margin-bottom: 6px;">TATAMI MASTER&trade; HIVATALOS VERSENYRENDSZER</div>
-            <h1 style="font-size: 3.2rem; letter-spacing: 4px; color: #18181B; margin: 0 0 10px 0;">OKLEVÉL</h1>
-            <h3 style="font-size: 1.5rem; color: #52525B; margin-bottom: 36px;">${versenyNev}</h3>
-            <p style="font-size: 1.3rem;">Igazoljuk, hogy</p>
-            <h2 style="font-size: 2.8rem; margin: 15px 0; border-bottom: 2px solid #18181B; display: inline-block; padding: 0 30px;">${nev}</h2>
-            <p style="font-size: 1.4rem; color: #52525B; margin-top: 5px;">(${klub})</p>
-            <p style="font-size: 1.4rem; margin-top: 32px;">a(z) <strong>${kategoria}</strong> kategóriában</p>
-            <h1 style="font-size: 3rem; color: #18181B; margin: 20px 0;">${helyezes}. HELYEZÉST</h1>
-            <p style="font-size: 1.3rem;">ért el.</p>
-            <div style="margin-top: 70px; display: flex; justify-content: space-around; font-size: 1.1rem;">
-                <div style="border-top: 1px solid #18181B; padding-top: 8px; width: 220px;">Főbíró</div>
-                <div style="border-top: 1px solid #18181B; padding-top: 8px; width: 220px;">Versenyigazgató</div>
-            </div>
-            <div style="margin-top: 40px; font-size: 0.75rem; color: #71717A; letter-spacing: 0.5px;">
-                &copy; 2026 TATAMI MASTER&trade; &bull; Hitelesített versenydokumentum &bull; Minden jog fenntartva.
-            </div>
-            <script>window.onload = function() { window.print(); }<\/script>
-        </body></html>
-    `);
-    w.document.close();
+    TatamiMaster.nyomtatOklevelek(TatamiMaster.lekerAktualisVersenyId(), [{ nev, klub, kategoria, helyezes }]);
 }
 
 // 3. NEVEZES.HTML - GYORS MÉRLEGELŐ ÁLLOMÁS

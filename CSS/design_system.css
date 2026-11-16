@@ -1822,12 +1822,103 @@ input:disabled, select:disabled, textarea:disabled {
 }
 
 /* --- NYOMTATÁSI NÉZET OPTIMALIZÁLÁS --- */
+#tmCategoryPrintRoot {
+    display: none;
+}
+
 @media print {
-    .top-header, #tatamiQuickNavBar, .admin-tabs, .admin-accordion-toolbar, .admin-accordion-header, .subbox-toggle-btn, .admin-workflow-guide, .admin-help-banner, .admin-step-nav-footer, .add-form-container, .btn, .tournaments-dock {
+    .top-header, #tatamiQuickNavBar, #adminAktivVersenyBar, #tmSubpageVersenyBar, #tmLegalFooter, .admin-tabs, .admin-accordion-toolbar, .admin-accordion-header, .subbox-toggle-btn, .admin-workflow-guide, .admin-help-banner, .admin-step-nav-footer, .add-form-container, .btn, .tournaments-dock {
         display: none !important;
     }
     body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .admin-container { max-width: 100%; margin: 0; padding: 0; }
+
+    body.tm-printing-category-sheet > *:not(#tmCategoryPrintRoot) {
+        display: none !important;
+    }
+    body.tm-printing-category-sheet {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #FFFFFF !important;
+    }
+    body.tm-printing-category-sheet #tmCategoryPrintRoot {
+        display: block !important;
+        width: 100%;
+        padding: 4mm 6mm;
+        color: #18181B;
+    }
+    .tm-cat-print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        border-bottom: 2px solid #18181B;
+        padding-bottom: 6px;
+        margin-bottom: 10px;
+    }
+    .tm-cat-print-fighters {
+        margin-bottom: 12px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .tm-cat-print-fighters-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px 10px;
+        font-size: 0.78rem;
+    }
+    .tm-cat-print-fighter-item {
+        padding: 3px 7px;
+        border: 1px solid #CFC9BC;
+        border-radius: 4px;
+        background: #FAF8F5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+    }
+    body.tm-printing-category-sheet .tm-print-hide-note {
+        display: none !important;
+    }
+    body.tm-printing-category-sheet .bracket-wrapper {
+        overflow: visible !important;
+        padding: 4px 0 !important;
+        gap: 14px !important;
+    }
+    body.tm-printing-category-sheet .bracket-wrapper.is-elimination {
+        gap: 0 !important;
+        padding: 6px 0 !important;
+    }
+    body.tm-printing-category-sheet .bracket-round {
+        min-width: 160px !important;
+    }
+    body.tm-printing-category-sheet .bracket-wrapper.is-elimination .bracket-round {
+        min-width: 140px !important;
+        flex: 1 1 0;
+    }
+    body.tm-printing-category-sheet .bracket-round h4 {
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+        margin-bottom: 8px !important;
+        height: auto !important;
+    }
+    body.tm-printing-category-sheet .bracket-slot {
+        padding: 6px 12px !important;
+    }
+    body.tm-printing-category-sheet .bracket-match {
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    body.tm-printing-category-sheet .bracket-fighter {
+        padding: 5px 8px !important;
+        font-size: 0.75rem !important;
+    }
+    body.tm-printing-category-sheet .data-table th,
+    body.tm-printing-category-sheet .data-table td {
+        padding: 5px 8px !important;
+        font-size: 0.76rem !important;
+    }
 }
 
 /* ==========================================================================

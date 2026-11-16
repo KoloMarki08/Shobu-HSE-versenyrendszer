@@ -292,6 +292,7 @@ const TatamiMaster = {
             this._alkalmazMegosztottAllapotHelyben('kumiteReszletek', snap.shared.kumiteReszletek);
             this._alkalmazMegosztottAllapotHelyben('versenyAdatMap', snap.shared.versenyAdatMap);
             this._alkalmazMegosztottAllapotHelyben('nevezesLezarva', snap.shared.nevezesLezarva);
+            this._alkalmazMegosztottAllapotHelyben('oklevelSablonok', snap.shared.oklevelSablonok);
         }
 
         // Élő Tatami eredményjelzők szinkronizálása
@@ -328,6 +329,8 @@ const TatamiMaster = {
                 for (const vId of Object.keys(val)) {
                     localStorage.setItem('tatamiNevezesLezarva_' + vId, val[vId] ? 'true' : 'false');
                 }
+            } else if (key === 'oklevelSablonok' && typeof val === 'object') {
+                localStorage.setItem('tatamiOklevelSablonok', JSON.stringify(val));
             }
         } catch (e) {}
     },
@@ -394,8 +397,10 @@ const TatamiMaster = {
                     localStorage.removeItem('kataDontoMeccsIdk');
                     localStorage.removeItem('kumiteReszletek');
                     localStorage.removeItem('tatamiVersenyAdatMap');
+                    localStorage.removeItem('tatamiOklevelSablonok');
+                    localStorage.removeItem('versenyMellekletek');
                     Object.keys(localStorage).forEach(k => {
-                        if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok')) {
+                        if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok') || k.startsWith('tatamiKovetettVersenyzok_')) {
                             localStorage.removeItem(k);
                         }
                     });
@@ -1219,56 +1224,24 @@ const TatamiMaster = {
                     ${ipGombokHtml}
                 </div>
 
-                <!-- NYOMTATHATÓ A4 PLAKÁT LAP -->
-                <div id="tmQrPosterSheet" style="background:#FFFFFF;border:3px solid #18181B;border-radius:12px;padding:24px 16px;text-align:center;">
-                    <div style="display:inline-flex;align-items:center;gap:10px;background:#18181B;color:#FAF8F5;padding:8px 16px;border-radius:8px;font-weight:800;letter-spacing:1px;font-size:0.85rem;margin-bottom:14px;max-width:100%;">
-                        ${this.brandLogoSvg(24)}
-                        <span>TATAMI MASTER&trade; &bull; ÉLŐ VERSENYKÖVETÉS</span>
-                    </div>
-
-                    <h1 style="margin:6px 0 8px 0;font-size:clamp(1.35rem, 4.5vw, 2rem);line-height:1.2;color:#18181B;text-transform:uppercase;letter-spacing:0.5px;">
+                <!-- NYOMTATHATÓ A4 PLAKÁT LAP (CSAK A LÉNYEG) -->
+                <div id="tmQrPosterSheet" style="background:#FFFFFF;border:3px solid #18181B;border-radius:12px;padding:34px 24px;text-align:center;">
+                    <h1 style="margin:0 0 8px 0;font-size:clamp(1.5rem, 4.5vw, 2.2rem);line-height:1.2;color:#18181B;text-transform:uppercase;letter-spacing:0.6px;">
                         ${this.escapeHtml(vAdat.name || 'Karate Bajnokság')}
                     </h1>
-                    <div style="font-size:0.95rem;color:#52525B;font-weight:700;margin-bottom:20px;">
-                        Dátum: ${this.escapeHtml(datumSzoveg)} &bull; Szervező: ${this.escapeHtml(vAdat.organizer || 'Shobu HSE')}
+                    <div style="font-size:0.96rem;color:#52525B;font-weight:700;margin-bottom:26px;">
+                        ${this.escapeHtml(datumSzoveg)}
                     </div>
 
-                    <div id="tmQrSvgBox" style="display:inline-block;padding:14px;border:3px solid #18181B;border-radius:14px;background:#FFFFFF;margin-bottom:16px;max-width:100%;">
-                        ${this.generalQrSvg(alapUrl, 270)}
+                    <div id="tmQrSvgBox" style="display:inline-block;padding:16px;border:3px solid #18181B;border-radius:14px;background:#FFFFFF;margin-bottom:22px;max-width:100%;">
+                        ${this.generalQrSvg(alapUrl, 300)}
                     </div>
 
-                    <div style="font-size:1.25rem;font-weight:800;color:#990000;letter-spacing:0.4px;margin-bottom:6px;text-transform:uppercase;">
-                        Olvasd be a telefonod kamerájával!
+                    <div style="font-size:1.18rem;font-weight:800;color:#990000;letter-spacing:0.4px;margin-bottom:10px;text-transform:uppercase;">
+                        Élő eredmények &amp; ágrajzok — Olvasd be a telefonoddal!
                     </div>
-                    <div id="tmQrUrlCaption" style="font-family:Consolas,monospace;font-size:0.82rem;color:#3F3F46;background:#FAF8F5;border:1px solid #E4E0D7;display:inline-block;padding:5px 12px;border-radius:6px;margin-bottom:20px;word-break:break-all;max-width:100%;">
+                    <div id="tmQrUrlCaption" style="font-family:Consolas,monospace;font-size:0.84rem;color:#3F3F46;background:#FAF8F5;border:1px solid #E4E0D7;display:inline-block;padding:6px 14px;border-radius:6px;word-break:break-all;max-width:100%;">
                         ${this.escapeHtml(alapUrl)}
-                    </div>
-
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 190px), 1fr));gap:12px;text-align:left;border-top:2px solid #E4E0D7;padding-top:18px;">
-                        <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
-                            <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
-                                ${this.icon('clock', 16)} 1. „Mikor küzdök?”
-                            </strong>
-                            <span style="font-size:0.82rem;color:#3F3F46;line-height:1.4;display:block;">
-                                Írd be a versenyző vagy klub nevét, és lásd melyik tatamin, hanyadik meccsként, várhatóan hány perc múlva szólítanak!
-                            </span>
-                        </div>
-                        <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
-                            <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
-                                ${this.icon('monitor', 16)} 2. Élő Tatami Állás
-                            </strong>
-                            <span style="font-size:0.82rem;color:#3F3F46;line-height:1.4;display:block;">
-                                Valós idejű óra, pontszámok, hosszabbítások és „Felkészül” szólítások minden tatamiról külön frissítés nélkül.
-                            </span>
-                        </div>
-                        <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px;">
-                            <strong style="display:flex;align-items:center;gap:6px;font-size:0.92rem;color:#18181B;margin-bottom:4px;">
-                                ${this.icon('git-branch', 16)} 3. Ágrajz &amp; Ranglista
-                            </strong>
-                            <span style="font-size:0.82rem;color:#3F3F46;line-height:1.4;display:block;">
-                                Élő Kumite ágrajzok, körmérkőzés-tabellák és 5-bírói Kata rangsorok közvetlenül a mobilodon.
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1282,7 +1255,7 @@ const TatamiMaster = {
         const cap = document.getElementById('tmQrUrlCaption');
         if (!inp || !svgBox) return;
         const url = inp.value.trim() || window.location.href;
-        svgBox.innerHTML = this.generalQrSvg(url, 270);
+        svgBox.innerHTML = this.generalQrSvg(url, 300);
         if (cap) cap.innerText = url;
     },
 
@@ -1353,7 +1326,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261113_mobile3';
+            link.href = prefix + 'design_system.css?v=20261116_v1';
             document.head.appendChild(link);
         }
 
@@ -1715,17 +1688,26 @@ const TatamiMaster = {
                 return res;
             }
 
-            if (vegpont === 'Tournaments/reset-seed') {
+            if (vegpont === 'Tournaments/reset-seed' || vegpont === 'Tournaments/reset-empty') {
                 localStorage.removeItem('tatamiVersenyAdatMap');
                 localStorage.removeItem('kataEredmenyek');
                 localStorage.removeItem('kataDontoMeccsIdk');
                 localStorage.removeItem('kumiteReszletek');
+                if (vegpont === 'Tournaments/reset-empty') {
+                    localStorage.removeItem('versenyMellekletek');
+                    localStorage.removeItem('tatamiOklevelSablonok');
+                    localStorage.removeItem('tatamiVersenyekCache');
+                    localStorage.removeItem('aktualisVersenyId');
+                    localStorage.removeItem('aktualisVersenyNev');
+                }
                 Object.keys(localStorage).forEach(k => {
-                    if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok')) {
+                    if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok') || k.startsWith('tatamiKovetettVersenyzok_')) {
                         localStorage.removeItem(k);
                     }
                 });
-                this.mentAktualisVerseny(1, 'Shobu HSE Országos Bajnokság 2026');
+                if (vegpont === 'Tournaments/reset-seed') {
+                    this.mentAktualisVerseny(1, 'Shobu HSE Országos Bajnokság 2026');
+                }
                 return res;
             }
 
@@ -1959,7 +1941,578 @@ const TatamiMaster = {
         this.kuldesLiveMegosztottAllapot('kumiteReszletek', delta, true);
     },
 
-    lekerKumiteReszletek: function() { return this.safeJsonParse('kumiteReszletek', {}); }
+    lekerKumiteReszletek: function() { return this.safeJsonParse('kumiteReszletek', {}); },
+
+    // =========================================================
+    // SABLON ALAPÚ OKLEVÉL TERVEZŐ ÉS NYOMTATÓ (VERSENYENKÉNT)
+    // =========================================================
+    alapOklevelSablon: function(versenyObj = null) {
+        const datum = (versenyObj && versenyObj.date)
+            ? new Date(versenyObj.date).toLocaleDateString('hu-HU')
+            : new Date().toLocaleDateString('hu-HU');
+        return {
+            orientacio: 'landscape',
+            stilus: 'klasszikus',
+            cim: 'OKLEVÉL',
+            alCim: '',
+            bevezeto: 'Elért kiemelkedő eredményéért elismerésben részesül',
+            mutasKeretEsLogo: true,
+            hatterKep: null,
+            szovegFuggolegesEltolas: 18,
+            balAlairas: 'Főbíró',
+            jobbAlairas: 'Versenyigazgató',
+            datumSzoveg: datum
+        };
+    },
+
+    lekerOklevelSablonok: function() {
+        return this.safeJsonParse('tatamiOklevelSablonok', {});
+    },
+
+    lekerOklevelSablon: function(versenyId = null, versenyObj = null) {
+        const vId = String(versenyId || this.lekerAktualisVersenyId());
+        const cache = this.safeJsonParse('tatamiVersenyekCache', []);
+        const vAdat = versenyObj || cache.find(v => String(v.id) === vId) || null;
+        const alap = this.alapOklevelSablon(vAdat);
+        const tarolo = this.lekerOklevelSablonok();
+        const mentett = tarolo[vId];
+        return mentett && typeof mentett === 'object' ? Object.assign({}, alap, mentett) : alap;
+    },
+
+    mentOklevelSablon: function(versenyId, sablon) {
+        const vId = String(versenyId || this.lekerAktualisVersenyId());
+        const tarolo = this.lekerOklevelSablonok();
+        tarolo[vId] = Object.assign({}, this.alapOklevelSablon(), sablon || {});
+        try {
+            localStorage.setItem('tatamiOklevelSablonok', JSON.stringify(tarolo));
+        } catch (e) {
+            this.toast('A sablon mérete túl nagy a helyi tárolóhoz! Próbálj kisebb felbontású háttérképet.', 'hiba');
+            return false;
+        }
+        const delta = {};
+        delta[vId] = tarolo[vId];
+        this.kuldesLiveMegosztottAllapot('oklevelSablonok', delta, true);
+        return true;
+    },
+
+    optimalizalSablonKep: function(file) {
+        return new Promise((resolve) => {
+            if (!file) return resolve(null);
+            const reader = new FileReader();
+            reader.onerror = () => resolve(null);
+            reader.onload = () => {
+                const rawUrl = reader.result;
+                if (typeof Image === 'undefined' || typeof document === 'undefined') {
+                    return resolve(rawUrl);
+                }
+                const img = new Image();
+                img.onerror = () => resolve(rawUrl);
+                img.onload = () => {
+                    try {
+                        const maxDim = 1600;
+                        let w = img.naturalWidth || img.width;
+                        let h = img.naturalHeight || img.height;
+                        if (w > maxDim || h > maxDim) {
+                            const scale = Math.min(maxDim / w, maxDim / h);
+                            w = Math.round(w * scale);
+                            h = Math.round(h * scale);
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return resolve(rawUrl);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const tomoritett = canvas.toDataURL('image/jpeg', 0.86);
+                        resolve((tomoritett && tomoritett.length < rawUrl.length) ? tomoritett : rawUrl);
+                    } catch (e) {
+                        resolve(rawUrl);
+                    }
+                };
+                img.src = rawUrl;
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+
+    epitsEgyOklevelOldalHtml: function(tetel, sablon, versenyObj = null, isElonezet = false) {
+        const s = Object.assign({}, this.alapOklevelSablon(versenyObj), sablon || {});
+        const cache = this.safeJsonParse('tatamiVersenyekCache', []);
+        const vAdat = versenyObj || cache.find(v => v.id === this.lekerAktualisVersenyId()) || { name: this.lekerAktualisVersenyNev() };
+
+        const nev = this.escapeHtml(tetel?.nev || 'Versenyző Neve');
+        const klub = this.escapeHtml(tetel?.klub || 'Klub / Egyesület');
+        const kat = this.escapeHtml(tetel?.kategoria || 'Kategória');
+        const helyNum = parseInt(tetel?.helyezes, 10) || 1;
+        const versenyNev = this.escapeHtml(s.alCim || (vAdat && vAdat.name) || 'TATAMI MASTER™ KYOKUSHIN KARATE KUPA');
+        const cim = this.escapeHtml(s.cim || 'OKLEVÉL');
+        const datumSzoveg = this.escapeHtml(s.datumSzoveg || ((vAdat && vAdat.date) ? new Date(vAdat.date).toLocaleDateString('hu-HU') : new Date().toLocaleDateString('hu-HU')));
+        const balAlairas = this.escapeHtml(s.balAlairas || 'Főbíró');
+        const jobbAlairas = this.escapeHtml(s.jobbAlairas || 'Versenyigazgató');
+
+        const behelyettesit = (txt) => {
+            return this.escapeHtml(txt || '')
+                .replace(/\{nev\}/gi, nev)
+                .replace(/\{klub\}/gi, klub)
+                .replace(/\{kategoria\}/gi, kat)
+                .replace(/\{helyezes\}/gi, `${helyNum}. helyezés`)
+                .replace(/\{verseny\}/gi, versenyNev)
+                .replace(/\{datum\}/gi, datumSzoveg);
+        };
+        const bevezetoHtml = behelyettesit(s.bevezeto || 'Elért kiemelkedő eredményéért elismerésben részesül');
+
+        const isPortrait = s.orientacio === 'portrait';
+        const isModern = s.stilus === 'modern';
+        const isEgyeniHatter = s.stilus === 'egyeni_hatter' && !!s.hatterKep;
+        const pageW = isElonezet ? '100%' : (isPortrait ? '210mm' : '297mm');
+        const pageH = isElonezet ? 'auto' : (isPortrait ? '296mm' : '209.5mm');
+        const minHeightStyle = isElonezet ? (isPortrait ? 'aspect-ratio:210/297;' : 'aspect-ratio:297/210;') : '';
+
+        const eltolas = Math.max(4, Math.min(68, parseInt(s.szovegFuggolegesEltolas, 10) || 18));
+        const mutasKeret = (s.mutasKeretEsLogo !== false);
+
+        const keretCss = isEgyeniHatter
+            ? 'border:none; background:#FFFFFF;'
+            : (isModern
+                ? 'background:#FFFFFF; border:2px solid #18181B;'
+                : 'background:#FAF8F5; border:10px double #18181B; outline:2px solid #990000; outline-offset:-18px;');
+
+        const topAccentHtml = (!isEgyeniHatter && isModern)
+            ? `<div style="position:absolute;top:0;left:0;right:0;height:14px;background:linear-gradient(90deg, #990000 0%, #990000 35%, #18181B 35%, #18181B 100%);"></div>`
+            : '';
+
+        const bgImgHtml = isEgyeniHatter
+            ? `<img src="${s.hatterKep}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0;pointer-events:none;">`
+            : '';
+
+        const headerHtml = mutasKeret
+            ? `<div style="margin-bottom:${isElonezet ? '6px' : '12px'};">${this.brandLogoSvg(isElonezet ? 34 : 56)}</div>
+               <h1 style="font-size:${isElonezet ? '1.65rem' : '3.1rem'};letter-spacing:5px;color:${isModern ? '#990000' : '#18181B'};margin:0 0 6px 0;font-weight:900;line-height:1.05;">${cim}</h1>
+               <div style="font-size:${isElonezet ? '0.88rem' : '1.35rem'};font-weight:700;color:#52525B;margin-bottom:${isElonezet ? '12px' : '26px'};text-transform:uppercase;letter-spacing:1px;">${versenyNev}</div>`
+            : '';
+
+        const padTop = isEgyeniHatter ? `${eltolas}%` : (isPortrait ? (isElonezet ? '24px' : '48px') : (isElonezet ? '22px' : '38px'));
+        const padSide = isElonezet ? '24px' : '56px';
+        const padBottom = isElonezet ? '20px' : '38px';
+
+        return `<section class="tm-cert-page" style="position:relative;width:${pageW};height:${pageH};${minHeightStyle}margin:0 auto;box-sizing:border-box;overflow:hidden;text-align:center;color:#18181B;font-family:'Bahnschrift','DIN Alternate','Segoe UI',sans-serif;${keretCss}">
+            ${bgImgHtml}
+            ${topAccentHtml}
+            <div style="position:relative;z-index:1;height:100%;box-sizing:border-box;padding:${padTop} ${padSide} ${padBottom};display:flex;flex-direction:column;justify-content:space-between;align-items:center;">
+                <div style="width:100%;">
+                    ${headerHtml}
+                    <p style="font-size:${isElonezet ? '0.78rem' : '1.15rem'};color:#3F3F46;margin:0 0 ${isElonezet ? '6px' : '10px'} 0;font-weight:600;">${bevezetoHtml}</p>
+                    <h2 style="font-size:${isElonezet ? '1.45rem' : '2.7rem'};margin:4px auto;border-bottom:2.5px solid #18181B;display:inline-block;padding:0 ${isElonezet ? '18px' : '34px'} 4px;font-weight:800;color:#18181B;line-height:1.15;">${nev}</h2>
+                    <div style="font-size:${isElonezet ? '0.85rem' : '1.3rem'};color:#52525B;font-weight:700;margin-top:4px;">${klub}</div>
+                </div>
+
+                <div style="width:100%;margin:${isElonezet ? '8px 0' : '14px 0'};">
+                    <p style="font-size:${isElonezet ? '0.84rem' : '1.25rem'};margin:0 0 6px 0;color:#27272A;">
+                        a(z) <strong>${kat}</strong> kategóriában
+                    </p>
+                    <div style="font-size:${isElonezet ? '1.5rem' : '2.85rem'};font-weight:900;color:#990000;letter-spacing:2px;line-height:1.1;">
+                        ${helyNum}. HELYEZÉS
+                    </div>
+                </div>
+
+                <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:${isElonezet ? '12px' : '24px'};padding-top:10px;">
+                    <div style="border-top:1.5px solid #18181B;padding-top:6px;width:${isElonezet ? '110px' : '220px'};font-size:${isElonezet ? '0.72rem' : '1.02rem'};font-weight:700;color:#27272A;">${balAlairas}</div>
+                    <div style="font-size:${isElonezet ? '0.7rem' : '0.96rem'};color:#52525B;font-weight:700;">${datumSzoveg}</div>
+                    <div style="border-top:1.5px solid #18181B;padding-top:6px;width:${isElonezet ? '110px' : '220px'};font-size:${isElonezet ? '0.72rem' : '1.02rem'};font-weight:700;color:#27272A;">${jobbAlairas}</div>
+                </div>
+            </div>
+        </section>`;
+    },
+
+    epitsOklevelNyomtatoHtml: function(versenyId, tetelek, versenyObj = null) {
+        const lista = Array.isArray(tetelek) ? tetelek : [];
+        const sablon = this.lekerOklevelSablon(versenyId, versenyObj);
+        return {
+            sablon,
+            pagesHtml: lista.map(t => this.epitsEgyOklevelOldalHtml(t, sablon, versenyObj, false)).join('')
+        };
+    },
+
+    nyomtatOklevelek: function(versenyId, tetelek, versenyObj = null) {
+        const lista = Array.isArray(tetelek) ? tetelek.filter(Boolean) : [];
+        if (lista.length === 0) {
+            this.toast('Nincs nyomtatható oklevél tétel!', 'figyelem');
+            return;
+        }
+
+        const { sablon, pagesHtml } = this.epitsOklevelNyomtatoHtml(versenyId, lista, versenyObj);
+
+        if (!document.getElementById('tmCertPrintStyle')) {
+            const st = document.createElement('style');
+            st.id = 'tmCertPrintStyle';
+            st.textContent = `
+                #tmCertPrintRoot { display: none; }
+                @media print {
+                    body.tm-printing-certificates > *:not(#tmCertPrintRoot) { display: none !important; }
+                    body.tm-printing-certificates {
+                        background: #FFFFFF !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    body.tm-printing-certificates #tmCertPrintRoot { display: block !important; width: 100%; }
+                    body.tm-printing-certificates .tm-cert-page { page-break-after: always; break-after: page; }
+                    body.tm-printing-certificates .tm-cert-page:last-child { page-break-after: auto; break-after: auto; }
+                }
+            `;
+            document.head.appendChild(st);
+        }
+
+        let pageSizeStyle = document.getElementById('tmCertPageSizeStyle');
+        if (!pageSizeStyle) {
+            pageSizeStyle = document.createElement('style');
+            pageSizeStyle.id = 'tmCertPageSizeStyle';
+            document.head.appendChild(pageSizeStyle);
+        }
+        const orientCss = sablon.orientacio === 'portrait' ? 'A4 portrait' : 'A4 landscape';
+        pageSizeStyle.textContent = `@media print { @page { size: ${orientCss}; margin: 0; } }`;
+
+        let root = document.getElementById('tmCertPrintRoot');
+        if (root) root.remove();
+        root = document.createElement('div');
+        root.id = 'tmCertPrintRoot';
+        root.innerHTML = pagesHtml;
+        document.body.appendChild(root);
+
+        document.body.classList.add('tm-printing-certificates');
+
+        const cleanup = () => {
+            document.body.classList.remove('tm-printing-certificates');
+            const r = document.getElementById('tmCertPrintRoot');
+            if (r) r.remove();
+            const ps = document.getElementById('tmCertPageSizeStyle');
+            if (ps) ps.remove();
+            window.removeEventListener('afterprint', cleanup);
+        };
+        window.addEventListener('afterprint', cleanup);
+
+        setTimeout(() => {
+            window.print();
+            setTimeout(cleanup, 1200);
+        }, 120);
+    },
+
+    nyitOklevelSablonModal: function(versenyObj = null, osszesNyomtatasCallback = null) {
+        const aktUser = this.lekerBejelentkezes();
+        if (!aktUser || !aktUser.role || String(aktUser.role).toUpperCase() !== 'ADMIN') {
+            this.toast('Az oklevél sablon szerkesztése csak adminisztrátorok számára érhető el.', 'hiba');
+            return;
+        }
+
+        const existing = document.getElementById('tmCertTemplateModal');
+        if (existing) existing.remove();
+
+        const aktId = (versenyObj && versenyObj.id) ? versenyObj.id : this.lekerAktualisVersenyId();
+        const cache = this.safeJsonParse('tatamiVersenyekCache', []);
+        const vAdat = versenyObj || cache.find(v => v.id === aktId) || {
+            id: aktId,
+            name: this.lekerAktualisVersenyNev(),
+            date: new Date().toISOString()
+        };
+
+        let munkaSablon = this.lekerOklevelSablon(aktId, vAdat);
+
+        const modal = document.createElement('div');
+        modal.id = 'tmCertTemplateModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(24,24,27,0.84);z-index:10012;display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow-y:auto;';
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+        modal.innerHTML = `
+            <div style="background:#FAF8F5;width:100%;max-width:1040px;border-radius:14px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,0.5);border:2px solid #18181B;color:#18181B;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid #E4E0D7;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        ${this.icon('award', 22)}
+                        <div>
+                            <strong style="font-size:1.12rem;display:block;">Verseny Oklevél Sablon Beállítása</strong>
+                            <span style="font-size:0.82rem;color:#52525B;">${this.escapeHtml(vAdat.name || 'Aktív verseny')} &bull; Használható sablon változók: {nev}, {klub}, {kategoria}, {helyezes}, {verseny}, {datum}</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline" id="tmCertCloseBtn">${this.icon('x', 15)} Bezárás</button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 340px), 1fr));gap:18px;align-items:start;">
+                    <div style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:11px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div>
+                                <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Oldal tájolása</label>
+                                <select id="tmCertOrientSelect" class="input-field">
+                                    <option value="landscape">Fekvő A4 (Hagyományos)</option>
+                                    <option value="portrait">Álló A4</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Sablon stílusa</label>
+                                <select id="tmCertStyleSelect" class="input-field">
+                                    <option value="klasszikus">Klasszikus Díszkeret</option>
+                                    <option value="modern">Modern Shobu (Piros-Fekete)</option>
+                                    <option value="egyeni_hatter">Egyéni feltöltött háttérkép</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="background:#FAF8F5;border:1px dashed #CFC9BC;padding:10px 12px;border-radius:8px;">
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#18181B;margin-bottom:5px;">Saját oklevél háttérkép feltöltése (JPG / PNG):</label>
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                <input type="file" id="tmCertBgFile" accept="image/*" style="font-size:0.82rem;flex:1;min-width:170px;">
+                                <button type="button" id="tmCertClearBgBtn" class="btn btn-outline" style="padding:4px 10px;font-size:0.78rem;">Háttér törlése</button>
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div>
+                                <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Főcím</label>
+                                <input type="text" id="tmCertTitleInput" class="input-field" value="${this.escapeHtml(munkaSablon.cim)}">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Dátum szöveg</label>
+                                <input type="text" id="tmCertDateInput" class="input-field" value="${this.escapeHtml(munkaSablon.datumSzoveg)}">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Alcím / Verseny neve (üresen hagyva a verseny neve)</label>
+                            <input type="text" id="tmCertSubInput" class="input-field" value="${this.escapeHtml(munkaSablon.alCim)}" placeholder="${this.escapeHtml(vAdat.name || '')}">
+                        </div>
+
+                        <div>
+                            <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Bevezető szöveg</label>
+                            <input type="text" id="tmCertIntroInput" class="input-field" value="${this.escapeHtml(munkaSablon.bevezeto)}">
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div>
+                                <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Bal aláíró</label>
+                                <input type="text" id="tmCertLeftSigInput" class="input-field" value="${this.escapeHtml(munkaSablon.balAlairas)}">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:4px;">Jobb aláíró</label>
+                                <input type="text" id="tmCertRightSigInput" class="input-field" value="${this.escapeHtml(munkaSablon.jobbAlairas)}">
+                            </div>
+                        </div>
+
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;font-weight:700;cursor:pointer;">
+                            <input type="checkbox" id="tmCertShowHeaderCb" ${munkaSablon.mutasKeretEsLogo ? 'checked' : ''} style="width:16px;height:16px;accent-color:#18181B;">
+                            <span>Logó és „OKLEVÉL” fejléc megjelenítése (saját képnél kikapcsolható)</span>
+                        </label>
+
+                        <div>
+                            <label style="display:flex;justify-content:space-between;font-size:0.78rem;font-weight:700;color:#52525B;margin-bottom:3px;">
+                                <span>Szöveg függőleges eltolása egyéni háttérképen</span>
+                                <span id="tmCertOffsetVal">${munkaSablon.szovegFuggolegesEltolas}%</span>
+                            </label>
+                            <input type="range" id="tmCertOffsetInput" min="4" max="62" value="${munkaSablon.szovegFuggolegesEltolas}" style="width:100%;accent-color:#990000;">
+                        </div>
+
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:6px;border-top:1px solid #E4E0D7;">
+                            <button type="button" id="tmCertSaveBtn" class="btn btn-outline-green" style="flex:1;">${this.icon('save', 15)} Sablon Mentése</button>
+                            <button type="button" id="tmCertSamplePrintBtn" class="btn btn-outline-blue">${this.icon('print', 15)} Minta Nyomtatása</button>
+                            ${typeof osszesNyomtatasCallback === 'function'
+                                ? `<button type="button" id="tmCertBatchPrintBtn" class="btn btn-danger">${this.icon('award', 15)} Dobogósok Nyomtatása</button>`
+                                : ''}
+                        </div>
+                    </div>
+
+                    <div style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:14px;">
+                        <div style="font-size:0.8rem;font-weight:800;color:#52525B;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.6px;">
+                            Élő Nyomtatási Előnézet (Minta versenyzővel)
+                        </div>
+                        <div id="tmCertPreviewFrame" style="width:100%;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('tmCertOrientSelect').value = munkaSablon.orientacio;
+        document.getElementById('tmCertStyleSelect').value = munkaSablon.stilus;
+
+        const olvasUrlap = () => {
+            munkaSablon.orientacio = document.getElementById('tmCertOrientSelect').value;
+            munkaSablon.stilus = document.getElementById('tmCertStyleSelect').value;
+            munkaSablon.cim = document.getElementById('tmCertTitleInput').value;
+            munkaSablon.datumSzoveg = document.getElementById('tmCertDateInput').value;
+            munkaSablon.alCim = document.getElementById('tmCertSubInput').value;
+            munkaSablon.bevezeto = document.getElementById('tmCertIntroInput').value;
+            munkaSablon.balAlairas = document.getElementById('tmCertLeftSigInput').value;
+            munkaSablon.jobbAlairas = document.getElementById('tmCertRightSigInput').value;
+            munkaSablon.mutasKeretEsLogo = document.getElementById('tmCertShowHeaderCb').checked;
+            munkaSablon.szovegFuggolegesEltolas = parseInt(document.getElementById('tmCertOffsetInput').value, 10) || 18;
+            document.getElementById('tmCertOffsetVal').innerText = munkaSablon.szovegFuggolegesEltolas + '%';
+        };
+
+        const frissitElonezet = () => {
+            olvasUrlap();
+            const frame = document.getElementById('tmCertPreviewFrame');
+            if (!frame) return;
+            frame.innerHTML = this.epitsEgyOklevelOldalHtml(
+                { nev: 'Kovács Péter', klub: 'Vácrátóti HSE', kategoria: 'Kumite Men 18-34 y.o.', helyezes: 1 },
+                munkaSablon,
+                vAdat,
+                true
+            );
+        };
+
+        ['tmCertOrientSelect', 'tmCertStyleSelect', 'tmCertTitleInput', 'tmCertDateInput', 'tmCertSubInput', 'tmCertIntroInput', 'tmCertLeftSigInput', 'tmCertRightSigInput', 'tmCertShowHeaderCb', 'tmCertOffsetInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', frissitElonezet);
+            if (el) el.addEventListener('change', frissitElonezet);
+        });
+
+        document.getElementById('tmCertBgFile').addEventListener('change', async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const dataUrl = await this.optimalizalSablonKep(file);
+            if (dataUrl) {
+                munkaSablon.hatterKep = dataUrl;
+                munkaSablon.stilus = 'egyeni_hatter';
+                document.getElementById('tmCertStyleSelect').value = 'egyeni_hatter';
+                frissitElonezet();
+                this.toast('Háttérkép betöltve az oklevél sablonba!');
+            }
+        });
+
+        document.getElementById('tmCertClearBgBtn').addEventListener('click', () => {
+            munkaSablon.hatterKep = null;
+            document.getElementById('tmCertBgFile').value = '';
+            if (munkaSablon.stilus === 'egyeni_hatter') {
+                munkaSablon.stilus = 'klasszikus';
+                document.getElementById('tmCertStyleSelect').value = 'klasszikus';
+            }
+            frissitElonezet();
+        });
+
+        document.getElementById('tmCertCloseBtn').addEventListener('click', () => modal.remove());
+
+        document.getElementById('tmCertSaveBtn').addEventListener('click', () => {
+            olvasUrlap();
+            if (this.mentOklevelSablon(aktId, munkaSablon)) {
+                this.toast(`Oklevél sablon elmentve a(z) „${vAdat.name}” versenyhez!`);
+            }
+        });
+
+        document.getElementById('tmCertSamplePrintBtn').addEventListener('click', () => {
+            olvasUrlap();
+            this.mentOklevelSablon(aktId, munkaSablon);
+            this.nyomtatOklevelek(
+                aktId,
+                [{ nev: 'Kovács Péter', klub: 'Vácrátóti HSE', kategoria: 'Kumite Men 18-34 y.o.', helyezes: 1 }],
+                vAdat
+            );
+        });
+
+        const batchBtn = document.getElementById('tmCertBatchPrintBtn');
+        if (batchBtn && typeof osszesNyomtatasCallback === 'function') {
+            batchBtn.addEventListener('click', () => {
+                olvasUrlap();
+                this.mentOklevelSablon(aktId, munkaSablon);
+                modal.remove();
+                osszesNyomtatasCallback(aktId, vAdat);
+            });
+        }
+
+        frissitElonezet();
+    },
+
+    szamolDobogosokEsKlubok: function(kategoriak, meccsek, versenyzok, kataTarolo = null, kumiteAdatok = null) {
+        const kTar = kataTarolo || this.lekerKataEredmenyek();
+        const kumTar = kumiteAdatok || this.lekerKumiteReszletek();
+        const klubPontok = {};
+        const kategoriaEredmenyek = [];
+
+        const adKlubErem = (versenyzo, helyezes) => {
+            if (!versenyzo || !versenyzo.club) return;
+            const klub = versenyzo.club;
+            if (!klubPontok[klub]) klubPontok[klub] = { klub: klub, arany: 0, ezust: 0, bronz: 0, pont: 0 };
+            if (helyezes === 1) { klubPontok[klub].arany++; klubPontok[klub].pont += 5; }
+            if (helyezes === 2) { klubPontok[klub].ezust++; klubPontok[klub].pont += 3; }
+            if (helyezes === 3) { klubPontok[klub].bronz++; klubPontok[klub].pont += 1; }
+        };
+
+        for (const kat of (kategoriak || [])) {
+            const katMeccsek = (meccsek || []).filter(m => m.categoryId === kat.id);
+            if (katMeccsek.length === 0) continue;
+
+            const dobogosok = [];
+            const isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+
+            if (isKata) {
+                const dontoMeccsek = katMeccsek.filter(m => this.isKataDontoMeccs(m.id));
+                const ertekeltMeccsek = (dontoMeccsek.length > 0 ? dontoMeccsek : katMeccsek)
+                    .map(m => kTar[m.id] && kTar[m.id].kesz ? { m: m, ...kTar[m.id] } : null)
+                    .filter(Boolean)
+                    .sort(this.kataSorrendHasonlito);
+
+                [0, 1, 2].forEach(idx => {
+                    if (ertekeltMeccsek[idx]) {
+                        dobogosok.push({
+                            hely: idx + 1,
+                            v: (versenyzok || []).find(x => x.id === ertekeltMeccsek[idx].m.competitor1Id),
+                            extra: Number(ertekeltMeccsek[idx].osszeg || 0).toFixed(1) + ' p'
+                        });
+                    }
+                });
+            } else {
+                const sorted = [...katMeccsek].sort((a, b) => a.id - b.id);
+                const n = sorted.length;
+                if (this.isKumiteAgrajz(sorted)) {
+                    const donto = sorted[n - 1];
+                    if (donto && donto.isFinished && donto.winnerId) {
+                        const elsoId = donto.winnerId;
+                        const masodikId = (donto.competitor1Id === elsoId) ? donto.competitor2Id : donto.competitor1Id;
+                        dobogosok.push({ hely: 1, v: (versenyzok || []).find(x => x.id === elsoId), extra: 'Döntő győztese' });
+                        if (masodikId) dobogosok.push({ hely: 2, v: (versenyzok || []).find(x => x.id === masodikId), extra: 'Döntős' });
+
+                        if (n >= 3) {
+                            [sorted[n - 3], sorted[n - 2]].forEach(ed => {
+                                if (ed && ed.isFinished && ed.competitor1Id && ed.competitor2Id) {
+                                    const vesztesId = (ed.winnerId === ed.competitor1Id) ? ed.competitor2Id : ed.competitor1Id;
+                                    dobogosok.push({ hely: 3, v: (versenyzok || []).find(x => x.id === vesztesId), extra: 'Elődöntős' });
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    const stat = {};
+                    for (const m of katMeccsek) {
+                        if (m.competitor1Id && !stat[m.competitor1Id]) stat[m.competitor1Id] = { id: m.competitor1Id, gy: 0, p: 0 };
+                        if (m.competitor2Id && !stat[m.competitor2Id]) stat[m.competitor2Id] = { id: m.competitor2Id, gy: 0, p: 0 };
+                        if (m.isFinished && m.winnerId && stat[m.winnerId]) {
+                            const r = kumTar[m.id];
+                            const wt = this.WIN_TYPES[r && r.winType ? r.winType : 'HANTEI'] || { pont: 1 };
+                            stat[m.winnerId].gy++;
+                            stat[m.winnerId].p += wt.pont;
+                        }
+                    }
+                    const tab = Object.values(stat).sort((a, b) => (b.gy - a.gy) || (b.p - a.p));
+                    [0, 1, 2].forEach(idx => {
+                        if (tab[idx] && tab[idx].gy > 0) {
+                            dobogosok.push({
+                                hely: idx + 1,
+                                v: (versenyzok || []).find(x => x.id === tab[idx].id),
+                                extra: tab[idx].p + ' súlypont'
+                            });
+                        }
+                    });
+                }
+            }
+
+            const ervenyesDobogosok = dobogosok.filter(d => d && d.v);
+            if (ervenyesDobogosok.length > 0) {
+                ervenyesDobogosok.forEach(d => adKlubErem(d.v, d.hely));
+                kategoriaEredmenyek.push({ kategoria: kat, dobogosok: ervenyesDobogosok });
+            }
+        }
+
+        const klubLista = Object.values(klubPontok).sort((a, b) => (b.pont - a.pont) || (b.arany - a.arany));
+        return { kategoriaEredmenyek, klubLista };
+    }
 };
 
 window.TatamiMaster = TatamiMaster;

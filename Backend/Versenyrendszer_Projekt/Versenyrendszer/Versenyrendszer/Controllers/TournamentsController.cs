@@ -41,6 +41,70 @@ namespace Versenyrendszer.Controllers
             return Ok(tournament);
         }
 
+        private async Task ClearCompetitionTablesAndResetSequencesAsync()
+        {
+            // 1. Minden versenyadat biztonságos törlése megfelelő sorrendben (Idegen kulcsok miatt!)
+            _context.Matches.RemoveRange(_context.Matches);
+            _context.Registrations.RemoveRange(_context.Registrations);
+            await _context.SaveChangesAsync();
+
+            _context.Competitors.RemoveRange(_context.Competitors);
+            _context.Categories.RemoveRange(_context.Categories);
+            _context.Tatamis.RemoveRange(_context.Tatamis);
+            _context.Tournaments.RemoveRange(_context.Tournaments);
+            await _context.SaveChangesAsync();
+
+            // 2. AUTO_INCREMENT ID-k visszaállítása 1-re (Linuxon a táblanevek Case-Sensitive-ek: Matches, Categories...)
+            var tableNames = new[] { "Matches", "Registrations", "Competitors", "Categories", "Tatamis", "Tournaments" };
+            foreach (var table in tableNames)
+            {
+                try { await _context.Database.ExecuteSqlRawAsync($"ALTER TABLE `{table}` AUTO_INCREMENT = 1;"); } catch {}
+                try { await _context.Database.ExecuteSqlRawAsync($"ALTER TABLE `{table.ToLower()}` AUTO_INCREMENT = 1;"); } catch {}
+            }
+        }
+
+        private async Task EnsureDefaultUsersAsync()
+        {
+            if (!await _context.Users.AnyAsync(u => u.Username == "KoloMarki"))
+            {
+                _context.Users.Add(new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" });
+            }
+            if (!await _context.Users.AnyAsync(u => u.Username == "A tatami"))
+            {
+                _context.Users.Add(new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" });
+            }
+            if (!await _context.Users.AnyAsync(u => u.Username == "Balint.Tornai"))
+            {
+                _context.Users.Add(new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" });
+            }
+        }
+
+        // POST: api/Tournaments/reset-empty
+        // Töröl minden versenyadatot (mérkőzések, nevezések, versenyzők, kategóriák, tatamik, versenyek),
+        // visszaállítja az ID-kat 1-re, és 0-ra üríti a rendszert tiszta éles versenyindításhoz (a felhasználók megmaradnak).
+        [HttpPost("reset-empty")]
+        public async Task<IActionResult> ResetEmptyDatabase()
+        {
+            try
+            {
+                await ClearCompetitionTablesAndResetSequencesAsync();
+                await EnsureDefaultUsersAsync();
+                await _context.SaveChangesAsync();
+
+                _liveState.ResetAll();
+
+                return Ok(new
+                {
+                    message = "Adatbázis sikeresen lenullázva (minden verseny, kategória, versenyző, nevezés és mérkőzés törölve)."
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("RESET-EMPTY HIBA: " + ex.ToString());
+                return StatusCode(500, new { error = ex.InnerException?.Message ?? ex.Message });
+            }
+        }
+
         // POST: api/Tournaments/reset-seed
         // Töröl minden adatot, visszaállítja az ID-kat 1-re, és a C# Backenden keresztül
         // feltölti a hivatalos Kyokushin korcsoportokkal (Gyerek 3,2,1 / Serdülő / Ifjúsági / Junior / Felnőtt / Senior) ellátott mintaadatokat!
@@ -49,38 +113,8 @@ namespace Versenyrendszer.Controllers
         {
             try
             {
-                // 1. Minden rekord biztonságos törlése megfelelő sorrendben (Idegen kulcsok miatt!)
-                _context.Matches.RemoveRange(_context.Matches);
-                _context.Registrations.RemoveRange(_context.Registrations);
-                await _context.SaveChangesAsync();
-
-                _context.Competitors.RemoveRange(_context.Competitors);
-                _context.Categories.RemoveRange(_context.Categories);
-                _context.Tatamis.RemoveRange(_context.Tatamis);
-                _context.Tournaments.RemoveRange(_context.Tournaments);
-                await _context.SaveChangesAsync();
-
-                // 2. AUTO_INCREMENT ID-k visszaállítása 1-re (Linuxon a táblanevek Case-Sensitive-ek: Matches, Categories...)
-                var tableNames = new[] { "Matches", "Registrations", "Competitors", "Categories", "Tatamis", "Tournaments" };
-                foreach (var table in tableNames)
-                {
-                    try { await _context.Database.ExecuteSqlRawAsync($"ALTER TABLE `{table}` AUTO_INCREMENT = 1;"); } catch {}
-                    try { await _context.Database.ExecuteSqlRawAsync($"ALTER TABLE `{table.ToLower()}` AUTO_INCREMENT = 1;"); } catch {}
-                }
-
-                // 3. Alap felhasználók biztosítása (ha még nincsenek benne)
-                if (!await _context.Users.AnyAsync(u => u.Username == "KoloMarki"))
-                {
-                    _context.Users.Add(new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" });
-                }
-                if (!await _context.Users.AnyAsync(u => u.Username == "A tatami"))
-                {
-                    _context.Users.Add(new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" });
-                }
-                if (!await _context.Users.AnyAsync(u => u.Username == "Balint.Tornai"))
-                {
-                    _context.Users.Add(new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" });
-                }
+                await ClearCompetitionTablesAndResetSequencesAsync();
+                await EnsureDefaultUsersAsync();
 
                 // 4. Alapverseny (ID = 1)
                 _context.Tournaments.Add(new Tournament
