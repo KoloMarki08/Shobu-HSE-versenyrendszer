@@ -52,22 +52,47 @@ window.onload = async function() {
 
 function initKataGyorsBillentyuzet() {
     const mezok = document.querySelectorAll('.kata-pont');
+    const hatarFigyelmeztetes = 'A Kata pontszám csak 5.0 és 9.0 közötti érték lehet (5.0 <= pont <= 9.0)!';
+
+    const korlatozMezo = (inp) => {
+        const nyers = String(inp.value || '').trim().replace(',', '.');
+        if (!nyers) return;
+        const val = parseFloat(nyers);
+        if (isNaN(val)) {
+            inp.value = '';
+            kataPontSzamitas();
+            return;
+        }
+        if (val < 5.0 || val > 9.0) {
+            const javitott = Math.min(9.0, Math.max(5.0, val));
+            inp.value = javitott.toFixed(1);
+            TatamiMaster.toast(hatarFigyelmeztetes, 'figyelem');
+            kataPontSzamitas();
+        }
+    };
+
     mezok.forEach((input, idx) => {
         input.addEventListener('focus', function() { this.select(); });
         input.addEventListener('input', function() {
             let val = this.value.replace(',', '.');
             if (/^\d{2}$/.test(val)) {
                 let szam = parseInt(val, 10);
-                if (szam > 10) {
+                if (szam >= 50 && szam <= 90) {
                     this.value = (szam / 10).toFixed(1);
                     kataPontSzamitas();
                     if (idx + 1 < mezok.length) {
                         mezok[idx + 1].focus();
                         mezok[idx + 1].select();
                     }
+                } else if (szam > 10) {
+                    this.value = szam < 50 ? '5.0' : '9.0';
+                    TatamiMaster.toast(hatarFigyelmeztetes, 'figyelem');
+                    kataPontSzamitas();
                 }
             }
         });
+        input.addEventListener('change', function() { korlatozMezo(this); });
+        input.addEventListener('blur', function() { korlatozMezo(this); });
     });
 }
 
@@ -766,8 +791,38 @@ function nullazasMeccsre() {
     adatokMentese();
 }
 
+function validalKataPontok(nyersPontok) {
+    const lista = Array.isArray(nyersPontok) ? nyersPontok : [];
+    if (lista.length < 5) {
+        return { ok: false, hiba: 'Kérlek adj meg mind az 5 bírónál érvényes (5.0 és 9.0 közötti) pontszámot!' };
+    }
+    for (let i = 0; i < 5; i++) {
+        const val = parseFloat(String(lista[i] === null || lista[i] === undefined ? '' : lista[i]).replace(',', '.'));
+        if (isNaN(val)) {
+            return { ok: false, hiba: `Add meg a B${i + 1} bíró pontszámát (5.0 - 9.0)!` };
+        }
+        if (val < 5.0 || val > 9.0) {
+            return { ok: false, hiba: `A B${i + 1} bíró pontszáma (${val}) érvénytelen: csak 5.0 és 9.0 közötti érték adható!` };
+        }
+    }
+    const ertekeles = TatamiMaster.szamolKataErtekeles(lista);
+    if (!ertekeles || !ertekeles.kesz) {
+        return { ok: false, hiba: 'Kérlek adj meg mind az 5 bírónál érvényes (5.0 és 9.0 közötti) pontszámot!' };
+    }
+    return { ok: true, ertekeles };
+}
+
 function kataPontSzamitas() {
-    const nyersPontok = Array.from(document.querySelectorAll('.kata-pont')).map(i => parseFloat(i.value));
+    const mezok = Array.from(document.querySelectorAll('.kata-pont'));
+    const nyersPontok = mezok.map(i => {
+        const szam = parseFloat(String(i.value || '').replace(',', '.'));
+        const ervenytelen = !isNaN(szam) && (szam < 5.0 || szam > 9.0);
+        if (i.style) {
+            i.style.borderColor = ervenytelen ? '#990000' : '';
+            i.style.backgroundColor = ervenytelen ? '#FEF2F2' : '';
+        }
+        return szam;
+    });
     const ertekeles = TatamiMaster.szamolKataErtekeles(nyersPontok);
     document.getElementById('kataOsszpontDisplay').innerText = ertekeles.osszeg.toFixed(1);
     adatokMentese();
@@ -831,12 +886,13 @@ async function meccsMentese() {
     try {
         if (aktualisMod === 'KATA') {
             const nyersPontok = Array.from(document.querySelectorAll('.kata-pont')).map(i => parseFloat(i.value));
-            const ertekeles = TatamiMaster.szamolKataErtekeles(nyersPontok);
+            const ell = validalKataPontok(nyersPontok);
 
-            if (!ertekeles.kesz) {
-                TatamiMaster.toast("Kérlek adj meg mind az 5 bírónál érvényes pontszámot!", "figyelem");
+            if (!ell.ok) {
+                TatamiMaster.toast(ell.hiba, "figyelem");
                 return;
             }
+            const ertekeles = ell.ertekeles;
 
             TatamiMaster.mentKataEredmeny(aktualisMeccs.id, aktualisMeccs.competitor1Id, ertekeles);
             aktualisMeccs.isFinished = true;

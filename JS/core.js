@@ -1383,7 +1383,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261116_v3';
+            link.href = prefix + 'design_system.css?v=20261116_v4';
             document.head.appendChild(link);
         }
 
@@ -1890,17 +1890,27 @@ const TatamiMaster = {
     },
 
     szamolKataErtekeles: function(pontokTomb) {
-        let ervenyes = pontokTomb.map((p, idx) => ({
-            ertek: Math.min(10, Math.max(0, parseFloat(p))),
-            idx: idx
-        })).filter(x => !isNaN(x.ertek) && x.ertek > 0);
+        const ervenyes = [];
+        const hibasIdxek = [];
+        (pontokTomb || []).forEach((p, idx) => {
+            const raw = parseFloat(String(p === null || p === undefined ? '' : p).replace(',', '.'));
+            if (isNaN(raw)) return;
+            if (raw < 5.0 || raw > 9.0) {
+                hibasIdxek.push(idx);
+                return;
+            }
+            ervenyes.push({
+                ertek: Math.round(raw * 10) / 10,
+                idx: idx
+            });
+        });
 
-        if (ervenyes.length < 5) {
+        if (ervenyes.length < 5 || hibasIdxek.length > 0) {
             let reszOsszeg = ervenyes.reduce((sum, x) => sum + x.ertek, 0);
             return {
                 kesz: false, osszeg: Math.round(reszOsszeg * 10) / 10,
-                minErtek: 0, maxErtek: 0, vezetoBiro: pontokTomb[0] || 0,
-                minIdx: -1, maxIdx: -1, pontok: pontokTomb
+                minErtek: 0, maxErtek: 0, vezetoBiro: ervenyes[0]?.ertek || 0,
+                minIdx: -1, maxIdx: -1, pontok: pontokTomb, hibasIdxek: hibasIdxek
             };
         }
 
@@ -1923,7 +1933,8 @@ const TatamiMaster = {
             minErtek: minObj.ertek, maxErtek: maxObj.ertek,
             vezetoBiro: ervenyes[0].ertek,
             minIdx: minObj.idx, maxIdx: maxObj.idx,
-            pontok: ervenyes.map(x => x.ertek)
+            pontok: ervenyes.map(x => x.ertek),
+            hibasIdxek: []
         };
     },
 
