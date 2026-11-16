@@ -1383,7 +1383,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261116_v5';
+            link.href = prefix + 'design_system.css?v=20261116_v6';
             document.head.appendChild(link);
         }
 
@@ -1429,7 +1429,7 @@ const TatamiMaster = {
                             &copy; 2026 TATAMI MASTER<sup style="font-size:0.7em;">&trade;</sup> &bull; Shobu HSE Kyokushin Karate Versenyrendszer. Minden jog fenntartva.
                         </div>
                         <div style="font-size: 0.78rem; color: #3F3F46; margin-top: 2px;">
-                            Főprojekt tervező és rendszerfejlesztő: <strong>Kolonics Márk</strong> &bull; Design és arculati megvalósítás: <strong>Kovács Péter</strong> &bull; Szerverüzemeltetés és tárhely: <a href="https://szerverem.hu" target="_blank" rel="noopener noreferrer" style="color:#990000;font-weight:700;text-decoration:none;">szerverem.hu</a>
+                            Főprojekt tervező és rendszerfejlesztő: <a href="https://www.instagram.com/kolomarki/" target="_blank" rel="noopener noreferrer" style="color:#18181B;font-weight:700;text-decoration:underline;">Kolonics Márk</a> &bull; Design és arculati megvalósítás: <strong>Kovács Péter</strong> &bull; Szerverüzemeltetés és tárhely: <a href="https://szerverem.hu" target="_blank" rel="noopener noreferrer" style="color:#990000;font-weight:700;text-decoration:none;">szerverem.hu</a>
                         </div>
                         <div style="font-size: 0.74rem; color: #71717A; margin-top: 2px;">
                             A „TATAMI MASTER&trade;” név, a Kanku-Tatami Oktogon embléma és a szoftveres felület védjegyoltalom (&trade;) és szerzői jogi védelem (&copy;) alatt áll (1999. évi LXXVI. tv. &amp; 1997. évi XI. tv.).
@@ -1558,7 +1558,7 @@ const TatamiMaster = {
 
                 <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:10px;padding:14px;margin-bottom:18px;font-size:0.84rem;color:#3F3F46;line-height:1.55;">
                     <strong style="color:#18181B;display:block;margin-bottom:4px;">5. Projekt Alkotói és Üzemeltetési Háttér:</strong>
-                    &bull; <strong>Főprojekt tervező és rendszerfejlesztő:</strong> Kolonics Márk<br>
+                    &bull; <strong>Főprojekt tervező és rendszerfejlesztő:</strong> <a href="https://www.instagram.com/kolomarki/" target="_blank" rel="noopener noreferrer" style="color:#18181B;font-weight:700;text-decoration:underline;">Kolonics Márk</a><br>
                     &bull; <strong>Design és arculati megvalósítás:</strong> Kovács Péter<br>
                     &bull; <strong>Szerverüzemeltetés és infrastruktúra:</strong> <a href="https://szerverem.hu" target="_blank" rel="noopener noreferrer" style="color:#990000;font-weight:700;text-decoration:none;">szerverem.hu</a>
                 </div>
