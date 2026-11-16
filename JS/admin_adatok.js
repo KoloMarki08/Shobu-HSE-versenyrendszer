@@ -1622,7 +1622,8 @@ function rajzolAgrajz() {
             korMeret /= 2;
         }
     } else {
-        fordulok.push(katMeccsek);
+        const sorrendben = [...katMeccsek].sort((a, b) => (a.matchOrder - b.matchOrder) || (a.id - b.id));
+        fordulok.push(sorrendben);
     }
 
     let formatumFejlec = isAgrajz
@@ -1699,7 +1700,7 @@ function rajzolAgrajz() {
             }
         }
         let tabella = Object.values(stat).sort((a, b) => (b.gy !== a.gy) ? (b.gy - a.gy) : (b.sulyPont - a.sulyPont));
-        html += `<div style="margin-top:18px;background:#FAF8F5;padding:16px;border-radius:10px;border:1px solid #CFC9BC;">
+        html += `<div class="tm-rr-standings-wrap" style="margin-top:18px;background:#FAF8F5;padding:16px;border-radius:10px;border:1px solid #CFC9BC;">
             <h4 style="margin-top:0;margin-bottom:10px;color:#18181B;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('trophy', 16)} Körmérkőzés Élő Tabella (Sorrend: 1. Győzelmek száma, 2. Súlyozott pont: IPP/AWA/SIK/KIK=3p, WAZ=2p, HAN=1p)</h4>
             <table class="data-table" style="margin-bottom:0;">
                 <thead><tr><th>Helyezés</th><th>Versenyző (Klub)</th><th>Meccs</th><th>Győzelem</th><th>Vereség</th><th>Súlyozott Pont</th></tr></thead>
@@ -1740,7 +1741,80 @@ function osszeallitKategoriaNyomtatoHtml(katId) {
         .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'hu'));
 
     const isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
-    const isAgrajz = !isKata && TatamiMaster.isKumiteAgrajz(katMeccsek);
+
+    if (isKata) {
+        const idopontMap = TatamiMaster.becsulMeccsTatamiIdopontok(globalTatamik, globalKategoriak, globalMerkozesek);
+        const kataTarolo = TatamiMaster.lekerKataEredmenyek();
+        const rendezettKata = [...katMeccsek].sort((a, b) => (a.matchOrder - b.matchOrder) || (a.id - b.id));
+
+        let rowsHtml = '';
+        if (rendezettKata.length > 0) {
+            rowsHtml = rendezettKata.map((m, idx) => {
+                const v = (globalVersenyzok || []).find(x => x.id === m.competitor1Id);
+                const tat = (globalTatamik || []).find(t => t.id === m.tatamiId);
+                const tatNev = tat ? tat.name : (m.tatamiId ? `Tatami #${m.tatamiId}` : 'Nincs tatami');
+                const tInfo = idopontMap[m.id];
+                const isDonto = TatamiMaster.isKataDontoMeccs(m.id);
+
+                let mikorSzoveg = esc(tatNev);
+                if (m.isFinished) {
+                    const er = kataTarolo[m.id];
+                    mikorSzoveg = `${esc(tatNev)} — Értékelve${er && er.kesz ? ' (' + Number(er.osszeg).toFixed(1) + ' p)' : ''}`;
+                } else if (tInfo && tInfo.statuszKod === 'MOST') {
+                    mikorSzoveg = `<strong>${esc(tInfo.tatamiNev)} — MOST lép tatamira</strong>`;
+                } else if (tInfo) {
+                    mikorSzoveg = `${esc(tInfo.tatamiNev)} &bull; <strong>kb. ${esc(tInfo.varhatoIdo)}</strong> <span style="color:#52525B;">(~${tInfo.becsultPerc} perc múlva, ${tInfo.elotteDb} előtte)</span>`;
+                }
+
+                return `<tr style="${idx % 2 === 1 ? 'background:#FAF8F5;' : ''}">
+                    <td><strong>#${m.matchOrder || (idx + 1)}</strong>${isDonto ? ' <small>[DÖNTŐ]</small>' : ''}</td>
+                    <td><strong>${v ? esc(v.name || '') : '-'}</strong></td>
+                    <td>${v ? esc(v.club || '') : '-'}</td>
+                    <td>${v && v.belt ? esc(v.belt) : '-'}</td>
+                    <td>${mikorSzoveg}</td>
+                </tr>`;
+            }).join('');
+        } else if (indulok.length > 0) {
+            rowsHtml = indulok.map((v, idx) => `
+                <tr style="${idx % 2 === 1 ? 'background:#FAF8F5;' : ''}">
+                    <td><strong>${idx + 1}.</strong></td>
+                    <td><strong>${esc(v.name || '')}</strong></td>
+                    <td>${esc(v.club || '')}</td>
+                    <td>${v.belt ? esc(v.belt) : '-'}</td>
+                    <td style="color:#71717A;">Még nincs kisorsolva</td>
+                </tr>`).join('');
+        } else {
+            rowsHtml = '<tr><td colspan="5" style="text-align:center;color:#71717A;">Nincs benevezett versenyző ebben a kategóriában.</td></tr>';
+        }
+
+        const kataHtml = `
+            <div class="tm-cat-print-header">
+                <div>
+                    <div style="font-size:0.78rem;font-weight:700;color:#52525B;text-transform:uppercase;">${esc(versenyNev)}</div>
+                    <h2 style="margin:2px 0 0 0;font-size:1.25rem;color:#18181B;">${esc(kat.name || '')}</h2>
+                </div>
+                <div style="text-align:right;font-size:0.82rem;font-weight:700;color:#27272A;">
+                    KATA RAJT SORREND &bull; ${rendezettKata.length || indulok.length} fellépő
+                </div>
+            </div>
+            <table class="data-table tm-kata-print-table" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th style="width:76px;">Sorrend</th>
+                        <th>Versenyző</th>
+                        <th>Klub / Egyesület</th>
+                        <th style="width:82px;">Övfokozat</th>
+                        <th>Mikor lép tatamira</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
+
+        return { html: kataHtml, orientacio: 'portrait' };
+    }
+
+    const isAgrajz = TatamiMaster.isKumiteAgrajz(katMeccsek);
 
     const sel = document.getElementById('agrajzKategoriaSelect');
     if (sel) sel.value = String(kId);
@@ -1781,7 +1855,7 @@ function osszeallitKategoriaNyomtatoHtml(katId) {
             </div>
         </div>
         <div class="tm-cat-print-fighters">
-            <div style="font-size:0.76rem;font-weight:800;text-transform:uppercase;color:#3F3F46;margin-bottom:5px;letter-spacing:0.5px;">Kategóriában induló versenyzők</div>
+            <div style="font-size:0.74rem;font-weight:800;text-transform:uppercase;color:#3F3F46;margin-bottom:4px;letter-spacing:0.5px;">Kategóriában induló versenyzők</div>
             ${indulokHtml}
         </div>
         <div style="${scaleStyle}">
@@ -1791,7 +1865,7 @@ function osszeallitKategoriaNyomtatoHtml(katId) {
 
     return {
         html,
-        orientacio: (isAgrajz || (isKata && katMeccsek.length > 0)) ? 'landscape' : 'portrait'
+        orientacio: isAgrajz ? 'landscape' : 'portrait'
     };
 }
 
