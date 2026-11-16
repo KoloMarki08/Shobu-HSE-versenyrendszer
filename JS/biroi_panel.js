@@ -50,49 +50,62 @@ window.onload = async function() {
     });
 };
 
+function alakitsKataBeutest(nyersErtek, lezartMezo = false) {
+    const digits = String(nyersErtek || '').replace(/\D/g, '').slice(0, 2);
+    if (digits.length === 0) {
+        return { ertek: '', keszKetSzam: false, hiba: null };
+    }
+    if (digits.length === 1) {
+        const d1 = parseInt(digits[0], 10);
+        if (d1 < 5) {
+            return {
+                ertek: '',
+                keszKetSzam: false,
+                hiba: 'Csak 5,0 és 9,0 közötti pont adható (az első számjegy 5, 6, 7, 8 vagy 9 lehet)!'
+            };
+        }
+        if (lezartMezo) {
+            return { ertek: d1 + ',0', keszKetSzam: true, hiba: null };
+        }
+        return { ertek: String(d1), keszKetSzam: false, hiba: null };
+    }
+    let szam = parseInt(digits, 10);
+    let hiba = null;
+    if (szam < 50) {
+        szam = 50;
+        hiba = 'A Kata pontszám minimum 5,0 lehet!';
+    } else if (szam > 90) {
+        szam = 90;
+        hiba = 'A Kata pontszám maximum 9,0 lehet (9,0 felett nem adható)!';
+    }
+    const s = String(szam);
+    return { ertek: s[0] + ',' + s[1], keszKetSzam: true, hiba };
+}
+
 function initKataGyorsBillentyuzet() {
     const mezok = document.querySelectorAll('.kata-pont');
-    const hatarFigyelmeztetes = 'A Kata pontszám csak 5.0 és 9.0 közötti érték lehet (5.0 <= pont <= 9.0)!';
-
-    const korlatozMezo = (inp) => {
-        const nyers = String(inp.value || '').trim().replace(',', '.');
-        if (!nyers) return;
-        const val = parseFloat(nyers);
-        if (isNaN(val)) {
-            inp.value = '';
-            kataPontSzamitas();
-            return;
-        }
-        if (val < 5.0 || val > 9.0) {
-            const javitott = Math.min(9.0, Math.max(5.0, val));
-            inp.value = javitott.toFixed(1);
-            TatamiMaster.toast(hatarFigyelmeztetes, 'figyelem');
-            kataPontSzamitas();
-        }
-    };
-
     mezok.forEach((input, idx) => {
         input.addEventListener('focus', function() { this.select(); });
         input.addEventListener('input', function() {
-            let val = this.value.replace(',', '.');
-            if (/^\d{2}$/.test(val)) {
-                let szam = parseInt(val, 10);
-                if (szam >= 50 && szam <= 90) {
-                    this.value = (szam / 10).toFixed(1);
-                    kataPontSzamitas();
-                    if (idx + 1 < mezok.length) {
-                        mezok[idx + 1].focus();
-                        mezok[idx + 1].select();
-                    }
-                } else if (szam > 10) {
-                    this.value = szam < 50 ? '5.0' : '9.0';
-                    TatamiMaster.toast(hatarFigyelmeztetes, 'figyelem');
-                    kataPontSzamitas();
-                }
+            const res = alakitsKataBeutest(this.value, false);
+            this.value = res.ertek;
+            if (res.hiba) TatamiMaster.toast(res.hiba, 'figyelem');
+            kataPontSzamitas();
+            if (res.keszKetSzam && idx + 1 < mezok.length) {
+                mezok[idx + 1].focus();
+                mezok[idx + 1].select();
             }
         });
-        input.addEventListener('change', function() { korlatozMezo(this); });
-        input.addEventListener('blur', function() { korlatozMezo(this); });
+        input.addEventListener('change', function() {
+            const res = alakitsKataBeutest(this.value, true);
+            this.value = res.ertek;
+            kataPontSzamitas();
+        });
+        input.addEventListener('blur', function() {
+            const res = alakitsKataBeutest(this.value, true);
+            this.value = res.ertek;
+            kataPontSzamitas();
+        });
     });
 }
 
@@ -830,7 +843,9 @@ function kataPontSzamitas() {
 
 function adatokMentese() {
     const nyersKata = Array.from(document.querySelectorAll('.kata-pont')).map(i => i.value);
-    const kataErtekeles = TatamiMaster.szamolKataErtekeles(nyersKata.map(x => parseFloat(x)));
+    const kataErtekeles = TatamiMaster.szamolKataErtekeles(
+        nyersKata.map(x => parseFloat(String(x || '').replace(',', '.')))
+    );
     const aktTatamiId = document.getElementById('panelTatamiSelect')?.value || '1';
     const aktTatamiObj = panelTatamik.find(t => String(t.id) === String(aktTatamiId));
     const fazis = (aktivIdoSzabaly && aktivIdoSzabaly.fazisok && aktivIdoSzabaly.fazisok[aktivFazisIndex])
@@ -885,7 +900,9 @@ async function meccsMentese() {
 
     try {
         if (aktualisMod === 'KATA') {
-            const nyersPontok = Array.from(document.querySelectorAll('.kata-pont')).map(i => parseFloat(i.value));
+            const nyersPontok = Array.from(document.querySelectorAll('.kata-pont')).map(i =>
+                parseFloat(String(i.value || '').replace(',', '.'))
+            );
             const ell = validalKataPontok(nyersPontok);
 
             if (!ell.ok) {

@@ -1383,7 +1383,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261116_v4';
+            link.href = prefix + 'design_system.css?v=20261116_v5';
             document.head.appendChild(link);
         }
 
