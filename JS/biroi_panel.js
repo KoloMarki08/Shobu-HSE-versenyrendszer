@@ -279,6 +279,28 @@ function valtsKumiteKorcsoportSzabaly(kulcs) {
     TatamiMaster.toast(`Időszabály beállítva: ${aktivIdoSzabaly.teljesCimke}`);
 }
 
+function nullazKumiteAllastUI() {
+    akaPont = 0;
+    shiroPont = 0;
+    akaBuntetes = 0;
+    shiroBuntetes = 0;
+    utolsoIppon = { aka: false, shiro: false };
+    kumiteHistory = { aka: [], shiro: [] };
+
+    document.getElementById('akaPontDisplay').innerText = 0;
+    document.getElementById('shiroPontDisplay').innerText = 0;
+    document.getElementById('akaBuntetesDisplay').innerText = 0;
+    document.getElementById('shiroBuntetesDisplay').innerText = 0;
+
+    const gyoztesSel = document.getElementById('gyoztesSelect');
+    const modSel = document.getElementById('gyozelemModSelect');
+    if (gyoztesSel) gyoztesSel.value = 'aka';
+    if (modSel) modSel.value = 'HANTEI';
+
+    frissitBuntetesGombokEsKijelzo();
+    ellenorizAutomatikusGyozelem();
+}
+
 function valtsKumiteFazisIndexre(ujIndex, nullazPontokat = false) {
     if (!aktivIdoSzabaly || !Array.isArray(aktivIdoSzabaly.fazisok)) return;
     const maxIdx = aktivIdoSzabaly.fazisok.length - 1;
@@ -288,17 +310,8 @@ function valtsKumiteFazisIndexre(ujIndex, nullazPontokat = false) {
 
     const fazis = aktivIdoSzabaly.fazisok[aktivFazisIndex];
     if (nullazPontokat) {
-        // Új hosszabbítási menet (Encho-sen) elején a menetpontok 0:0-ról indulnak (a büntetések tovább öröklődnek)
-        akaPont = 0;
-        shiroPont = 0;
-        utolsoIppon = { aka: false, shiro: false };
-        kumiteHistory = { aka: [], shiro: [] };
-        document.getElementById('akaPontDisplay').innerText = 0;
-        document.getElementById('shiroPontDisplay').innerText = 0;
-        const modSel = document.getElementById('gyozelemModSelect');
-        if (modSel) modSel.value = 'HANTEI';
-        frissitBuntetesGombokEsKijelzo();
-        ellenorizAutomatikusGyozelem();
+        // Hosszabbítás (Encho-sen) elején az addigi eredmények (pontok és büntetések egyaránt) 0:0-ról indulnak
+        nullazKumiteAllastUI();
     }
 
     idoMasodpercben = fazis.mp || 0;
@@ -773,10 +786,6 @@ function idoMegallitas() {
 
 function nullazasMeccsre() {
     idoMegallitas();
-    akaPont = 0; shiroPont = 0;
-    akaBuntetes = 0; shiroBuntetes = 0;
-    utolsoIppon = { aka: false, shiro: false };
-    kumiteHistory = { aka: [], shiro: [] };
     aktivFazisIndex = 0;
 
     const alapMp = (aktivIdoSzabaly && aktivIdoSzabaly.fazisok && aktivIdoSzabaly.fazisok[0])
@@ -784,18 +793,7 @@ function nullazasMeccsre() {
         : 120;
     idoMasodpercben = alapMp;
 
-    document.getElementById('akaPontDisplay').innerText = 0;
-    document.getElementById('shiroPontDisplay').innerText = 0;
-    document.getElementById('akaBuntetesDisplay').innerText = 0;
-    document.getElementById('shiroBuntetesDisplay').innerText = 0;
-
-    const gyoztesSel = document.getElementById('gyoztesSelect');
-    const modSel = document.getElementById('gyozelemModSelect');
-    if (gyoztesSel) gyoztesSel.value = 'aka';
-    if (modSel) modSel.value = 'HANTEI';
-
-    frissitBuntetesGombokEsKijelzo();
-    ellenorizAutomatikusGyozelem();
+    nullazKumiteAllastUI();
     frissitTimerKijelzo();
     frissitKumiteFazisUI();
 
