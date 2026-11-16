@@ -347,6 +347,7 @@ const TatamiMaster = {
             this._alkalmazMegosztottAllapotHelyben('versenyAdatMap', snap.shared.versenyAdatMap);
             this._alkalmazMegosztottAllapotHelyben('nevezesLezarva', snap.shared.nevezesLezarva);
             this._alkalmazMegosztottAllapotHelyben('oklevelSablonok', snap.shared.oklevelSablonok);
+            this._alkalmazMegosztottAllapotHelyben('versenyMellekletek', snap.shared.versenyMellekletek);
         }
 
         // Élő Tatami eredményjelzők szinkronizálása
@@ -385,6 +386,8 @@ const TatamiMaster = {
                 }
             } else if (key === 'oklevelSablonok' && typeof val === 'object') {
                 localStorage.setItem('tatamiOklevelSablonok', JSON.stringify(val));
+            } else if (key === 'versenyMellekletek' && typeof val === 'object') {
+                localStorage.setItem('versenyMellekletek', JSON.stringify(val));
             }
         } catch (e) {}
     },
@@ -493,7 +496,7 @@ const TatamiMaster = {
 
         fetch(this.API_URL + '/LiveArena/tatami', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.epitsAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify(tatamiAdatok)
         }).catch(() => {});
     },
@@ -501,7 +504,7 @@ const TatamiMaster = {
     kuldesLiveMegosztottAllapot: function(kulcs, ertek, merge = false) {
         fetch(this.API_URL + '/LiveArena/shared', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.epitsAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ key: kulcs, value: ertek, merge: merge })
         }).catch(() => {});
     },
@@ -1380,7 +1383,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261116_v2';
+            link.href = prefix + 'design_system.css?v=20261116_v3';
             document.head.appendChild(link);
         }
 
@@ -1425,7 +1428,10 @@ const TatamiMaster = {
                         <div style="font-weight: 700; color: #18181B;">
                             &copy; 2026 TATAMI MASTER<sup style="font-size:0.7em;">&trade;</sup> &bull; Shobu HSE Kyokushin Karate Versenyrendszer. Minden jog fenntartva.
                         </div>
-                        <div style="font-size: 0.74rem; color: #71717A;">
+                        <div style="font-size: 0.78rem; color: #3F3F46; margin-top: 2px;">
+                            Főprojekt tervező és rendszerfejlesztő: <strong>Kolonics Márk</strong> &bull; Design és arculati megvalósítás: <strong>Kovács Péter</strong> &bull; Szerverüzemeltetés és tárhely: <a href="https://szerverem.hu" target="_blank" rel="noopener noreferrer" style="color:#990000;font-weight:700;text-decoration:none;">szerverem.hu</a>
+                        </div>
+                        <div style="font-size: 0.74rem; color: #71717A; margin-top: 2px;">
                             A „TATAMI MASTER&trade;” név, a Kanku-Tatami Oktogon embléma és a szoftveres felület védjegyoltalom (&trade;) és szerzői jogi védelem (&copy;) alatt áll (1999. évi LXXVI. tv. &amp; 1997. évi XI. tv.).
                         </div>
                     </div>
@@ -1545,9 +1551,16 @@ const TatamiMaster = {
                     </div>
                 </div>
 
-                <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:10px;padding:14px;margin-bottom:18px;font-size:0.84rem;color:#3F3F46;line-height:1.5;">
+                <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:10px;padding:14px;margin-bottom:14px;font-size:0.84rem;color:#3F3F46;line-height:1.5;">
                     <strong style="color:#18181B;display:block;margin-bottom:4px;">4. Szerzői Jogi Védelem (Copyright &copy; 2026):</strong>
                     A szoftver forráskódja, adatbázis-struktúrája, sorsolási algoritmusa, valamint a <strong>TATAMI MASTER&trade;</strong> vektoros grafikai embléma a szerzői jogról szóló <strong>1999. évi LXXVI. törvény (Szjt.)</strong> alapján a létrejöttével automatikusan szerzői jogi védelem alatt áll. Engedély nélküli másolása, módosítása vagy jogosulatlan felhasználása tilos.
+                </div>
+
+                <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:10px;padding:14px;margin-bottom:18px;font-size:0.84rem;color:#3F3F46;line-height:1.55;">
+                    <strong style="color:#18181B;display:block;margin-bottom:4px;">5. Projekt Alkotói és Üzemeltetési Háttér:</strong>
+                    &bull; <strong>Főprojekt tervező és rendszerfejlesztő:</strong> Kolonics Márk<br>
+                    &bull; <strong>Design és arculati megvalósítás:</strong> Kovács Péter<br>
+                    &bull; <strong>Szerverüzemeltetés és infrastruktúra:</strong> <a href="https://szerverem.hu" target="_blank" rel="noopener noreferrer" style="color:#990000;font-weight:700;text-decoration:none;">szerverem.hu</a>
                 </div>
 
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -1612,9 +1625,41 @@ const TatamiMaster = {
         }
     },
 
+    hashClientPassword: function(plain) {
+        const str = String(plain || '');
+        let h1 = 0xdeadbeef ^ str.length;
+        let h2 = 0x41c6ce57 ^ str.length;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761);
+            h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return 'CH1_' + (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
+    },
+
+    lekerAuthToken: function() {
+        const u = this.lekerBejelentkezes();
+        return (u && u.token) ? String(u.token) : '';
+    },
+
+    epitsAuthHeaders: function(extra = {}) {
+        const headers = Object.assign({}, extra || {});
+        const token = this.lekerAuthToken();
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
+            headers['X-Tatami-Token'] = token;
+        }
+        return headers;
+    },
+
     apiGet: async function(vegpont, opciok = null) {
         try {
-            const res = await fetch(this.API_URL + '/' + vegpont);
+            const token = this.lekerAuthToken();
+            const res = token
+                ? await fetch(this.API_URL + '/' + vegpont, { headers: this.epitsAuthHeaders() })
+                : await fetch(this.API_URL + '/' + vegpont);
             if (!res.ok) {
                 console.warn(`API GET hiba (${vegpont}): HTTP ${res.status}`);
                 return [];
@@ -1718,7 +1763,7 @@ const TatamiMaster = {
             const tisztaAdat = adat ? this.sanitizePayload(adat) : null;
             const res = await fetch(this.API_URL + '/' + vegpont, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.epitsAuthHeaders({ 'Content-Type': 'application/json' }),
                 body: tisztaAdat ? JSON.stringify(tisztaAdat) : null
             });
             const alapVegpont = vegpont.split('/')[0];
@@ -1736,7 +1781,16 @@ const TatamiMaster = {
             }
 
             if (!res.ok) {
-                if (!(method === 'DELETE' && res.status === 404 && opciok && opciok.csendes404)) {
+                if (res.status === 401) {
+                    this.toast('A biztonsági munkamenet lejárt vagy újra be kell jelentkezni!', 'hiba');
+                    const utvonal = (window.location && window.location.pathname ? window.location.pathname : '').toLowerCase();
+                    if (utvonal.includes('admin.html') || utvonal.includes('biroi_panel.html')) {
+                        try { localStorage.removeItem('tatamiUser'); } catch (e) {}
+                        window.location.href = '../index.html?login=1';
+                    }
+                } else if (res.status === 403) {
+                    this.toast('Nincs jogosultság ehhez a művelethez!', 'hiba');
+                } else if (!(method === 'DELETE' && res.status === 404 && opciok && opciok.csendes404)) {
                     this.toast(`Szerver hiba (${method} ${vegpont}): HTTP ${res.status}`, 'hiba');
                 }
                 return res;
@@ -1826,6 +1880,9 @@ const TatamiMaster = {
         } catch (e) {
             this.toast("A csatolt fájl mérete túl nagy a böngésző tárolójához!", "figyelem");
         }
+        const delta = {};
+        delta[versenyNev] = tarolo[versenyNev];
+        this.kuldesLiveMegosztottAllapot('versenyMellekletek', delta, true);
     },
 
     lekerVersenyMellekletek: function() {

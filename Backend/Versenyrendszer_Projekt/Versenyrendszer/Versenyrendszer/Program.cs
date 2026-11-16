@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Versenyrendszer.Hubs;
 using Versenyrendszer.Models; // Ha esetleg máshogy nevezted a mappát/projektet, ezt a szót írd át!
@@ -27,13 +28,43 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<LiveArenaStateService>();
+builder.Services.AddSingleton<AuthService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+static bool IsAllowedCorsOrigin(string? origin)
+{
+    if (string.IsNullOrWhiteSpace(origin) || !Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    var host = uri.Host;
+    if (string.Equals(host, "tatamimaster.hu", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(host, "www.tatamimaster.hu", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(host, "::1", StringComparison.OrdinalIgnoreCase))
+    {
+        return true;
+    }
+
+    if (IPAddress.TryParse(host, out var ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+    {
+        var b = ip.GetAddressBytes();
+        if (b[0] == 10) return true;
+        if (b[0] == 192 && b[1] == 168) return true;
+        if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return true;
+        if (b[0] == 127) return true;
+    }
+
+    return false;
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        policy => policy.SetIsOriginAllowed(_ => true)
+        policy => policy.SetIsOriginAllowed(IsAllowedCorsOrigin)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());
@@ -50,15 +81,7 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
 
-        if (!db.Users.Any())
-        {
-            db.Users.AddRange(
-                new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" },
-                new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" },
-                new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" }
-            );
-            db.SaveChanges();
-        }
+        await AuthService.EnsureDefaultUsersAndHashesAsync(db);
 
         if (!db.Tournaments.Any())
         {
@@ -126,12 +149,82 @@ app.Use(async (context, next) =>
 
 app.Use(async (context, next) =>
 {
-    // 1. Biztonsági HTTP Fejlécek (Clickjacking és XSS ellen)
+    // 1. Biztonsági HTTP Fejlécek (Clickjacking, MIME-sniffing és XSS ellen)
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
 
-    // 2. Automatikus élő szinkronizációs értesítés adatváltozáskor (POST / PUT / DELETE)
+    // 2. Szerveroldali API hitelesítés és szerepkör-védelem
     var method = context.Request.Method.ToUpperInvariant();
+    var path = (context.Request.Path.Value ?? string.Empty).TrimEnd('/');
+
+    if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) && method != "OPTIONS")
+    {
+        var authService = context.RequestServices.GetRequiredService<AuthService>();
+        var caller = authService.ValidateToken(AuthService.ExtractTokenFromRequest(context.Request));
+
+        bool isUsersRead = string.Equals(method, "GET", StringComparison.Ordinal) &&
+                           (path.Equals("/api/Users", StringComparison.OrdinalIgnoreCase) ||
+                            path.StartsWith("/api/Users/", StringComparison.OrdinalIgnoreCase));
+
+        bool isPublicAuthWrite = string.Equals(method, "POST", StringComparison.Ordinal) &&
+                                 (path.Equals("/api/Users/login", StringComparison.OrdinalIgnoreCase) ||
+                                  path.Equals("/api/Users/register", StringComparison.OrdinalIgnoreCase) ||
+                                  path.Equals("/api/Users", StringComparison.OrdinalIgnoreCase));
+
+        bool isProtectedWrite = (method == "POST" || method == "PUT" || method == "DELETE") && !isPublicAuthWrite;
+
+        if (isUsersRead || isProtectedWrite)
+        {
+            if (!caller.Valid)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json; charset=utf-8";
+                await context.Response.WriteAsJsonAsync(new { error = "Hitelesítés szükséges! Jelentkezz be újra." });
+                return;
+            }
+
+            bool isAdminEndpoint = isUsersRead ||
+                                   path.StartsWith("/api/Tournaments", StringComparison.OrdinalIgnoreCase) ||
+                                   path.StartsWith("/api/Categories", StringComparison.OrdinalIgnoreCase) ||
+                                   path.StartsWith("/api/Tatamis", StringComparison.OrdinalIgnoreCase) ||
+                                   path.StartsWith("/api/Users", StringComparison.OrdinalIgnoreCase);
+
+            bool isJudgeOrAdminEndpoint = path.StartsWith("/api/Matches", StringComparison.OrdinalIgnoreCase) ||
+                                          path.StartsWith("/api/LiveArena/tatami", StringComparison.OrdinalIgnoreCase);
+
+            bool isCoachOrHigherEndpoint = path.StartsWith("/api/Competitors", StringComparison.OrdinalIgnoreCase) ||
+                                           path.StartsWith("/api/Registrations", StringComparison.OrdinalIgnoreCase) ||
+                                           path.StartsWith("/api/LiveArena/shared", StringComparison.OrdinalIgnoreCase) ||
+                                           path.StartsWith("/api/LiveArena/notify", StringComparison.OrdinalIgnoreCase);
+
+            bool allowed = true;
+            if (isAdminEndpoint)
+            {
+                allowed = caller.Role == "ADMIN";
+            }
+            else if (isJudgeOrAdminEndpoint)
+            {
+                allowed = caller.Role == "ADMIN" || caller.Role == "JUDGE";
+            }
+            else if (isCoachOrHigherEndpoint)
+            {
+                allowed = caller.Role == "ADMIN" || caller.Role == "JUDGE" || caller.Role == "COACH";
+            }
+
+            if (!allowed)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json; charset=utf-8";
+                await context.Response.WriteAsJsonAsync(new { error = "Nincs megfelelő jogosultság ehhez a művelethez." });
+                return;
+            }
+        }
+    }
+
+    // 3. Automatikus élő szinkronizációs értesítés adatváltozáskor (POST / PUT / DELETE)
     try
     {
         await next();
@@ -139,10 +232,10 @@ app.Use(async (context, next) =>
         if ((method == "POST" || method == "PUT" || method == "DELETE") &&
             context.Response.StatusCode >= 200 && context.Response.StatusCode < 400)
         {
-            var path = context.Request.Path.Value ?? string.Empty;
             if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) &&
                 !path.StartsWith("/api/LiveArena", StringComparison.OrdinalIgnoreCase) &&
-                !path.StartsWith("/api/Auth", StringComparison.OrdinalIgnoreCase))
+                !path.StartsWith("/api/Auth", StringComparison.OrdinalIgnoreCase) &&
+                !path.Equals("/api/Users/login", StringComparison.OrdinalIgnoreCase))
             {
                 var liveArena = context.RequestServices.GetRequiredService<LiveArenaStateService>();
                 if (path.EndsWith("/reset-seed", StringComparison.OrdinalIgnoreCase))

@@ -63,20 +63,9 @@ namespace Versenyrendszer.Controllers
             }
         }
 
-        private async Task EnsureDefaultUsersAsync()
+        private Task EnsureDefaultUsersAsync()
         {
-            if (!await _context.Users.AnyAsync(u => u.Username == "KoloMarki"))
-            {
-                _context.Users.Add(new User { Username = "KoloMarki", Password = "1234", Role = "ADMIN" });
-            }
-            if (!await _context.Users.AnyAsync(u => u.Username == "A tatami"))
-            {
-                _context.Users.Add(new User { Username = "A tatami", Password = "A-tatami", Role = "JUDGE" });
-            }
-            if (!await _context.Users.AnyAsync(u => u.Username == "Balint.Tornai"))
-            {
-                _context.Users.Add(new User { Username = "Balint.Tornai", Password = "1234", Role = "COACH" });
-            }
+            return AuthService.EnsureDefaultUsersAndHashesAsync(_context);
         }
 
         // POST: api/Tournaments/reset-empty

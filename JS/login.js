@@ -338,6 +338,7 @@ async function regisztracioKuldese(event) {
     }
 
     const teljesNev = `${lastName} ${firstName}`;
+    const jelszoHash = TatamiMaster.hashClientPassword(pass);
     const ujEdzoProfil = {
         id: Date.now(),
         username: email,
@@ -353,36 +354,64 @@ async function regisztracioKuldese(event) {
         ikoMembership: ikoMembership,
         sex: sex,
         dateOfBirth: `${dobYear}-${dobMonth}-${dobDay}`,
-        password: pass,
+        passwordHash: jelszoHash,
         hcaptchaVerified: true,
-        role: 'COACH' // Automatikusan megkapja az Edzői rangot
+        role: 'COACH' // Szerveroldalon is kényszerített Edzői rang
     };
 
-    // 1. Elmentjük a regisztrált edzők listájába (minden mezővel)
+    // 1. Beküldjük a C# Backend /api/Users/register végpontjára (PBKDF2 hasheléssel + aláírt tokennel)
+    let szerverElert = false;
+    try {
+        const regRes = await fetch(TatamiMaster.API_URL + '/Users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: email,
+                password: pass,
+                role: 'COACH'
+            })
+        });
+        szerverElert = true;
+
+        if (!regRes.ok) {
+            let hibaUzenet = 'A regisztráció sikertelen.';
+            try {
+                const errBody = await regRes.json();
+                if (errBody && errBody.error) hibaUzenet = errBody.error;
+            } catch (e) {}
+            if (errDiv) {
+                errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} ${TatamiMaster.escapeHtml(hibaUzenet)}`;
+                errDiv.style.display = 'block';
+            }
+            return;
+        }
+
+        const mentettUser = await regRes.json();
+        if (mentettUser && mentettUser.id) ujEdzoProfil.id = mentettUser.id;
+        if (mentettUser && mentettUser.token) ujEdzoProfil.token = mentettUser.token;
+        if (mentettUser && mentettUser.role) ujEdzoProfil.role = mentettUser.role;
+    } catch (e) {
+        if (!szerverElert) {
+            console.warn("C# Users/register végpont nem elérhető, offline edzői profil mentve.");
+        }
+    }
+
+    // 2. Elmentjük a helyi regisztrált edzői profilok listájába (nyers jelszó NÉLKÜL)
     regisztraltEdzok.push(ujEdzoProfil);
     localStorage.setItem('regisztraltEdzok', JSON.stringify(regisztraltEdzok));
-
-    // 2. Megpróbáljuk beküldeni a C# Backend /api/Users táblájába is (ha fut a végpont)
-    try {
-        await TatamiMaster.apiSend('Users', 'POST', {
-            username: email,
-            password: pass,
-            passwordHash: pass,
-            role: 'COACH'
-        });
-    } catch (e) {
-        console.warn("C# Users tábla mentés kihagyva, helyi profil mentve.");
-    }
 
     // 3. Automatikusan kiválasztjuk az éppen aktuális versenyt, beléptetjük az új edzőt és átirányítjuk a nevezési felületre
     TatamiMaster.valasztdAutoAktualisVersenyt();
 
-    TatamiMaster.mentBejelentkezes(ujEdzoProfil);
+    const munkamenetProfil = Object.assign({}, ujEdzoProfil);
+    delete munkamenetProfil.password;
+    delete munkamenetProfil.passwordHash;
+    TatamiMaster.mentBejelentkezes(munkamenetProfil);
     alert(`Sikeres regisztráció! Üdvözlünk, ${teljesNev} (${clubName})!`);
     window.location.href = 'views/audience.html';
 }
 
-// BEJELENTKEZÉS KEZELÉSE -> hCaptcha "Ember vagyok" ELLENŐRZÉSSEL
+// BEJELENTKEZÉS KEZELÉSE -> hCaptcha + SZERVEROLDALI HITELESÍTÉS & ALÁÍRT TOKEN
 async function bejelentkezes(event) {
     event.preventDefault();
     const uName = document.getElementById('loginUsername').value.trim();
@@ -398,48 +427,62 @@ async function bejelentkezes(event) {
         return;
     }
 
-    let sikeresUser = null;
-
-    // 1. Megnézzük a regisztrációs űrlapon regisztrált Edzők között (e-mail vagy teljes név alapján)
     const regisztraltEdzok = JSON.parse(localStorage.getItem('regisztraltEdzok') || '[]');
-    const regTalalat = regisztraltEdzok.find(u =>
-        (u.email.toLowerCase() === uName.toLowerCase() || u.displayName.toLowerCase() === uName.toLowerCase()) &&
-        u.password === uPass
-    );
-    if (regTalalat) {
-        sikeresUser = regTalalat;
-    }
+    let sikeresUser = null;
+    let szerverHibaUzenet = '';
 
-    // 2. Megnézzük a C# /api/Users táblában
-    if (!sikeresUser) {
-        try {
-            const res = await fetch(TatamiMaster.API_URL + '/Users');
-            if (res.ok) {
-                const users = await res.json();
-                const talalat = users.find(u =>
-                    (u.username && u.username.toLowerCase() === uName.toLowerCase()) &&
-                    (u.password === uPass || u.passwordHash === uPass)
-                );
-                if (talalat) {
-                    sikeresUser = {
-                        id: talalat.id,
-                        username: talalat.username,
-                        displayName: talalat.username,
-                        role: (talalat.role || 'COACH').toUpperCase()
-                    };
-                }
+    // 1. Szerveroldali hitelesítés a C# /api/Users/login végponton keresztül (PBKDF2 + Rate Limit + HMAC token)
+    try {
+        const res = await fetch(TatamiMaster.API_URL + '/Users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: uName,
+                password: uPass,
+                captchaToken: (hcaptchaAllapot.login && hcaptchaAllapot.login.token) || '',
+                honeypot: lekerHoneypotErtek('login')
+            })
+        });
+
+        if (res.ok) {
+            const authUser = await res.json();
+            const helyiEdzo = regisztraltEdzok.find(u =>
+                (u.email && u.email.toLowerCase() === String(authUser.username || '').toLowerCase()) ||
+                (u.displayName && u.displayName.toLowerCase() === uName.toLowerCase())
+            );
+            sikeresUser = {
+                id: authUser.id,
+                username: authUser.username,
+                displayName: (helyiEdzo && helyiEdzo.displayName) ? helyiEdzo.displayName : (authUser.displayName || authUser.username),
+                club: helyiEdzo ? helyiEdzo.club : '',
+                degree: helyiEdzo ? helyiEdzo.degree : '',
+                role: (authUser.role || 'COACH').toUpperCase(),
+                token: authUser.token || ''
+            };
+        } else {
+            try {
+                const errJson = await res.json();
+                if (errJson && errJson.error) szerverHibaUzenet = errJson.error;
+            } catch (e) {}
+            if (!szerverHibaUzenet) {
+                szerverHibaUzenet = 'Hibás e-mail cím / felhasználónév vagy jelszó!';
             }
-        } catch (e) {}
-    }
-
-    // 3. Beépített teszt fiókok (Admin, Bíró, Edző)
-    if (!sikeresUser) {
-        if (uName.toLowerCase() === 'admin' && uPass === 'admin123') {
-            sikeresUser = { id: 1, username: 'admin', displayName: 'Adminisztrátor', role: 'ADMIN' };
-        } else if ((uName.toLowerCase() === 'biro' || uName.toLowerCase() === 'bíró') && uPass === 'biro123') {
-            sikeresUser = { id: 2, username: 'biro', displayName: 'Asztalbíró', role: 'JUDGE' };
-        } else if ((uName.toLowerCase() === 'edzo' || uName.toLowerCase() === 'edző' || uName.toLowerCase() === 'coach') && uPass === 'edzo123') {
-            sikeresUser = { id: 3, username: 'edzo', displayName: 'Klubedző', club: 'Shobu HSE', role: 'COACH' };
+        }
+    } catch (e) {
+        // 2. Kizárólag offline / elérhetetlen backend esetén: helyi hashelt edzői profil ellenőrzése
+        const bevittHash = TatamiMaster.hashClientPassword(uPass);
+        const regTalalat = regisztraltEdzok.find(u =>
+            ((u.email && u.email.toLowerCase() === uName.toLowerCase()) ||
+             (u.displayName && u.displayName.toLowerCase() === uName.toLowerCase())) &&
+            ((u.passwordHash && u.passwordHash === bevittHash) || (u.password && u.password === uPass))
+        );
+        if (regTalalat) {
+            const tiszta = Object.assign({}, regTalalat);
+            delete tiszta.password;
+            delete tiszta.passwordHash;
+            sikeresUser = tiszta;
+        } else {
+            szerverHibaUzenet = 'A hitelesítő szerver jelenleg nem elérhető!';
         }
     }
 
@@ -456,7 +499,7 @@ async function bejelentkezes(event) {
     } else {
         resetHCaptcha('login');
         if (errDiv) {
-            errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} Hibás e-mail cím / felhasználónév vagy jelszó!`;
+            errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} ${TatamiMaster.escapeHtml(szerverHibaUzenet || 'Hibás e-mail cím / felhasználónév vagy jelszó!')}`;
             errDiv.style.display = 'block';
         }
     }
