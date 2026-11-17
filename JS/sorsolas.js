@@ -107,6 +107,8 @@ async function dedikaltSorsolasInditasa() {
         await TatamiMaster.apiSend('Matches', 'POST', m);
     }
 
+    await TatamiMaster.rendezTatamiMenetrend(tatamiId);
+
     alert(`Sorsolás kész! (${generaltMeccsek.length} tétel létrehozva). Átirányítás az ágrajzhoz / ranglistához...`);
     window.location.href = isKata ? 'kata.html' : 'kumite.html';
 }

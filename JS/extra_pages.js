@@ -371,13 +371,15 @@ function initTatamiPage() {
 
         let v1 = exVersenyzok.find(v => v.id === m.competitor1Id);
         let v2 = exVersenyzok.find(v => v.id === m.competitor2Id);
+        let isKataDonto = isKata && TatamiMaster.isKataDontoMeccs(m.id);
+        let kataCimke = isKata ? (isKataDonto ? ' <span style="background:#990000;color:#FAF8F5;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:800;">TOP 6 DÖNTŐ</span>' : ' <span style="background:#E4E0D7;color:#18181B;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;">SELEJTEZŐ</span>') : '';
         let parositas = isKata
             ? `${TatamiMaster.icon('award', 15)} <strong>${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</strong>`
             : `<span style="color:#990000;font-weight:bold;"><span class="fighter-tag aka-tag">AKA</span> ${v1 ? v1.name + ' (' + v1.club + ')' : 'Várakozik...'}</span> vs. <strong><span class="fighter-tag shiro-tag">SHIRO</span> ${v2 ? v2.name + ' (' + v2.club + ')' : 'Várakozik...'}</strong>`;
 
         html += `<tr style="${m.isFinished ? 'opacity:0.55;background:#F3F0EA;' : ''}">
             <td><strong>#${m.matchOrder}</strong></td>
-            <td>${kat ? kat.name : ''}</td>
+            <td>${kat ? kat.name : ''}${kataCimke}</td>
             <td>${parositas}</td>
             <td>${m.isFinished ? `<span style="color:#52525B;font-weight:bold;">${TatamiMaster.icon('check', 14)} Lezajlott</span>` : `<span style="background:#18181B;color:#FFFFFF;padding:3px 9px;border-radius:4px;font-weight:bold;font-size:0.8rem;">${TatamiMaster.icon('megaphone', 13)} Szólítandó</span>`}</td>
         </tr>`;

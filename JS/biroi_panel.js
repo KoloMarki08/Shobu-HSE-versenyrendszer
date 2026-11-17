@@ -221,9 +221,10 @@ function frissitKovetkezoMeccsSzoveg() {
         let kv2 = panelVersenyzok.find(v => v.id === kovetkezoMeccs.competitor2Id);
         let kKat = panelKategoriak.find(k => k.id === kovetkezoMeccs.categoryId);
         let kIsKata = (kKat && kKat.matchType && kKat.matchType.toUpperCase() === 'KATA');
+        let kDontoCimke = (kIsKata && TatamiMaster.isKataDontoMeccs(kovetkezoMeccs.id)) ? ' [TOP 6 DÖNTŐ]' : '';
 
         kovetkezoMeccsSzoveg = kIsKata
-            ? `FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): [KATA] ${kv1 ? kv1.name + ' (' + kv1.club + ')' : '?'}`
+            ? `FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): [KATA]${kDontoCimke} ${kv1 ? kv1.name + ' (' + kv1.club + ')' : '?'}`
             : `FELKÉSZÜL (#${kovetkezoMeccs.matchOrder}): [AKA] ${kv1 ? kv1.name : '?'} vs. [SHIRO] ${kv2 ? kv2.name : '?'}`;
     } else {
         kovetkezoMeccsSzoveg = "FELKÉSZÜL: Nincs több várakozó mérkőzés ezen a tatamin.";
@@ -1008,7 +1009,8 @@ async function ellenorizKataSelejtezoEsTop6Donto(categoryId, tatamiId) {
         }
 
         TatamiMaster.megjelolKataDontoMeccsek(ujDontoMeccsIdk);
-        TatamiMaster.toast(`A Kata selejtező véget ért! A legjobb ${top6.length} versenyző (Top 6) bekerült a Döntőbe!`);
+        await TatamiMaster.rendezTatamiMenetrend(tatamiId);
+        TatamiMaster.toast(`A Kata selejtező véget ért! A legjobb ${top6.length} versenyző (Top 6) bekerült a korosztályos Döntőbe!`);
     } else {
         TatamiMaster.toast("Kata pontszám rögzítve!");
     }

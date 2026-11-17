@@ -887,6 +887,247 @@ const TatamiMaster = {
         return generalt;
     },
 
+    // --- KOROSZTÁLYOS ÉS KATEGÓRIÁS TATAMI-MENETREND RENDEZŐ MOTOR ---
+    isNoiKategoria: function(kat) {
+        if (!kat) return false;
+        const g = String(kat.gender || '').toLowerCase();
+        const n = String(kat.name || '').toLowerCase();
+        return g.includes('girl') || g.includes('women') || g.includes('female') || g.includes('nő') || g.includes('lány') ||
+               n.includes('girl') || n.includes('women') || n.includes('female') || n.includes('női') || n.includes('lány');
+    },
+
+    lekerSulySorrendErtek: function(kat) {
+        if (!kat || !kat.name) return 9999;
+        const nev = String(kat.name);
+
+        // Kata Kyu-csoportok (A -> B -> C kategória)
+        if (/-\s*A\s*kateg[oó]ria/i.test(nev)) return 1;
+        if (/-\s*B\s*kateg[oó]ria/i.test(nev)) return 2;
+        if (/-\s*C\s*kateg[oó]ria/i.test(nev)) return 3;
+
+        // Súlycsoportok (pl. -30 kg, -35 kg, +35 kg) növekvő sorrendben
+        const sulyMatch = nev.match(/([+-])\s*(\d+(?:[.,]\d+)?)\s*kg/i);
+        if (sulyMatch) {
+            const elojel = sulyMatch[1];
+            const ertek = parseFloat(sulyMatch[2].replace(',', '.')) || 0;
+            return elojel === '+' ? ertek + 0.001 : ertek;
+        }
+        return 9999;
+    },
+
+    lekerKorosztalyKulcs: function(kat) {
+        if (!kat) return '999_999';
+        const minA = kat.minAge ?? 0;
+        const maxA = kat.maxAge ?? 99;
+        return `${minA}_${maxA}`;
+    },
+
+    kategoriaSorrendHasonlito: function(katA, katB) {
+        if (!katA || !katB) return 0;
+        const minA = katA.minAge ?? 0;
+        const minB = katB.minAge ?? 0;
+        if (minA !== minB) return minA - minB;
+
+        const maxA = katA.maxAge ?? 99;
+        const maxB = katB.maxAge ?? 99;
+        if (maxA !== maxB) return maxA - maxB;
+
+        const noiA = TatamiMaster.isNoiKategoria(katA) ? 0 : 1;
+        const noiB = TatamiMaster.isNoiKategoria(katB) ? 0 : 1;
+        if (noiA !== noiB) return noiA - noiB;
+
+        const sulyA = TatamiMaster.lekerSulySorrendErtek(katA);
+        const sulyB = TatamiMaster.lekerSulySorrendErtek(katB);
+        if (sulyA !== sulyB) return sulyA - sulyB;
+
+        return (katA.id || 0) - (katB.id || 0);
+    },
+
+    bontKumiteMeccsekFordulokra: function(katMeccsek) {
+        const rendezett = [...(katMeccsek || [])].sort((a, b) => a.id - b.id);
+        const n = rendezett.length;
+
+        if (this.isKumiteAgrajz(rendezett)) {
+            const fordulok = [];
+            let korMeret = (n + 1) / 2;
+            let idx = 0;
+            while (korMeret >= 1) {
+                fordulok.push(rendezett.slice(idx, idx + korMeret));
+                idx += korMeret;
+                korMeret /= 2;
+            }
+            return fordulok;
+        }
+
+        const maradek = [...rendezett];
+        const korok = [];
+
+        while (maradek.length > 0) {
+            const aktualisKor = [];
+            const foglaltVersenyzok = new Set();
+
+            for (let i = 0; i < maradek.length; i++) {
+                const m = maradek[i];
+                const v1 = m.competitor1Id;
+                const v2 = m.competitor2Id;
+
+                const v1Foglalt = (v1 && foglaltVersenyzok.has(v1));
+                const v2Foglalt = (v2 && foglaltVersenyzok.has(v2));
+
+                if (!v1Foglalt && !v2Foglalt) {
+                    aktualisKor.push(m);
+                    if (v1) foglaltVersenyzok.add(v1);
+                    if (v2) foglaltVersenyzok.add(v2);
+                    maradek.splice(i, 1);
+                    i--;
+                }
+            }
+            korok.push(aktualisKor);
+        }
+
+        return korok;
+    },
+
+    /**
+     * Egy tatami mérkőzéseinek optimális sorrendbe állítása:
+     * 1. ELŐSZÖR MINDEN KATA, korosztályonként (pl. 8-9, majd 10-11, stb.):
+     *    - Adott korosztály Lány selejtező(k) -> Adott korosztály Fiú selejtező(k)
+     *    - Közvetlenül a korosztály Fiú selejtezője után: Adott korosztály Lány TOP 6 döntő(k) -> Adott korosztály Fiú TOP 6 döntő(k)
+     *    - Csak ezután következik a következő Kata korosztály!
+     * 2. MIUTÁN NINCS TÖBB KATA A TATAMIN, JÖNNEK A KUMITE KÜZDELMEK:
+     *    - Szintén korosztályonként végighaladva (növekvő életkor szerint),
+     *    - Korosztályon belül a kategóriákon (Lányok -> Fiúk, súlycsoportok szerint) fordulónként végigmenve egészen a korosztály döntőjéig,
+     *    - Majd jöhet a következő Kumite korosztály.
+     */
+    epitsOptimalisTatamiSorrend: function(tatamiMeccsek, kategoriak) {
+        if (!Array.isArray(tatamiMeccsek) || tatamiMeccsek.length === 0) return [];
+        const katLista = Array.isArray(kategoriak) ? kategoriak : [];
+
+        const katIdk = [...new Set(tatamiMeccsek.map(m => m.categoryId))];
+        const tatamiKategoriak = katIdk
+            .map(id => katLista.find(k => k.id === id) || { id: id, name: '', matchType: '', minAge: 999, maxAge: 999 })
+            .sort((a, b) => this.kategoriaSorrendHasonlito(a, b));
+
+        const kataKategoriak = tatamiKategoriak.filter(k => k.matchType && k.matchType.toUpperCase() === 'KATA');
+        const kumiteKategoriak = tatamiKategoriak.filter(k => !k.matchType || k.matchType.toUpperCase() !== 'KATA');
+
+        const csoportositKorosztalySzerint = (katTomb) => {
+            const csoportMap = new Map();
+            for (const kat of katTomb) {
+                const kulcs = this.lekerKorosztalyKulcs(kat);
+                if (!csoportMap.has(kulcs)) csoportMap.set(kulcs, []);
+                csoportMap.get(kulcs).push(kat);
+            }
+            return Array.from(csoportMap.values());
+        };
+
+        const vegsoTatamiSorrend = [];
+
+        // 1. FÁZIS: KATA KOROSZTÁLYONKÉNT
+        // (Korosztály Lány Selejtező -> Korosztály Fiú Selejtező -> Korosztály Lány Döntő -> Korosztály Fiú Döntő)
+        const kataKorosztalyCsoportok = csoportositKorosztalySzerint(kataKategoriak);
+        for (const korCsoport of kataKorosztalyCsoportok) {
+            // A) Az adott korosztály összes Kata SELEJTEZŐJE (Lányok, majd Fiúk)
+            for (const kKat of korCsoport) {
+                const selejtezok = tatamiMeccsek
+                    .filter(m => m.categoryId === kKat.id && !this.isKataDontoMeccs(m.id))
+                    .sort((a, b) => a.id - b.id);
+                vegsoTatamiSorrend.push(...selejtezok);
+            }
+            // B) Közvetlenül a korosztály Fiú selejtezője után: az adott korosztály Kata DÖNTŐI (Lány döntő, majd Fiú döntő)
+            for (const kKat of korCsoport) {
+                const dontok = tatamiMeccsek
+                    .filter(m => m.categoryId === kKat.id && this.isKataDontoMeccs(m.id))
+                    .sort((a, b) => a.id - b.id);
+                vegsoTatamiSorrend.push(...dontok);
+            }
+        }
+
+        // 2. FÁZIS: KUMITE KOROSZTÁLYONKÉNT (miután a tatamin nincs több Kata)
+        const kumiteKorosztalyCsoportok = csoportositKorosztalySzerint(kumiteKategoriak);
+        for (const korCsoport of kumiteKorosztalyCsoportok) {
+            const korosztalyForduloMap = [];
+            const korosztalyDontok = [];
+
+            for (const kumKat of korCsoport) {
+                const mLista = tatamiMeccsek.filter(m => m.categoryId === kumKat.id);
+                const fordulok = this.bontKumiteMeccsekFordulokra(mLista);
+
+                if (fordulok.length > 1) {
+                    const utolsoFordulo = fordulok.pop();
+                    korosztalyDontok.push(...utolsoFordulo);
+                }
+
+                korosztalyForduloMap.push({
+                    kategoria: kumKat,
+                    fordulok: fordulok
+                });
+            }
+
+            const maxForduloSzam = Math.max(0, ...korosztalyForduloMap.map(x => x.fordulok.length));
+            for (let korIdx = 0; korIdx < maxForduloSzam; korIdx++) {
+                for (const elem of korosztalyForduloMap) {
+                    if (elem.fordulok[korIdx]) {
+                        vegsoTatamiSorrend.push(...elem.fordulok[korIdx]);
+                    }
+                }
+            }
+
+            vegsoTatamiSorrend.push(...korosztalyDontok);
+        }
+
+        return vegsoTatamiSorrend;
+    },
+
+    rendezTatamiMenetrend: async function(celTatamiId = null) {
+        const [frissMeccsek, frissKategoriak, frissTatamik] = await Promise.all([
+            this.apiGet('Matches'),
+            this.apiGet('Categories'),
+            this.apiGet('Tatamis')
+        ]);
+
+        if (!Array.isArray(frissMeccsek) || frissMeccsek.length === 0) return 0;
+
+        const tatamiIdk = celTatamiId
+            ? [parseInt(celTatamiId)]
+            : [...new Set([
+                ...(Array.isArray(frissTatamik) ? frissTatamik.map(t => t.id) : []),
+                ...frissMeccsek.map(m => m.tatamiId)
+            ].filter(Boolean))];
+
+        const frissitesiIgeretek = [];
+
+        for (const tId of tatamiIdk) {
+            const tatamiMeccsek = frissMeccsek.filter(m => m.tatamiId === tId);
+            if (tatamiMeccsek.length === 0) continue;
+
+            const vegsoTatamiSorrend = this.epitsOptimalisTatamiSorrend(tatamiMeccsek, frissKategoriak);
+
+            for (let i = 0; i < vegsoTatamiSorrend.length; i++) {
+                const meccs = vegsoTatamiSorrend[i];
+                const ujSorszam = i + 1;
+                if (meccs.matchOrder !== ujSorszam) {
+                    meccs.matchOrder = ujSorszam;
+                    frissitesiIgeretek.push(this.apiSend('Matches/' + meccs.id, 'PUT', {
+                        id: meccs.id,
+                        categoryId: meccs.categoryId,
+                        tatamiId: meccs.tatamiId,
+                        competitor1Id: meccs.competitor1Id ?? null,
+                        competitor2Id: meccs.competitor2Id ?? null,
+                        matchOrder: ujSorszam,
+                        isFinished: Boolean(meccs.isFinished),
+                        winnerId: meccs.winnerId ?? null
+                    }));
+                }
+            }
+        }
+
+        if (frissitesiIgeretek.length > 0) {
+            await Promise.all(frissitesiIgeretek);
+        }
+        return frissitesiIgeretek.length;
+    },
+
     // --- EMOJI-MENTESÍTŐ (AUTOMATIKUS KARAKTERTISZTÍTÓ) ---
     stripEmojis: function(str) {
         if (typeof str !== 'string') return str;

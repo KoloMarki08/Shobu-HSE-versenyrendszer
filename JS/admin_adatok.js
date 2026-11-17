@@ -1756,9 +1756,15 @@ async function kategoriaSorsolasa() {
     const meglevoKatMeccsek = globalMerkozesek.filter(m => m.categoryId === katId);
     if (meglevoKatMeccsek.length > 0) {
         if (!confirm(`Ebben a kategóriában már van ${meglevoKatMeccsek.length} db mérkőzés! Töröljük őket és újrasorsoljuk?`)) return;
+        const torlendoIdk = new Set(meglevoKatMeccsek.map(rm => rm.id));
+        const dontoIdk = TatamiMaster.lekerKataDontoMeccsIdk().filter(id => !torlendoIdk.has(id));
+        localStorage.setItem('kataDontoMeccsIdk', JSON.stringify(dontoIdk));
+        const kataTar = TatamiMaster.lekerKataEredmenyek();
         for (let rm of meglevoKatMeccsek) {
+            delete kataTar[rm.id];
             await TatamiMaster.apiSend('Matches/' + rm.id, 'DELETE');
         }
+        localStorage.setItem('kataEredmenyek', JSON.stringify(kataTar));
     }
 
     const kiemeltIdk = Array.from(document.querySelectorAll('.kiemelt-versenyzo-cb:checked')).map(cb => parseInt(cb.value));
@@ -1838,6 +1844,7 @@ function merkozesekBetoltese() {
         const v2 = globalVersenyzok.find(v => v.id === m.competitor2Id);
         const gy = globalVersenyzok.find(v => v.id === m.winnerId);
         const isKata = (kat && kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+        const isKataDonto = isKata && TatamiMaster.isKataDontoMeccs(m.id);
 
         if (!szurtTatamiId && m.tatamiId !== elozoTatamiId) {
             elozoTatamiId = m.tatamiId;
@@ -1856,6 +1863,12 @@ function merkozesekBetoltese() {
             ? `<span style="color:#18181B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${TatamiMaster.icon('check', 14)} Kész (${gy ? gy.name : 'Erőnyerő'})</span>`
             : `<span style="color:#52525B;font-weight:700;display:inline-flex;align-items:center;gap:4px;">${TatamiMaster.icon('clock', 14)} Várakozik</span>`;
 
+        const kataFazisBadge = isKata
+            ? (isKataDonto
+                ? ` <span style="background:#990000;color:#FAF8F5;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:800;margin-left:4px;">TOP 6 DÖNTŐ</span>`
+                : ` <span style="background:#E4E0D7;color:#18181B;padding:2px 7px;border-radius:4px;font-size:0.72rem;font-weight:700;margin-left:4px;">SELEJTEZŐ</span>`)
+            : '';
+
         html += `<tr class="draggable-row" data-match-id="${m.id}" draggable="true"
                      ondragstart="dragStart(event, ${m.id})"
                      ondragenter="dragEnter(event)"
@@ -1873,9 +1886,9 @@ function merkozesekBetoltese() {
                 </div>
             </td>
             <td>${tat ? tat.name : '-'}</td>
-            <td><strong>${kat ? kat.name : '-'}</strong></td>
+            <td><strong>${kat ? kat.name : '-'}</strong>${kataFazisBadge}</td>
             <td style="color:#18181B;font-weight:700;">${v1 ? v1.name + ' <small style="color:#52525B;">(' + v1.club + ')</small>' : 'Várakozik...'}</td>
-            <td>${isKata ? '<em>KATA EGYÉNI</em>' : (v2 ? v2.name + ' <small style="color:#52525B;">(' + v2.club + ')</small>' : (m.isFinished ? '<em>Erőnyerő</em>' : 'Várakozik...'))}</td>
+            <td>${isKata ? (isKataDonto ? '<strong style="color:#990000;">KATA TOP 6 DÖNTŐ</strong>' : '<em>KATA SELEJTEZŐ</em>') : (v2 ? v2.name + ' <small style="color:#52525B;">(' + v2.club + ')</small>' : (m.isFinished ? '<em>Erőnyerő</em>' : 'Várakozik...'))}</td>
             <td>${statuszHtml}</td>
             <td style="white-space:nowrap;">
                 <button class="btn btn-outline" draggable="false" onmousedown="event.stopPropagation()" style="padding:4px 8px;font-size:0.8rem;" onclick="meccsUjranyitasaReset(${m.id})">${TatamiMaster.icon('refresh', 13)} Újranyitás</button>
@@ -2632,69 +2645,15 @@ async function adatbazisTeljesLenullazas() {
 // VERSENYNAPI TATAMI-MENETREND ÉS PIHENŐIDŐS ROTÁCIÓS MOTOR
 // ============================================================================
 function isNoiKategoria(kat) {
-    if (!kat) return false;
-    const g = (kat.gender || '').toLowerCase();
-    const n = (kat.name || '').toLowerCase();
-    return g.includes('girl') || g.includes('women') || g.includes('nő') || g.includes('lány') ||
-           n.includes('girl') || n.includes('women') || n.includes('női') || n.includes('lány');
+    return TatamiMaster.isNoiKategoria(kat);
 }
 
 function kategoriaSorrendHasonlito(katA, katB) {
-    if (!katA || !katB) return 0;
-    const korA = katA.minAge ?? 0;
-    const korB = katB.minAge ?? 0;
-    if (korA !== korB) return korA - korB;
-
-    const noiA = isNoiKategoria(katA) ? 0 : 1;
-    const noiB = isNoiKategoria(katB) ? 0 : 1;
-    if (noiA !== noiB) return noiA - noiB;
-
-    return (katA.id || 0) - (katB.id || 0);
+    return TatamiMaster.kategoriaSorrendHasonlito(katA, katB);
 }
 
 function bontKumiteMeccsekFordulokra(katMeccsek) {
-    let rendezett = [...katMeccsek].sort((a, b) => a.id - b.id);
-    let n = rendezett.length;
-
-    if (TatamiMaster.isKumiteAgrajz(rendezett)) {
-        let fordulok = [];
-        let korMeret = (n + 1) / 2;
-        let idx = 0;
-        while (korMeret >= 1) {
-            fordulok.push(rendezett.slice(idx, idx + korMeret));
-            idx += korMeret;
-            korMeret /= 2;
-        }
-        return fordulok;
-    }
-
-    let maradek = [...rendezett];
-    let korok = [];
-
-    while (maradek.length > 0) {
-        let aktualisKor = [];
-        let foglaltVersenyzok = new Set();
-
-        for (let i = 0; i < maradek.length; i++) {
-            let m = maradek[i];
-            let v1 = m.competitor1Id;
-            let v2 = m.competitor2Id;
-
-            let v1Foglalt = (v1 && foglaltVersenyzok.has(v1));
-            let v2Foglalt = (v2 && foglaltVersenyzok.has(v2));
-
-            if (!v1Foglalt && !v2Foglalt) {
-                aktualisKor.push(m);
-                if (v1) foglaltVersenyzok.add(v1);
-                if (v2) foglaltVersenyzok.add(v2);
-                maradek.splice(i, 1);
-                i--;
-            }
-        }
-        korok.push(aktualisKor);
-    }
-
-    return korok;
+    return TatamiMaster.bontKumiteMeccsekFordulokra(katMeccsek);
 }
 
 async function automatikusTatamiMenetrendRendezes(celTatamiId = null, csendes = false) {
@@ -2704,80 +2663,10 @@ async function automatikusTatamiMenetrendRendezes(celTatamiId = null, csendes = 
         return;
     }
 
-    const erintettTatamik = celTatamiId
-        ? globalTatamik.filter(t => t.id === celTatamiId)
-        : globalTatamik;
-
-    let frissitesiIgeretek = [];
-
-    for (let tat of erintettTatamik) {
-        const tatamiMeccsek = frissMeccsek.filter(m => m.tatamiId === tat.id);
-        if (tatamiMeccsek.length === 0) continue;
-
-        const katIdk = [...new Set(tatamiMeccsek.map(m => m.categoryId))];
-        const tatamiKategoriak = katIdk
-            .map(id => globalKategoriak.find(k => k.id === id))
-            .filter(Boolean)
-            .sort(kategoriaSorrendHasonlito);
-
-        const kataKategoriak = tatamiKategoriak.filter(k => k.matchType && k.matchType.toUpperCase() === 'KATA');
-        const kumiteKategoriak = tatamiKategoriak.filter(k => !k.matchType || k.matchType.toUpperCase() !== 'KATA');
-
-        let vegsoTatamiSorrend = [];
-
-        for (let kKat of kataKategoriak) {
-            let kMeccsek = tatamiMeccsek
-                .filter(m => m.categoryId === kKat.id)
-                .sort((a, b) => a.id - b.id);
-            vegsoTatamiSorrend.push(...kMeccsek);
-        }
-
-        let kategoriaForduloMap = [];
-        let felnottDontok = [];
-
-        for (let kumKat of kumiteKategoriak) {
-            let mLista = tatamiMeccsek.filter(m => m.categoryId === kumKat.id);
-            let fordulok = bontKumiteMeccsekFordulokra(mLista);
-            let isFelnott = ((kumKat.minAge ?? 0) >= 18);
-
-            if (isFelnott && fordulok.length > 1) {
-                let utolsoFordulo = fordulok.pop();
-                felnottDontok.push(...utolsoFordulo);
-            }
-
-            kategoriaForduloMap.push({
-                kategoria: kumKat,
-                fordulok: fordulok
-            });
-        }
-
-        let maxForduloSzam = Math.max(0, ...kategoriaForduloMap.map(x => x.fordulok.length));
-        for (let korIdx = 0; korIdx < maxForduloSzam; korIdx++) {
-            for (let elem of kategoriaForduloMap) {
-                if (elem.fordulok[korIdx]) {
-                    vegsoTatamiSorrend.push(...elem.fordulok[korIdx]);
-                }
-            }
-        }
-
-        vegsoTatamiSorrend.push(...felnottDontok);
-
-        for (let i = 0; i < vegsoTatamiSorrend.length; i++) {
-            let meccs = vegsoTatamiSorrend[i];
-            let ujSorszam = i + 1;
-            if (meccs.matchOrder !== ujSorszam) {
-                meccs.matchOrder = ujSorszam;
-                frissitesiIgeretek.push(TatamiMaster.apiSend('Matches/' + meccs.id, 'PUT', meccs));
-            }
-        }
-    }
-
-    if (frissitesiIgeretek.length > 0) {
-        await Promise.all(frissitesiIgeretek);
-    }
+    await TatamiMaster.rendezTatamiMenetrend(celTatamiId);
 
     if (!csendes) {
-        TatamiMaster.toast("Tatami menetrend optimalizálva! (Kata Lányok->Fiúk, Kumite pihenős rotáció + Felnőtt döntők a végén!)");
+        TatamiMaster.toast("Tatami menetrend optimalizálva! (1. Kata korosztályonként: Lány->Fiú selejtező, majd Lány->Fiú döntő; 2. Kumite korosztályonként és kategóriánként rotálva!)");
     }
     await mindenAdatFrissitese();
 }
@@ -2788,13 +2677,16 @@ async function osszesKategoriaAutomatikusSorsolasa() {
         return;
     }
 
-    if (!confirm("AUTOMATIKUS TELJES SORSOLÁS & MENETREND:\n\nKisorsoljuk az összes kategóriát a Tatami A, B, C pástokra (korosztályos elosztásban), és felépítsük a pihenőidős, rotációs menetrendet?")) {
+    if (!confirm("AUTOMATIKUS TELJES SORSOLÁS & MENETREND:\n\nKisorsoljuk az összes kategóriát a Tatami A, B, C pástokra (korosztályos elosztásban), és felépítsük a korosztályos Kata (Selejtező -> Döntő) + Kumite menetrendet?")) {
         return;
     }
 
     for (let m of globalMerkozesek) {
         await TatamiMaster.apiSend('Matches/' + m.id, 'DELETE');
     }
+    localStorage.removeItem('kataDontoMeccsIdk');
+    localStorage.removeItem('kataEredmenyek');
+    localStorage.removeItem('kumiteReszletek');
 
     const tatA = globalTatamik[0];
     const tatB = globalTatamik[1] || tatA;
@@ -2813,11 +2705,13 @@ async function osszesKategoriaAutomatikusSorsolasa() {
 
         if (indulok.length === 0 || (!isKata && indulok.length < 2)) continue;
 
+        // Azonos korosztály Kata és Kumite számai ugyanarra a tatamira kerülnek:
+        // Tatami A: 8-11 év (Gyerek) | Tatami B: 12-15 év (Serdülő & Ifjúsági) | Tatami C: 16+ év (Junior, Felnőtt, Senior)
         let celTatami = tatA;
         const minAge = kat.minAge ?? 0;
-        if (minAge <= 11 || (isKata && minAge <= 13)) {
+        if (minAge <= 11) {
             celTatami = tatA;
-        } else if (minAge >= 16 && minAge <= 34) {
+        } else if (minAge <= 15) {
             celTatami = tatB;
         } else {
             celTatami = tatC;
@@ -2849,5 +2743,6 @@ async function osszesKategoriaAutomatikusSorsolasa() {
     }
 
     await automatikusTatamiMenetrendRendezes(null, true);
-    TatamiMaster.toast("Teljes sorsolás és pihenőidős tatami-menetrend elkészült!");
+    TatamiMaster.toast("Teljes sorsolás és korosztályos tatami-menetrend elkészült!");
 }
+
