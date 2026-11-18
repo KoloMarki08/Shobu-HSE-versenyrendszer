@@ -155,7 +155,7 @@
         </div>
     </div>
 
-    <script src="../JS/core.js?v=20261116_v7"></script>
+    <script src="../JS/core.js?v=20261118_v1"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const tatamiSzam = urlParams.get('tatami');
@@ -177,7 +177,12 @@
 
             try {
                 const infoEl = document.getElementById('obsMatchInfo');
-                if (infoEl) infoEl.innerText = d.matchInfo || 'TATAMI ÉLŐ STREAM';
+                const aktStatus = (d.statusBanner && d.statusText) ? String(d.statusText) : '';
+                if (infoEl) {
+                    infoEl.innerText = aktStatus
+                        ? `${aktStatus} — ${d.matchInfo || 'TATAMI ÉLŐ STREAM'}`
+                        : (d.matchInfo || 'TATAMI ÉLŐ STREAM');
+                }
                 const isKata = (d.mode && d.mode.toUpperCase() === 'KATA');
 
                 document.getElementById('obsKumiteRow').style.display = isKata ? 'none' : 'grid';

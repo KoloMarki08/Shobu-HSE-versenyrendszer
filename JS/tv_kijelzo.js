@@ -26,10 +26,24 @@ function tvKijelzoFrissites() {
     }
     if (!adatok) return;
 
-    // 1. Felső kategória és mérkőzés információ
+    // 1. Felső kategória és mérkőzés információ (+ Orvosi ápolás / Tatami szünet kijelzés)
     const matchInfoEl = document.getElementById('tvMatchInfo');
+    const statusBannerEl = document.getElementById('tvStatusBanner');
+    const aktStatusText = (adatok.statusBanner && adatok.statusText) ? String(adatok.statusText) : '';
     if (matchInfoEl) {
-        matchInfoEl.innerText = adatok.matchInfo || 'TATAMI MASTER — ÉLŐ KÖVETÉS';
+        matchInfoEl.innerText = aktStatusText
+            ? `${aktStatusText} — ${adatok.matchInfo || 'TATAMI MASTER'}`
+            : (adatok.matchInfo || 'TATAMI MASTER — ÉLŐ KÖVETÉS');
+    }
+    if (statusBannerEl) {
+        if (aktStatusText) {
+            statusBannerEl.style.display = 'block';
+            statusBannerEl.style.background = (adatok.statusBanner === 'ORVOSI_APOLAS') ? '#990000' : '#18181B';
+            statusBannerEl.innerText = aktStatusText;
+        } else {
+            statusBannerEl.style.display = 'none';
+            statusBannerEl.innerText = '';
+        }
     }
 
     // 2. Alsó "Felkészül" sáv

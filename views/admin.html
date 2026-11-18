@@ -10,7 +10,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261116_v7">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261118_v1">
 </head>
 
 <body>
@@ -242,18 +242,31 @@
                     </div>
                     <div class="admin-field-group" style="max-width: 145px; min-width: 120px;">
                         <label class="admin-field-label" for="ujVersenyzoSuly">4. Testsúly (kg)</label>
-                        <input type="number" id="ujVersenyzoSuly" placeholder="Pl. 65" class="input-field">
+                        <input type="number" id="ujVersenyzoSuly" placeholder="Pl. 65" class="input-field" oninput="frissitAdminKategoriaAjanlas()">
                     </div>
                     <div class="admin-field-group" style="max-width: 160px; min-width: 135px;">
                         <label class="admin-field-label" for="ujVersenyzoSzulEv">5. Születési év</label>
-                        <input type="number" id="ujVersenyzoSzulEv" placeholder="Pl. 2008" class="input-field">
+                        <input type="number" id="ujVersenyzoSzulEv" placeholder="Pl. 2008" class="input-field" oninput="frissitAdminKategoriaAjanlas()">
+                    </div>
+                    <div class="admin-field-group" style="max-width: 155px; min-width: 130px;">
+                        <label class="admin-field-label" for="ujVersenyzoNem">6. Nem (Ajánlóhoz)</label>
+                        <select id="ujVersenyzoNem" class="input-field" onchange="frissitAdminKategoriaAjanlas()">
+                            <option value="">Automatikus / Mind</option>
+                            <option value="Férfi">Férfi / Fiú</option>
+                            <option value="Női">Női / Lány</option>
+                        </select>
                     </div>
 
                     <div style="width: 100%; margin-top: 8px; background: #FFFFFF; border: 1px solid #E4E0D7; border-radius: 8px; padding: 12px 14px;">
-                        <label style="font-weight: 800; font-size: 0.9rem; color: #18181B; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            6. Melyik kategóriá(k)ban indul? (Pipáld be nyugodtan, akár többet is – pl. Kata és Kumite):
-                        </label>
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                            <label style="font-weight: 800; font-size: 0.9rem; color: #18181B; display: flex; align-items: center; gap: 6px; margin: 0;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                7. Melyik kategóriá(k)ban indul? (Az életkor, súly és nem alapján ajánlott kategóriákat megjelöljük):
+                            </label>
+                            <button type="button" class="btn btn-outline-blue" style="padding:5px 12px;font-size:0.8rem;font-weight:700;" onclick="alkalmazAdminAjanlottKategoriak()">
+                                Ajánlott kategóriák automatikus bepipálása
+                            </button>
+                        </div>
                         <div id="adminUjVersenyzoKatCheckboxes" class="kat-checkbox-grid"></div>
                     </div>
 
@@ -263,6 +276,23 @@
                             Versenyző Mentése (+ Benevezés)
                         </button>
                     </div>
+                </div>
+
+                <!-- TÖMEGES EXCEL / CSV NEVEZÉS IMPORT ÉS EXPORT (1.1) -->
+                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #CFC9BC; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <strong style="font-size: 0.84rem; color: #18181B;">Tömeges Excel / CSV Nevezés Importálása:</strong>
+                        <input type="file" id="csvImportFileInput" accept=".csv,.txt,.tsv" class="input-field" style="max-width: 240px; padding: 5px 8px; font-size: 0.8rem;">
+                        <button type="button" class="btn btn-outline-green" style="padding: 7px 14px; font-size: 0.82rem;" onclick="inditTomegesCsvImport()">
+                            CSV / Excel Fájl Importálása
+                        </button>
+                        <button type="button" class="btn btn-outline" style="padding: 7px 12px; font-size: 0.8rem;" onclick="letoltMintaNevezesCsv()">
+                            Minta CSV Sablon Letöltése
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-outline-blue" style="padding: 7px 14px; font-size: 0.82rem;" onclick="exportVersenyzokCsv()">
+                        Versenyzők &amp; Nevezések Exportálása (Excel CSV)
+                    </button>
                 </div>
             </div>
 
@@ -641,6 +671,35 @@
                 </div>
             </div>
 
+            <!-- C/2) TATAMI-TERHELÉSELOSZTÓ: ÉLŐ ÁTHELYEZÉS TATAMIK KÖZÖTT (3.7) -->
+            <div id="tatamiTerhelesElosztoBox" class="admin-section-box" style="background:#FAF8F5;border:1.5px solid #CFC9BC;">
+                <div class="admin-section-header">
+                    <div>
+                        <h3 class="admin-section-title">
+                            <span class="admin-section-num">TATAMI-TERHELÉSELOSZTÓ</span>
+                            Kategória Hátralévő Mérkőzéseinek Élő Áthelyezése Másik Tatamira
+                        </h3>
+                        <small style="color:#52525B;display:block;margin-top:4px;">
+                            Ha az egyik tatami már végzett vagy hamarabb felszabadul, egyetlen kattintással átmozgathatod rá egy túlterhelt tatami még le nem játszott kategóriáját.
+                        </small>
+                    </div>
+                </div>
+                <div id="tatamiTerhelesKartyak" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px;margin-bottom:12px;"></div>
+                <div class="add-form-container" style="margin-bottom:0;align-items:flex-end;">
+                    <div class="admin-field-group" style="flex:1.6;min-width:220px;">
+                        <label class="admin-field-label" for="athelyezendoKategoriaSelect">1. Áthelyezendő kategória (hátralévő meccsekkel)</label>
+                        <select id="athelyezendoKategoriaSelect" class="input-field"></select>
+                    </div>
+                    <div class="admin-field-group" style="flex:1;min-width:170px;">
+                        <label class="admin-field-label" for="celTatamiAthelyezesSelect">2. Cél tatami (ahová átkerül)</label>
+                        <select id="celTatamiAthelyezesSelect" class="input-field"></select>
+                    </div>
+                    <button type="button" class="btn btn-outline-blue" style="padding:11px 20px;" onclick="athelyezKategoriaMasikTatamira()">
+                        Hátralévő Meccsek Áthelyezése a Cél Tatamira
+                    </button>
+                </div>
+            </div>
+
             <!-- D) KISORSOLT MÉRKŐZÉSEK MENETRENDJE -->
             <div class="admin-section-box" style="margin-bottom: 0;">
                 <div class="admin-section-header" style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
@@ -653,11 +712,16 @@
                             Tipp: A sorokat a bal oldali fogónál (&#8942;&#8942;) megfogva áthúzhatod egy másik mérkőzésre, vagy használhatod a fel/le léptető gombokat!
                         </small>
                     </div>
-                    <div>
-                        <label for="menetrendTatamiSzuroSelect" style="font-size:0.78rem;font-weight:700;color:#52525B;display:block;margin-bottom:4px;">Tatami szűrő:</label>
-                        <select id="menetrendTatamiSzuroSelect" class="form-control" style="min-width: 220px; width: auto;" onchange="merkozesekBetoltese()">
-                            <option value="ALL">Összes Tatami (csoportosítva)</option>
-                        </select>
+                    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <div>
+                            <label for="menetrendTatamiSzuroSelect" style="font-size:0.78rem;font-weight:700;color:#52525B;display:block;margin-bottom:4px;">Tatami szűrő:</label>
+                            <select id="menetrendTatamiSzuroSelect" class="form-control" style="min-width: 220px; width: auto;" onchange="merkozesekBetoltese()">
+                                <option value="ALL">Összes Tatami (csoportosítva)</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-outline-blue" style="padding:9px 14px;font-size:0.82rem;" onclick="exportMenetrendCsv()">
+                            Menetrend Exportálása (Excel CSV)
+                        </button>
                     </div>
                 </div>
 
@@ -728,10 +792,10 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261116_v7"></script>
-    <script src="../JS/auth.js?v=20261116_v7"></script>
-    <script src="../JS/tabs.js?v=20261116_v7"></script>
-    <script src="../JS/admin_adatok.js?v=20261116_v7"></script>
+    <script src="../JS/core.js?v=20261118_v1"></script>
+    <script src="../JS/auth.js?v=20261118_v1"></script>
+    <script src="../JS/tabs.js?v=20261118_v1"></script>
+    <script src="../JS/admin_adatok.js?v=20261118_v1"></script>
 </body>
 
 </html>

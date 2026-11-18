@@ -191,8 +191,58 @@ async function extraSulyBontas() {
     }
 }
 
-// 2. EREDMENYEK.HTML - DOBOGÓSOK, KLUBRANGLISTA & SABLONOS OKLEVÉL
+// 2. EREDMENYEK.HTML - DOBOGÓSOK, KLUBRANGLISTA, PÓDIUM PIPÁLÓ (4.11) & SABLONOS OKLEVÉL
 let eredmenyDobogosLista = [];
+let aktivDijatadoSzuro = 'ALL';
+
+function allitEredmenyekDijatadoSzuro(szuro) {
+    aktivDijatadoSzuro = szuro || 'ALL';
+    initEredmenyekPage();
+}
+
+function toggleKategoriaDijatadoStatusz(categoryId, mezo) {
+    const map = TatamiMaster.lekerDijatadoAllapot();
+    const akt = map[String(categoryId)] || { nyomtatva: false, atadva: false };
+    const ujErtek = !akt[mezo];
+    TatamiMaster.mentKategoriaDijatadoAllapot(categoryId, { [mezo]: ujErtek });
+    initEredmenyekPage();
+}
+
+function exportEredmenyekCsv() {
+    const { kategoriaEredmenyek, klubLista } = TatamiMaster.szamolDobogosokEsKlubok(exKategoriak, exMeccsek, exVersenyzok);
+    const dijatadoMap = TatamiMaster.lekerDijatadoAllapot();
+    const fejlec = ['Kategória', 'Típus', 'Helyezés', 'Versenyző Neve', 'Klub / Egyesület', 'Eredmény', 'Oklevél kinyomtatva', 'Díjátadó megtörtént'];
+    const sorok = [];
+
+    for (const ke of kategoriaEredmenyek) {
+        const kat = ke.kategoria;
+        const st = dijatadoMap[String(kat.id)] || { nyomtatva: false, atadva: false };
+        for (const d of ke.dobogosok) {
+            if (!d.v) continue;
+            sorok.push([
+                kat.name || '',
+                kat.matchType || '',
+                `${d.hely}. hely`,
+                d.v.name || '',
+                d.v.club || '',
+                d.extra || '',
+                st.nyomtatva ? 'Igen' : 'Nem',
+                st.atadva ? 'Igen' : 'Nem'
+            ]);
+        }
+    }
+
+    if (klubLista.length > 0) {
+        sorok.push([]);
+        sorok.push(['--- KLUBOK PONTVERSENYE ---', 'Helyezés', 'Klub', 'Arany (5p)', 'Ezüst (3p)', 'Bronz (1p)', 'Összpontszám', '']);
+        klubLista.forEach((k, i) => {
+            sorok.push(['KLUBRANGLISTA', `${i + 1}.`, k.klub, k.arany, k.ezust, k.bronz, `${k.pont} pont`, '']);
+        });
+    }
+
+    const vId = TatamiMaster.lekerAktualisVersenyId();
+    return TatamiMaster.letoltCsvFajl(`TATAMI_MASTER_eredmenyek_v${vId}.csv`, fejlec, sorok);
+}
 
 function initEredmenyekPage() {
     const user = TatamiMaster.lekerBejelentkezes();
@@ -203,21 +253,41 @@ function initEredmenyekPage() {
 
     const esc = (s) => TatamiMaster.escapeHtml(s);
     const { kategoriaEredmenyek, klubLista } = TatamiMaster.szamolDobogosokEsKlubok(exKategoriak, exMeccsek, exVersenyzok);
+    const dijatadoMap = TatamiMaster.lekerDijatadoAllapot();
+
+    let atadvaDb = 0;
+    let varakozikDb = 0;
+    for (const ke of kategoriaEredmenyek) {
+        const st = dijatadoMap[String(ke.kategoria.id)] || {};
+        if (st.atadva) atadvaDb++;
+        else varakozikDb++;
+    }
+
+    const szuroSav = document.getElementById('eredmenyekDijatadoSzuroSav');
+    if (szuroSav) {
+        const btnStyle = (akt) => akt
+            ? 'background:#18181B;color:#FAF8F5;border-color:#18181B;font-weight:800;'
+            : 'background:#FFFFFF;color:#18181B;';
+        szuroSav.innerHTML = `
+            <button type="button" class="btn btn-outline" style="padding:6px 12px;font-size:0.8rem;${btnStyle(aktivDijatadoSzuro === 'ALL')}" onclick="allitEredmenyekDijatadoSzuro('ALL')">
+                Összes lezárt (${kategoriaEredmenyek.length})
+            </button>
+            <button type="button" class="btn btn-outline" style="padding:6px 12px;font-size:0.8rem;${btnStyle(aktivDijatadoSzuro === 'PENDING')}" onclick="allitEredmenyekDijatadoSzuro('PENDING')">
+                Díjátadóra vár (${varakozikDb})
+            </button>
+            <button type="button" class="btn btn-outline" style="padding:6px 12px;font-size:0.8rem;${btnStyle(aktivDijatadoSzuro === 'DONE')}" onclick="allitEredmenyekDijatadoSzuro('DONE')">
+                Díjátadó kész (${atadvaDb})
+            </button>
+        `;
+    }
 
     eredmenyDobogosLista = [];
     let dobogoHtml = '';
 
     for (let ke of kategoriaEredmenyek) {
         const kat = ke.kategoria;
-        const katNev = esc(kat.name || '');
-        dobogoHtml += `<div style="background:#FFFFFF;border:1px solid #E4E0D7;border-radius:10px;padding:18px;margin-bottom:15px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px 0;">
-                <h3 style="margin:0;display:flex;align-items:center;gap:8px;color:#18181B;">${TatamiMaster.icon('trophy', 18)} ${katNev} (${esc(kat.matchType || '')})</h3>
-                <button type="button" class="btn btn-outline-green" style="padding:5px 12px;font-size:0.84rem;" onclick="nyomtatKategoriaOklevelek(${kat.id})">
-                    ${TatamiMaster.icon('print', 14)} Kategória okleveleinek nyomtatása
-                </button>
-            </div>
-            <table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>Klub</th><th>Eredmény</th><th>Oklevél</th></tr>`;
+        const st = dijatadoMap[String(kat.id)] || { nyomtatva: false, atadva: false };
+        const katDobogosIndexek = [];
         for (let d of ke.dobogosok) {
             if (!d.v) continue;
             const idx = eredmenyDobogosLista.length;
@@ -228,6 +298,40 @@ function initEredmenyekPage() {
                 kategoria: kat.name,
                 helyezes: d.hely
             });
+            katDobogosIndexek.push({ d, idx });
+        }
+
+        if (aktivDijatadoSzuro === 'PENDING' && st.atadva) continue;
+        if (aktivDijatadoSzuro === 'DONE' && !st.atadva) continue;
+
+        const katNev = esc(kat.name || '');
+        const statuszBadge = st.atadva
+            ? `<span style="background:#18181B;color:#FAF8F5;padding:3px 9px;border-radius:6px;font-size:0.75rem;font-weight:800;">DÍJÁTADÓ KÉSZ</span>`
+            : `<span style="background:#FAF5F5;color:#990000;border:1px solid #990000;padding:3px 9px;border-radius:6px;font-size:0.75rem;font-weight:800;">DÍJÁTADÓRA VÁR</span>`;
+
+        dobogoHtml += `<div style="background:#FFFFFF;border:1.5px solid ${st.atadva ? '#CFC9BC' : '#18181B'};border-radius:10px;padding:18px;margin-bottom:15px;opacity:${st.atadva ? '0.86' : '1'};">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px 0;">
+                <h3 style="margin:0;display:flex;align-items:center;gap:8px;color:#18181B;flex-wrap:wrap;">
+                    ${TatamiMaster.icon('trophy', 18)} ${katNev} (${esc(kat.matchType || '')}) ${statuszBadge}
+                </h3>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:700;cursor:pointer;background:#FAF8F5;border:1px solid #CFC9BC;padding:5px 10px;border-radius:6px;">
+                        <input type="checkbox" ${st.nyomtatva ? 'checked' : ''} onchange="toggleKategoriaDijatadoStatusz(${kat.id}, 'nyomtatva')">
+                        <span>Oklevél kinyomtatva</span>
+                    </label>
+                    <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:800;cursor:pointer;background:${st.atadva ? '#F3F0EA' : '#FAF5F5'};border:1px solid ${st.atadva ? '#18181B' : '#990000'};color:${st.atadva ? '#18181B' : '#990000'};padding:5px 10px;border-radius:6px;">
+                        <input type="checkbox" ${st.atadva ? 'checked' : ''} onchange="toggleKategoriaDijatadoStatusz(${kat.id}, 'atadva')">
+                        <span>Díjátadó megtörtént</span>
+                    </label>
+                    <button type="button" class="btn btn-outline-green" style="padding:5px 12px;font-size:0.84rem;" onclick="nyomtatKategoriaOklevelek(${kat.id})">
+                        ${TatamiMaster.icon('print', 14)} Kategória okleveleinek nyomtatása
+                    </button>
+                </div>
+            </div>
+            <table class="data-table"><tr><th>Helyezés</th><th>Versenyző</th><th>Klub</th><th>Eredmény</th><th>Oklevél</th></tr>`;
+        for (let elem of katDobogosIndexek) {
+            const d = elem.d;
+            const idx = elem.idx;
             let ikon = `${TatamiMaster.icon('medal', 15)} ${d.hely}. hely`;
             dobogoHtml += `<tr>
                 <td><strong>${ikon}</strong></td>
@@ -240,7 +344,7 @@ function initEredmenyekPage() {
         dobogoHtml += `</table></div>`;
     }
 
-    document.getElementById('dobogosokContainer').innerHTML = dobogoHtml || '<p>Még nincs lezárt kategória.</p>';
+    document.getElementById('dobogosokContainer').innerHTML = dobogoHtml || '<p>Nincs a szűrőnek megfelelő lezárt kategória.</p>';
 
     let kHtml = `<table class="data-table"><tr><th>Helyezés</th><th>Klub / Egyesület</th><th>${TatamiMaster.icon('medal', 14)} Arany (5p)</th><th>${TatamiMaster.icon('medal', 14)} Ezüst (3p)</th><th>${TatamiMaster.icon('medal', 14)} Bronz (1p)</th><th>Összpontszám</th></tr>`;
     for (let i = 0; i < klubLista.length; i++) {
@@ -276,6 +380,8 @@ function nyomtatKategoriaOklevelek(categoryId) {
         TatamiMaster.toast('Ehhez a kategóriához még nincs lezárt dobogós.', 'figyelem');
         return;
     }
+    TatamiMaster.mentKategoriaDijatadoAllapot(categoryId, { nyomtatva: true });
+    initEredmenyekPage();
     TatamiMaster.nyomtatOklevelek(TatamiMaster.lekerAktualisVersenyId(), tetelek);
 }
 
@@ -284,6 +390,11 @@ function nyomtatOsszesOklevelet() {
         TatamiMaster.toast('Még nincs lezárt kategória oklevélnyomtatáshoz.', 'figyelem');
         return;
     }
+    const katIdk = Array.from(new Set(eredmenyDobogosLista.map(t => t.categoryId)));
+    for (const kId of katIdk) {
+        TatamiMaster.mentKategoriaDijatadoAllapot(kId, { nyomtatva: true });
+    }
+    initEredmenyekPage();
     TatamiMaster.nyomtatOklevelek(TatamiMaster.lekerAktualisVersenyId(), eredmenyDobogosLista);
 }
 

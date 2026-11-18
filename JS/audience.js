@@ -213,8 +213,20 @@ async function audienceAdatokBetoltese() {
         frissitSelectMezo('teamTag3Select', versOpciok, '-- 3. Csapattag (opcionális) --');
         frissitSelectMezo('mikorKuzdokVersenyzoSelect', versOpciok, '-- Vagy válassz versenyzőt a listából --');
 
+        const klubNevek = Array.from(new Set(audVersenyzok.map(v => (v.club || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'hu'));
+        const klubSelect = document.getElementById('mikorKuzdokKlubSelect');
+        frissitSelectMezo('mikorKuzdokKlubSelect', klubNevek.map(k => ({ val: k, text: 'Egyesület: ' + k })), '-- Saját egyesületem meccsei (Klubszűrő) --');
+        if (klubSelect && !klubSelect.dataset.autoInitDone) {
+            const belepve = TatamiMaster.lekerBejelentkezes();
+            if (belepve && belepve.club && klubNevek.includes(belepve.club)) {
+                klubSelect.value = belepve.club;
+            }
+            klubSelect.dataset.autoInitDone = '1';
+        }
+
         rajzolTatamiKartyak();
         frissitMikorKuzdokPanel();
+        frissitKlubMenetrendPanel();
         audienceAgrajzFrissites();
         rajzolAudienceVersenyzokTabla();
     } catch (e) {
@@ -324,24 +336,66 @@ function mutatAudiencePlakatNagyban(versenyNev) {
     document.body.appendChild(modal);
 }
 
-function frissitKategoriaCheckboxok() {
+function frissitKategoriaCheckboxok(meglevoBepipalt = null) {
+    frissitCoachKategoriaAjanlas(meglevoBepipalt);
+}
+
+function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
     const cont = document.getElementById('coachUjKategoriaCheckboxes');
     if (!cont) return;
 
-    const bepipaltIdk = Array.from(cont.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+    const bepipaltIdk = Array.isArray(meglevoBepipalt)
+        ? meglevoBepipalt
+        : Array.from(cont.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value, 10));
     const lezarva = TatamiMaster.isNevezesLezarva();
 
-    cont.innerHTML = audKategoriak.map(kat => {
+    const sulyVal = document.getElementById('coachUjSuly')?.value || '';
+    const szulEvVal = document.getElementById('coachUjSzulEv')?.value || '';
+    const nemVal = document.getElementById('coachUjNem')?.value || '';
+    const vanBemenet = Boolean(sulyVal || szulEvVal || nemVal);
+
+    const ajanlas = vanBemenet
+        ? TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulEvVal, sulyVal, nemVal)
+        : { ajanlottIds: [] };
+    const ajanlottSet = new Set(ajanlas.ajanlottIds || []);
+
+    const rendezett = [...audKategoriak].sort((a, b) => {
+        const aAj = ajanlottSet.has(a.id) ? 0 : 1;
+        const bAj = ajanlottSet.has(b.id) ? 0 : 1;
+        if (aAj !== bAj) return aAj - bAj;
+        return a.id - b.id;
+    });
+
+    cont.innerHTML = rendezett.map(kat => {
         const isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
         const jelzo = isKata ? `${TatamiMaster.icon('award', 13)} KATA` : `${TatamiMaster.icon('target', 13)} KUMITE`;
         const checked = bepipaltIdk.includes(kat.id) ? 'checked' : '';
+        const isAj = ajanlottSet.has(kat.id);
+        const ajBadge = isAj
+            ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">AJÁNLOTT</span>`
+            : '';
+        const extraStyle = isAj ? 'border-color:#990000;background:#FAF5F5;' : '';
         return `
-            <label class="kat-check-item">
+            <label class="kat-check-item" style="${extraStyle}">
                 <input type="checkbox" class="coach-kat-cb" value="${kat.id}" ${checked} ${lezarva ? 'disabled' : ''}>
-                <span><strong>${TatamiMaster.escapeHtml(kat.name)}</strong> <small style="color:#52525B;display:inline-flex;align-items:center;gap:3px;">[${jelzo}]</small></span>
+                <span><strong>${TatamiMaster.escapeHtml(kat.name)}</strong> <small style="color:#52525B;display:inline-flex;align-items:center;gap:3px;">[${jelzo}]</small>${ajBadge}</span>
             </label>
         `;
     }).join('');
+}
+
+function alkalmazCoachAjanlottKategoriak() {
+    const sulyVal = document.getElementById('coachUjSuly')?.value || '';
+    const szulEvVal = document.getElementById('coachUjSzulEv')?.value || '';
+    const nemVal = document.getElementById('coachUjNem')?.value || '';
+    const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulEvVal, sulyVal, nemVal);
+    if (!ajanlas.ajanlottIds || ajanlas.ajanlottIds.length === 0) {
+        TatamiMaster.toast("Add meg a születési évet és/vagy testsúlyt az ajánláshoz!", "figyelem");
+        return [];
+    }
+    frissitCoachKategoriaAjanlas(ajanlas.ajanlottIds);
+    TatamiMaster.toast(`${ajanlas.ajanlottIds.length} ajánlott kategória automatikusan kijelölve!`);
+    return ajanlas.ajanlottIds;
 }
 
 function frissitSelectMezo(selectId, elemek, alapSzoveg) {
@@ -397,8 +451,11 @@ function szamolMeccsVarhatoIdoAdatok(celMeccs) {
 
     const elotteDb = elotteMeccsek.length;
     const liveTatami = TatamiMaster.lekerLiveTatamiAllapot(celMeccs.tatamiId);
+    const szunetMp = (liveTatami && typeof liveTatami.pauseUntilMs === 'number' && liveTatami.pauseUntilMs > Date.now())
+        ? Math.max(0, Math.round((liveTatami.pauseUntilMs - Date.now()) / 1000))
+        : 0;
 
-    if (elotteDb === 0 && (isKata ? celMeccs.competitor1Id !== null : (celMeccs.competitor1Id !== null && celMeccs.competitor2Id !== null))) {
+    if (elotteDb === 0 && szunetMp === 0 && (isKata ? celMeccs.competitor1Id !== null : (celMeccs.competitor1Id !== null && celMeccs.competitor2Id !== null))) {
         return {
             statuszKod: 'MOST',
             tatamiNev: tatNev,
@@ -411,8 +468,8 @@ function szamolMeccsVarhatoIdoAdatok(celMeccs) {
         };
     }
 
-    // Becsült másodpercek összegzése az előtte lévő meccsek valódi korcsoport-idejéből!
-    let osszMp = 0;
+    // Becsült másodpercek összegzése az előtte lévő meccsek valódi korcsoport-idejéből (+ tatami szünetből)!
+    let osszMp = szunetMp;
     elotteMeccsek.forEach((m, idx) => {
         const mKat = audKategoriak.find(k => k.id === m.categoryId);
         if (idx === 0 && liveTatami && String(liveTatami.matchId) === String(m.id) && typeof liveTatami.remainingSeconds === 'number') {
@@ -625,6 +682,126 @@ function frissitMikorKuzdokPanel() {
 }
 
 // =========================================================
+// 4.10 KLUBSZŰRŐ („SAJÁT EGYESÜLETEM MECCSEI”) IDŐRENDBEN + ÜTKÖZÉSJELZŐ
+// =========================================================
+function frissitKlubMenetrendPanel() {
+    const cont = document.getElementById('klubMenetrendContainer');
+    const sel = document.getElementById('mikorKuzdokKlubSelect');
+    if (!cont) return;
+
+    const valasztottKlub = (sel && sel.value) ? sel.value.trim() : '';
+    if (!valasztottKlub) {
+        cont.innerHTML = '';
+        return;
+    }
+
+    const esc = (s) => TatamiMaster.escapeHtml(s);
+    const klubVersenyzoMap = new Map();
+    for (const v of audVersenyzok) {
+        if ((v.club || '').trim().toLowerCase() === valasztottKlub.toLowerCase()) {
+            klubVersenyzoMap.set(v.id, v);
+        }
+    }
+
+    if (klubVersenyzoMap.size === 0) {
+        cont.innerHTML = `<div style="background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;padding:12px 14px;color:#52525B;font-size:0.86rem;">Ehhez az egyesülethez még nincs regisztrált versenyző.</div>`;
+        return;
+    }
+
+    const tetelek = [];
+    for (const m of audMeccsek) {
+        if (m.isFinished && m.competitor1Id !== null && m.competitor2Id === null) {
+            const kat = audKategoriak.find(k => k.id === m.categoryId);
+            const isKata = (kat && kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+            if (!isKata) continue;
+        }
+        const v1 = klubVersenyzoMap.get(m.competitor1Id);
+        const v2 = klubVersenyzoMap.get(m.competitor2Id);
+        if (!v1 && !v2) continue;
+
+        const info = szamolMeccsVarhatoIdoAdatok(m);
+        if (v1) {
+            tetelek.push({ meccs: m, sajat: v1, isAka: true, ellenfelId: m.competitor2Id, info });
+        }
+        if (v2) {
+            tetelek.push({ meccs: m, sajat: v2, isAka: false, ellenfelId: m.competitor1Id, info });
+        }
+    }
+
+    const prior = { MOST: 0, FELKESZUL: 1, VARAKOZIK: 2, FORDULORA_VAR: 3, KESZ: 4 };
+    tetelek.sort((a, b) => {
+        const pa = prior[a.info.statuszKod] ?? 9;
+        const pb = prior[b.info.statuszKod] ?? 9;
+        if (pa !== pb) return pa - pb;
+        if (a.info.becsultPerc !== b.info.becsultPerc) return a.info.becsultPerc - b.info.becsultPerc;
+        return (a.meccs.matchOrder - b.meccs.matchOrder) || (a.meccs.id - b.meccs.id);
+    });
+
+    // Párhuzamos tatami-ütközések keresése (azonos klub két nyitott meccse különböző tatamin 3 percen belül)
+    const nyitottak = tetelek.filter(t => t.info.statuszKod !== 'KESZ');
+    const utkozesMap = new Map();
+    for (let i = 0; i < nyitottak.length; i++) {
+        for (let j = i + 1; j < nyitottak.length; j++) {
+            const a = nyitottak[i];
+            const b = nyitottak[j];
+            if (a.meccs.tatamiId !== b.meccs.tatamiId && Math.abs((a.info.becsultPerc || 0) - (b.info.becsultPerc || 0)) <= 3) {
+                utkozesMap.set(`${a.meccs.id}_${a.sajat.id}`, `${b.sajat.name} (${b.info.tatamiNev})`);
+                utkozesMap.set(`${b.meccs.id}_${b.sajat.id}`, `${a.sajat.name} (${a.info.tatamiNev})`);
+            }
+        }
+    }
+
+    let html = `<div style="background:#FAF8F5;border:1.5px solid #18181B;border-radius:10px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div>
+                <strong style="font-size:1rem;color:#18181B;">${esc(valasztottKlub)} — Egyesületi Mérkőzés-menetrend (${klubVersenyzoMap.size} versenyző, ${tetelek.length} fellépés)</strong>
+                <div style="font-size:0.78rem;color:#52525B;">Időrendi sorrendben az összes tatamiról &bull; Párhuzamos tatami-ütközés figyeléssel</div>
+            </div>
+            <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:0.76rem;" onclick="document.getElementById('mikorKuzdokKlubSelect').value='';frissitKlubMenetrendPanel();">
+                Klubszűrő bezárása
+            </button>
+        </div>`;
+
+    if (tetelek.length === 0) {
+        html += `<div style="color:#52525B;font-size:0.86rem;">Az egyesület versenyzőinek még nincs kisorsolt mérkőzése.</div></div>`;
+        cont.innerHTML = html;
+        return;
+    }
+
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:8px;">`;
+    for (const t of tetelek) {
+        const ellenfel = t.ellenfelId ? audVersenyzok.find(x => x.id === t.ellenfelId) : null;
+        const katNev = t.info.kategoria ? t.info.kategoria.name : 'Kategória';
+        const utkozesSzoveg = utkozesMap.get(`${t.meccs.id}_${t.sajat.id}`) || '';
+        const isMost = t.info.statuszKod === 'MOST';
+        const isFelkeszul = t.info.statuszKod === 'FELKESZUL';
+        const isKesz = t.info.statuszKod === 'KESZ';
+
+        const idoCimke = isKesz
+            ? (t.meccs.winnerId === t.sajat.id ? 'GYŐZELEM' : 'LEZÁRULT')
+            : (isMost ? 'MOST A TATAMIN!' : `~${t.info.varhatoIdopont} (${t.info.becsultPerc} p)`);
+
+        const ovTag = t.info.isKata
+            ? `<span style="background:#E4E0D7;color:#18181B;padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:800;">KATA</span>`
+            : `<span class="fighter-tag ${t.isAka ? 'aka-tag' : 'shiro-tag'}">${t.isAka ? 'AKA' : 'SHIRO'}</span>`;
+
+        html += `<div style="background:#FFFFFF;border:1.5px solid ${isMost || isFelkeszul ? '#990000' : '#E4E0D7'};border-radius:8px;padding:9px 11px;opacity:${isKesz ? '0.72' : '1'};">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                <strong style="font-size:0.88rem;color:#18181B;">${ovTag} ${esc(t.sajat.name)}</strong>
+                <span style="background:${isMost ? '#990000' : '#18181B'};color:#FAF8F5;padding:2px 8px;border-radius:5px;font-size:0.73rem;font-weight:800;">${esc(idoCimke)}</span>
+            </div>
+            <div style="font-size:0.78rem;color:#3F3F46;margin-top:3px;font-weight:700;">
+                ${esc(t.info.tatamiNev)} &bull; #${t.meccs.matchOrder}. meccs &bull; ${esc(katNev)}
+            </div>
+            ${!t.info.isKata ? `<div style="font-size:0.76rem;color:#52525B;margin-top:2px;">Ellenfél: <strong>${ellenfel ? esc(ellenfel.name + ' (' + ellenfel.club + ')') : 'Előző kör győztese'}</strong></div>` : ''}
+            ${utkozesSzoveg ? `<div style="margin-top:4px;background:#FAF5F5;border:1px solid #990000;color:#990000;padding:2px 7px;border-radius:5px;font-size:0.72rem;font-weight:800;">ÜTKÖZÉS: Ezzel egy időben küzd ${esc(utkozesSzoveg)}!</div>` : ''}
+        </div>`;
+    }
+    html += `</div></div>`;
+    cont.innerHTML = html;
+}
+
+// =========================================================
 // 1. ÚJ EGYÉNI VERSENYZŐ FELVÉTELE (AKÁR TÖBB KATEGÓRIÁBA EGYSZERRE!)
 // =========================================================
 async function coachUjVersenyzoEsNevezes() {
@@ -806,6 +983,13 @@ function rajzolTatamiKartyak() {
         }
         html += '</div>';
         html += '<div style="padding: 18px;">';
+
+        if (liveErvenyes && liveAdat.statusBanner && liveAdat.statusText) {
+            const isOrvosi = (liveAdat.statusBanner === 'ORVOSI_APOLAS');
+            html += `<div style="margin-bottom:14px;padding:10px 14px;border-radius:8px;background:${isOrvosi ? '#990000' : '#18181B'};color:#FAF8F5;font-weight:800;font-size:0.9rem;text-align:center;letter-spacing:0.6px;border:1.5px solid #FAF8F5;">
+                ${TatamiMaster.escapeHtml(liveAdat.statusText)}
+            </div>`;
+        }
 
         if (aktualis) {
             let kat = audKategoriak.find(k => k.id === aktualis.categoryId);

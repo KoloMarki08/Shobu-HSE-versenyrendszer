@@ -36,10 +36,18 @@ let aktualisMeccs = null;
 let kovetkezoMeccsSzoveg = "Várakozás a következő mérkőzésre...";
 let mentesFolyamatban = false;
 
+// Orvosi ápolás és tatami szünet állapot (2.5)
+let orvosiApolasAktiv = false;
+let tatamiSzunetVegMs = 0;
+let tatamiSzunetPerc = 0;
+let tatamiSzunetInterval = null;
+
 window.onload = async function() {
     initKataGyorsBillentyuzet();
+    initBiroiBillentyuParancsok();
     await biroiAdatokFrissitese();
     frissitKumiteFazisUI();
+    frissitBiroiSzunetUI();
     adatokMentese();
 
     // Ha az Admin egy másik gépen új sorsolást készít vagy meccset módosít, és épp nem fut az óra, frissítjük a listát
@@ -785,6 +793,157 @@ function idoMegallitas() {
     if (futott) adatokMentese();
 }
 
+function idoStartPause() {
+    if (idozitoInterval) {
+        idoMegallitas();
+    } else {
+        if (orvosiApolasAktiv) {
+            orvosiApolasAktiv = false;
+            frissitBiroiSzunetUI();
+        }
+        if (tatamiSzunetVegMs > Date.now()) {
+            tatamiSzunetVegMs = 0;
+            tatamiSzunetPerc = 0;
+            frissitBiroiSzunetUI();
+        }
+        idoInditas();
+    }
+}
+
+function initBiroiBillentyuParancsok() {
+    if (typeof window === 'undefined' || window._biroiHotkeysInitialized) return;
+    window._biroiHotkeysInitialized = true;
+    window.addEventListener('keydown', (e) => {
+        if (!e || e.ctrlKey || e.altKey || e.metaKey) return;
+        const akt = document.activeElement;
+        const tag = (akt && akt.tagName) ? akt.tagName.toUpperCase() : '';
+        const isKataInput = !!(akt && akt.classList && akt.classList.contains('kata-pont'));
+        const isFormElem = (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT');
+
+        if ((e.code === 'Space' || e.key === ' ') && !isFormElem && tag !== 'BUTTON') {
+            if (aktualisMod === 'KUMITE') {
+                e.preventDefault();
+                idoStartPause();
+            }
+        } else if (e.key === 'Enter') {
+            if (!isFormElem || isKataInput) {
+                e.preventDefault();
+                meccsMentese();
+            }
+        }
+    });
+}
+
+function frissitBiroiSzunetUI() {
+    const btnOrvosi = document.getElementById('btnOrvosiApolas');
+    const btnSzunet = document.getElementById('btnTatamiSzunet');
+    const banner = document.getElementById('biroiAllapotBanner');
+    const szunetAktiv = (tatamiSzunetVegMs > Date.now());
+    const hatralevoPerc = szunetAktiv ? Math.max(1, Math.ceil((tatamiSzunetVegMs - Date.now()) / 60000)) : 0;
+
+    if (btnOrvosi) {
+        if (orvosiApolasAktiv) {
+            btnOrvosi.style.background = '#990000';
+            btnOrvosi.style.color = '#FAF8F5';
+            btnOrvosi.innerText = 'ORVOSI ÁPOLÁS BEFEJEZÉSE';
+        } else {
+            btnOrvosi.style.background = 'transparent';
+            btnOrvosi.style.color = '#990000';
+            btnOrvosi.innerText = 'ORVOSI ÁPOLÁS';
+        }
+    }
+
+    if (btnSzunet) {
+        if (szunetAktiv) {
+            btnSzunet.style.background = '#18181B';
+            btnSzunet.style.color = '#FAF8F5';
+            btnSzunet.innerText = `Szünet vége (${hatralevoPerc} p)`;
+        } else {
+            btnSzunet.style.background = '';
+            btnSzunet.style.color = '';
+            btnSzunet.innerText = 'Szünet indítása';
+        }
+    }
+
+    if (banner) {
+        if (orvosiApolasAktiv) {
+            banner.style.display = 'inline-flex';
+            banner.style.background = '#990000';
+            banner.style.color = '#FAF8F5';
+            banner.innerText = 'AKTÍV: ORVOSI ÁPOLÁS A TATAMIN';
+        } else if (szunetAktiv) {
+            const vegStr = new Date(tatamiSzunetVegMs).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+            banner.style.display = 'inline-flex';
+            banner.style.background = '#18181B';
+            banner.style.color = '#FAF8F5';
+            banner.innerText = `TATAMI SZÜNET (${hatralevoPerc} PERC - VÁRHATÓ FOLYTATÁS: ${vegStr})`;
+        } else {
+            banner.style.display = 'none';
+            banner.innerText = '';
+        }
+    }
+}
+
+function toggleOrvosiApolas() {
+    orvosiApolasAktiv = !orvosiApolasAktiv;
+    if (orvosiApolasAktiv) {
+        idoMegallitas();
+        tatamiSzunetVegMs = 0;
+        tatamiSzunetPerc = 0;
+        if (tatamiSzunetInterval) {
+            clearInterval(tatamiSzunetInterval);
+            tatamiSzunetInterval = null;
+        }
+        TatamiMaster.toast("Orvosi ápolás aktiválva! A TV-kijelzőn és az élő oldalon megjelent az ORVOSI ÁPOLÁS felirat.");
+    } else {
+        TatamiMaster.toast("Orvosi ápolás lezárva.");
+    }
+    frissitBiroiSzunetUI();
+    adatokMentese();
+}
+
+function toggleTatamiSzunet(percOverride = null) {
+    const szunetAktiv = (tatamiSzunetVegMs > Date.now());
+    if (szunetAktiv && percOverride === null) {
+        tatamiSzunetVegMs = 0;
+        tatamiSzunetPerc = 0;
+        if (tatamiSzunetInterval) {
+            clearInterval(tatamiSzunetInterval);
+            tatamiSzunetInterval = null;
+        }
+        frissitBiroiSzunetUI();
+        adatokMentese();
+        TatamiMaster.toast("Tatami szünet befejezve, a mérkőzések folytatódnak.");
+        return;
+    }
+
+    const sel = document.getElementById('tatamiSzunetPercSelect');
+    const perc = (percOverride !== null && !isNaN(parseInt(percOverride, 10)))
+        ? parseInt(percOverride, 10)
+        : (parseInt(sel ? sel.value : '15', 10) || 15);
+
+    idoMegallitas();
+    orvosiApolasAktiv = false;
+    tatamiSzunetPerc = perc;
+    tatamiSzunetVegMs = Date.now() + perc * 60 * 1000;
+
+    if (tatamiSzunetInterval) clearInterval(tatamiSzunetInterval);
+    tatamiSzunetInterval = setInterval(() => {
+        if (tatamiSzunetVegMs <= Date.now()) {
+            tatamiSzunetVegMs = 0;
+            tatamiSzunetPerc = 0;
+            clearInterval(tatamiSzunetInterval);
+            tatamiSzunetInterval = null;
+        }
+        frissitBiroiSzunetUI();
+        adatokMentese();
+    }, 15000);
+
+    frissitBiroiSzunetUI();
+    adatokMentese();
+    TatamiMaster.toast(`${perc} perces tatami szünet elindítva! A tatami várható kezdési időpontjai automatikusan eltolódtak.`);
+}
+
 function nullazasMeccsre() {
     idoMegallitas();
     aktivFazisIndex = 0;
@@ -851,6 +1010,15 @@ function adatokMentese() {
         ? aktivIdoSzabaly.fazisok[aktivFazisIndex]
         : { kod: 'ALAP', nev: 'Alapidő', rovid: 'ALAPIDŐ', isMerlegeles: false };
 
+    const szunetAktiv = (tatamiSzunetVegMs > Date.now());
+    const hatralevoSzunetPerc = szunetAktiv ? Math.max(1, Math.ceil((tatamiSzunetVegMs - Date.now()) / 60000)) : 0;
+    const statusBanner = orvosiApolasAktiv ? 'ORVOSI_APOLAS' : (szunetAktiv ? 'TATAMI_SZUNET' : '');
+    const statusText = orvosiApolasAktiv
+        ? 'ORVOSI ÁPOLÁS'
+        : (szunetAktiv ? `TATAMI SZÜNET (${hatralevoSzunetPerc} PERC)` : '');
+
+    const alapRoundLabel = aktualisMod === 'KATA' ? 'KATA PONTOZÁS' : fazis.rovid;
+
     const adatok = {
         tatamiId: String(aktTatamiId),
         tatamiName: aktTatamiObj ? aktTatamiObj.name : ('Tatami #' + aktTatamiId),
@@ -870,8 +1038,12 @@ function adatokMentese() {
         remainingSeconds: idoMasodpercben,
         timerRunning: !!idozitoInterval,
         roundCode: aktualisMod === 'KATA' ? 'KATA' : fazis.kod,
-        roundLabel: aktualisMod === 'KATA' ? 'KATA PONTOZÁS' : fazis.rovid,
+        roundLabel: statusText || alapRoundLabel,
         ruleLabel: aktualisMod === 'KATA' ? '5 bírói pontozás' : (aktivIdoSzabaly ? aktivIdoSzabaly.teljesCimke : ''),
+        statusBanner: statusBanner,
+        statusText: statusText,
+        pauseUntilMs: szunetAktiv ? tatamiSzunetVegMs : 0,
+        pauseMinutes: szunetAktiv ? hatralevoSzunetPerc : 0,
         weighInAkaKg: document.getElementById('merlegelesAkaKg')?.value || '',
         weighInShiroKg: document.getElementById('merlegelesShiroKg')?.value || '',
         kataScores: nyersKata,
@@ -971,6 +1143,92 @@ async function meccsMentese() {
             mentesBtn.style.opacity = '1';
         }
     }
+}
+
+async function ujranyitMeccsBiroiPultbol(celMeccsId = null) {
+    const aktTatamiId = parseInt(document.getElementById('panelTatamiSelect')?.value, 10);
+    let celMeccs = null;
+
+    if (celMeccsId !== null) {
+        celMeccs = panelMeccsek.find(m => m.id === parseInt(celMeccsId, 10));
+    } else if (aktualisMeccs && aktualisMeccs.isFinished) {
+        celMeccs = aktualisMeccs;
+    } else {
+        const tatamiKeszMeccsek = panelMeccsek
+            .filter(m => m.tatamiId === aktTatamiId && m.isFinished)
+            .filter(m => {
+                const kat = panelKategoriak.find(k => k.id === m.categoryId);
+                const isKata = (kat && kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+                return isKata || (m.competitor1Id !== null && m.competitor2Id !== null);
+            })
+            .sort((a, b) => (a.matchOrder - b.matchOrder) || (a.id - b.id));
+        if (tatamiKeszMeccsek.length > 0) {
+            celMeccs = tatamiKeszMeccsek[tatamiKeszMeccsek.length - 1];
+        }
+    }
+
+    if (!celMeccs) {
+        TatamiMaster.toast("Nincs újranyitható lezárt mérkőzés ezen a tatamin! Válassz ki egy [KÉSZ] meccset a listából.", "figyelem");
+        return false;
+    }
+
+    const kat = panelKategoriak.find(k => k.id === celMeccs.categoryId);
+    const isKata = (kat && kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+    const regiGyoztesId = celMeccs.winnerId;
+
+    // Ha egyenes kieséses Kumite ágrajzban már továbbjutott a győztes a következő fordulóba, és az még nem zajlott le, visszavonjuk onnan
+    if (!isKata && regiGyoztesId) {
+        const katMeccsek = panelMeccsek
+            .filter(m => m.categoryId === celMeccs.categoryId)
+            .sort((a, b) => a.id - b.id);
+        if (TatamiMaster.isKumiteAgrajz(katMeccsek)) {
+            let fordulok = [];
+            let korMeret = (katMeccsek.length + 1) / 2;
+            let idx = 0;
+            while (korMeret >= 1) {
+                fordulok.push(katMeccsek.slice(idx, idx + korMeret));
+                idx += korMeret;
+                korMeret /= 2;
+            }
+            for (let r = 0; r < fordulok.length - 1; r++) {
+                const mIndex = fordulok[r].findIndex(x => x.id === celMeccs.id);
+                if (mIndex !== -1) {
+                    const kovMeccs = fordulok[r + 1][Math.floor(mIndex / 2)];
+                    if (kovMeccs && !kovMeccs.isFinished) {
+                        if (mIndex % 2 === 0 && kovMeccs.competitor1Id === regiGyoztesId) {
+                            kovMeccs.competitor1Id = null;
+                        } else if (mIndex % 2 !== 0 && kovMeccs.competitor2Id === regiGyoztesId) {
+                            kovMeccs.competitor2Id = null;
+                        }
+                        await TatamiMaster.apiSend('Matches/' + kovMeccs.id, 'PUT', epitsTisztaBiroiMeccsPayload(kovMeccs));
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    celMeccs.isFinished = false;
+    celMeccs.winnerId = null;
+
+    if (isKata) {
+        const kataTar = TatamiMaster.lekerKataEredmenyek();
+        delete kataTar[celMeccs.id];
+        try { localStorage.setItem('kataEredmenyek', JSON.stringify(kataTar)); } catch (e) {}
+    }
+
+    const res = await TatamiMaster.apiSend('Matches/' + celMeccs.id, 'PUT', epitsTisztaBiroiMeccsPayload(celMeccs));
+    if (res && res.ok) {
+        await biroiAdatokFrissitese(true);
+        const sel = document.getElementById('panelMeccsSelect');
+        if (sel) {
+            sel.value = String(celMeccs.id);
+            meccsKivalasztva();
+        }
+        TatamiMaster.toast(`Mérkőzés #${celMeccs.matchOrder} újranyitva és betöltve javításra!`);
+        return true;
+    }
+    return false;
 }
 
 async function ellenorizKataSelejtezoEsTop6Donto(categoryId, tatamiId) {

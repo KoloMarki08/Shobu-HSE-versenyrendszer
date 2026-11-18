@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tatami Master - Végeredmények, Klubranglista & Oklevélnyomtatás</title>
-    <link rel="stylesheet" href="../CSS/stlye.css">
-    <link rel="stylesheet" href="../CSS/design_system.css">
+    <link rel="stylesheet" href="../CSS/stlye.css?v=20261118_v1">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261118_v1">
 </head>
 <body id="pageEredmenyek">
     <header class="top-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 25px;">
@@ -17,6 +17,9 @@
             <button type="button" id="eredmenyekSablonBtn" class="btn btn-outline" style="display:none;" onclick="nyitEredmenyekSablonSzerkeszto()">
                 <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
                 Oklevél Sablon
+            </button>
+            <button type="button" class="btn btn-outline-blue" onclick="exportEredmenyekCsv()">
+                Eredmények Exportálása (Excel CSV)
             </button>
             <button type="button" class="btn btn-outline-green" onclick="nyomtatOsszesOklevelet()">
                 <svg class="tm-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -42,15 +45,18 @@
             <div id="klubRanglistaContainer"></div>
         </div>
 
-        <h2 style="display:flex;align-items:center;gap:8px;color:#18181B;margin-bottom:15px;">
-            <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-            Kategóriák Dobogósai (1–3. helyezettek) & Egyéni Oklevél Nyomtatás
-        </h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:15px;">
+            <h2 style="display:flex;align-items:center;gap:8px;color:#18181B;margin:0;">
+                <svg class="tm-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                Kategóriák Dobogósai (1–3. helyezettek), Pódium Pipáló Lista &amp; Oklevél Nyomtatás
+            </h2>
+            <div id="eredmenyekDijatadoSzuroSav" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"></div>
+        </div>
         <div id="dobogosokContainer"></div>
     </main>
 
-    <script src="../JS/core.js?v=20261116_v7"></script>
-    <script src="../JS/auth.js?v=20261116_v7"></script>
-    <script src="../JS/data.js?v=20261116_v7"></script>
+    <script src="../JS/core.js?v=20261118_v1"></script>
+    <script src="../JS/auth.js?v=20261118_v1"></script>
+    <script src="../JS/data.js?v=20261118_v1"></script>
 </body>
 </html>
