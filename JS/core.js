@@ -2024,7 +2024,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261122_v2';
+            link.href = prefix + 'design_system.css?v=20261122_v3';
             document.head.appendChild(link);
         }
 

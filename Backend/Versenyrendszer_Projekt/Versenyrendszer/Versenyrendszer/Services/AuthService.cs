@@ -159,8 +159,48 @@ namespace Versenyrendszer.Services
             return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
 
+        public static string NormalizeApprovalStatus(string? status)
+        {
+            var upper = (status ?? string.Empty).Trim().ToUpperInvariant();
+            if (upper == "PENDING") return "PENDING";
+            if (upper == "REJECTED") return "REJECTED";
+            return "APPROVED";
+        }
+
+        public static async Task EnsureUserSchemaColumnsAsync(AppDbContext db)
+        {
+            var alterStatements = new[]
+            {
+                "ALTER TABLE `Users` ADD COLUMN `ApprovalStatus` VARCHAR(32) NOT NULL DEFAULT 'APPROVED'",
+                "ALTER TABLE `Users` ADD COLUMN `Email` VARCHAR(255) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `FullName` VARCHAR(255) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `Club` VARCHAR(255) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `Branchief` VARCHAR(255) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `Phone` VARCHAR(64) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `Country` VARCHAR(128) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `Degree` VARCHAR(64) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `IkoMembership` VARCHAR(128) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `RejectionReason` VARCHAR(512) NOT NULL DEFAULT ''",
+                "ALTER TABLE `Users` ADD COLUMN `RegisteredAt` VARCHAR(64) NOT NULL DEFAULT ''"
+            };
+
+            foreach (var sql in alterStatements)
+            {
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync(sql);
+                }
+                catch
+                {
+                    // Az oszlop már létezik az adatbázisban
+                }
+            }
+        }
+
         public static async Task EnsureDefaultUsersAndHashesAsync(AppDbContext db)
         {
+            await EnsureUserSchemaColumnsAsync(db);
+
             var existingUsers = await db.Users.ToListAsync();
             foreach (var u in existingUsers)
             {
@@ -169,6 +209,7 @@ namespace Versenyrendszer.Services
                     u.Password = HashPassword(u.Password);
                 }
                 u.Role = NormalizeRole(u.Role);
+                u.ApprovalStatus = NormalizeApprovalStatus(u.ApprovalStatus);
             }
 
             var defaults = new (string Username, string PlainPassword, string Role)[]
@@ -189,7 +230,8 @@ namespace Versenyrendszer.Services
                     {
                         Username = def.Username,
                         Password = HashPassword(def.PlainPassword),
-                        Role = def.Role
+                        Role = def.Role,
+                        ApprovalStatus = "APPROVED"
                     });
                 }
             }

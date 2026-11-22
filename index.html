@@ -19,8 +19,8 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="CSS/stlye.css?v=20261122_v2">
-    <link rel="stylesheet" href="CSS/design_system.css?v=20261122_v2">
+    <link rel="stylesheet" href="CSS/stlye.css?v=20261122_v3">
+    <link rel="stylesheet" href="CSS/design_system.css?v=20261122_v3">
     <style>
         .auth-tabs {
             display: flex;
@@ -274,8 +274,9 @@
 
             <!-- 1. BEJELENTKEZÉSI ŰRLAP -->
             <div id="loginFormContainer">
+                <div id="loginStatusNotice" style="display:none;background:#FAF8F5;border:1.5px solid #18181B;border-left:5px solid #990000;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:0.86rem;color:#18181B;line-height:1.5;"></div>
                 <p style="color: #52525B; font-size: 0.9rem; margin-bottom: 20px;">
-                    Adminisztrátorok, asztalbírók és regisztrált klubedzők részére.
+                    Adminisztrátorok, asztalbírók és jóváhagyott IKO klubedzők részére.
                 </p>
 
                 <form onsubmit="bejelentkezes(event)">
@@ -322,7 +323,7 @@
             <div id="registerFormContainer" style="display: none;">
                 <div style="background: #FAF8F5; padding: 12px 15px; border: 1px solid #E4E0D7; border-radius: 8px; margin-bottom: 18px; font-size: 0.85rem; color: #3F3F46; display: flex; gap: 10px; align-items: flex-start;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>A regisztrált felhasználók automatikusan megkapják az <strong>Edzői (COACH)</strong> jogosultságot, amellyel benevezhetik klubjuk versenyzőit.</span>
+                    <span>A beküldött edzői regisztrációk <strong>szervezői / főbírói elbírálás (IKO tagság ellenőrzése)</strong> alá kerülnek. A regisztrációról és az elbírálás eredményéről automatikus e-mail értesítést küldünk az <strong>info@tatamimaster.hu</strong> címről.</span>
                 </div>
 
                 <form onsubmit="regisztracioKuldese(event)" id="coachRegForm">
@@ -473,7 +474,7 @@
 
                     <button type="submit" class="btn btn-outline-green" style="width: 100%; padding: 12px 18px; font-size: 1rem; font-weight: 700;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span>Regisztráció & Belépés Edzőként</span>
+                        <span>Edzői Regisztráció Beküldése Elbírálásra</span>
                     </button>
                 </form>
             </div>
@@ -481,9 +482,9 @@
         </div>
     </main>
 
-    <script src="JS/core.js?v=20261122_v2"></script>
-    <script src="JS/jelszomegjelenito.js?v=20261122_v2"></script>
-    <script src="JS/login.js?v=20261122_v2"></script>
-    <script src="JS/index.js?v=20261122_v2"></script>
+    <script src="JS/core.js?v=20261122_v3"></script>
+    <script src="JS/jelszomegjelenito.js?v=20261122_v3"></script>
+    <script src="JS/login.js?v=20261122_v3"></script>
+    <script src="JS/index.js?v=20261122_v3"></script>
 </body>
 </html>

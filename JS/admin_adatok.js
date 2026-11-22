@@ -14,6 +14,7 @@ window.onload = function() {
         datumInput.value = new Date().toISOString().split('T')[0];
     }
     mindenAdatFrissitese();
+    betoltEmailBeallitasokAdmin();
 
     // Valós idejű háttér-szinkronizáció: ha másik gépen (Edzői vagy Bírói pulton) változás történik,
     // automatikusan frissítjük az Admin Központot is (kivéve ha épp szövegmezőbe gépel az admin vagy húzza a sort)
@@ -185,6 +186,7 @@ async function mindenAdatFrissitese() {
         merkozesekBetoltese();
         rajzolAgrajz();
         frissitNevezesZarolasUI();
+        await betoltEdzoRegisztraciokAdmin();
     } catch (e) {
         console.error("Hiba az admin adatok betöltésekor:", e);
     }
@@ -3518,4 +3520,262 @@ async function osszesKategoriaAutomatikusSorsolasa() {
     await automatikusTatamiMenetrendRendezes(null, true);
     TatamiMaster.toast("Teljes sorsolás és korosztályos tatami-menetrend elkészült!");
 }
+
+// =========================================================
+// 7. MENÜ: EDZŐI REGISZTRÁCIÓK ELBÍRÁLÁSA (IKO SZŰRÉS) ÉS E-MAIL KÜLDŐ
+// =========================================================
+let globalEdzoFiokok = [];
+
+async function betoltEdzoRegisztraciokAdmin() {
+    try {
+        const users = await TatamiMaster.apiGet('Users');
+        if (Array.isArray(users)) {
+            globalEdzoFiokok = users;
+        }
+    } catch (e) {
+        globalEdzoFiokok = [];
+    }
+    renderEdzoRegisztraciokAdmin();
+}
+
+function ugorjEdzoElbiralasMenure() {
+    const sec = document.getElementById('tab-edzo-regisztraciok');
+    if (sec && sec.style.display === 'none' && typeof toggleAccordionTab === 'function') {
+        toggleAccordionTab('tab-edzo-regisztraciok');
+    } else if (sec) {
+        sec.style.display = 'block';
+    }
+    const szuro = document.getElementById('edzoRegStatuszSzuroSelect');
+    if (szuro) szuro.value = 'PENDING';
+    renderEdzoRegisztraciokAdmin();
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderEdzoRegisztraciokAdmin() {
+    const tbody = document.getElementById('edzoRegisztraciokTbody');
+    const badgeEl = document.getElementById('accBadgeEdzoRegisztraciok');
+    const alertBanner = document.getElementById('pendingCoachAlertBanner');
+    const szuroVal = (document.getElementById('edzoRegStatuszSzuroSelect')?.value || 'ALL').toUpperCase();
+
+    const coachLista = (globalEdzoFiokok || []).filter(u => (u.role || 'COACH').toUpperCase() === 'COACH');
+    const pendingDb = coachLista.filter(u => (u.approvalStatus || 'APPROVED').toUpperCase() === 'PENDING').length;
+    const approvedDb = coachLista.filter(u => (u.approvalStatus || 'APPROVED').toUpperCase() === 'APPROVED').length;
+
+    if (badgeEl) {
+        if (pendingDb > 0) {
+            badgeEl.style.background = '#990000';
+            badgeEl.style.color = '#FAF8F5';
+            badgeEl.innerText = `${pendingDb} elbírálásra vár • ${approvedDb} jóváhagyott`;
+        } else {
+            badgeEl.style.background = '';
+            badgeEl.style.color = '';
+            badgeEl.innerText = `${approvedDb} jóváhagyott edző`;
+        }
+    }
+
+    if (alertBanner) {
+        if (pendingDb > 0) {
+            alertBanner.style.display = 'flex';
+            alertBanner.innerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;color:#990000;font-weight:800;font-size:0.94rem;">
+                    ${TatamiMaster.icon('alert', 18)}
+                    <span>${pendingDb} új edzői regisztráció vár szervezői / főbírói elbírálásra (IKO jogosultság ellenőrzése)!</span>
+                </div>
+                <button type="button" class="btn btn-danger" style="padding:8px 16px;font-weight:800;" onclick="ugorjEdzoElbiralasMenure()">
+                    Elbírálás Megnyitása (7. Menü)
+                </button>
+            `;
+        } else {
+            alertBanner.style.display = 'none';
+            alertBanner.innerHTML = '';
+        }
+    }
+
+    if (!tbody) return;
+
+    const szurt = coachLista.filter(u => {
+        const st = (u.approvalStatus || 'APPROVED').toUpperCase();
+        if (szuroVal === 'ALL') return true;
+        return st === szuroVal;
+    }).sort((a, b) => {
+        const order = { PENDING: 0, REJECTED: 1, APPROVED: 2 };
+        const sa = order[(a.approvalStatus || 'APPROVED').toUpperCase()] ?? 2;
+        const sb = order[(b.approvalStatus || 'APPROVED').toUpperCase()] ?? 2;
+        if (sa !== sb) return sa - sb;
+        return (b.id || 0) - (a.id || 0);
+    });
+
+    if (szurt.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#71717A;padding:18px;">Nincs a szűrőnek megfelelő edzői fiók.</td></tr>`;
+        return;
+    }
+
+    const esc = (s) => TatamiMaster.escapeHtml(s || '');
+    tbody.innerHTML = szurt.map(u => {
+        const st = (u.approvalStatus || 'APPROVED').toUpperCase();
+        let stBadge = '';
+        if (st === 'PENDING') {
+            stBadge = `<span style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;padding:3px 9px;border-radius:6px;font-size:0.76rem;font-weight:800;">ELBÍRÁLÁS ALATT</span>`;
+        } else if (st === 'REJECTED') {
+            stBadge = `<span style="background:#FAF5F5;color:#990000;border:1px solid #990000;padding:3px 9px;border-radius:6px;font-size:0.76rem;font-weight:800;">ELUTASÍTVA</span>`;
+            if (u.rejectionReason) {
+                stBadge += `<div style="font-size:0.74rem;color:#71717A;margin-top:4px;max-width:240px;">Indok: ${esc(u.rejectionReason)}</div>`;
+            }
+        } else {
+            stBadge = `<span style="background:#18181B;color:#FAF8F5;padding:3px 9px;border-radius:6px;font-size:0.76rem;font-weight:800;">ENGEDÉLYEZVE (IKO)</span>`;
+        }
+
+        const nev = u.fullName ? esc(u.fullName) : esc(u.username);
+        const email = esc(u.email || u.username);
+        const tel = u.phone ? `<div style="font-size:0.78rem;color:#52525B;">Tel: ${esc(u.phone)}</div>` : '';
+        const klub = u.club ? `<strong>${esc(u.club)}</strong>` : '<span style="color:#71717A;">-</span>';
+        const branch = u.branchief ? `<div style="font-size:0.78rem;color:#52525B;">Branch Chief: ${esc(u.branchief)}</div>` : '';
+        const orszag = u.country ? `<div style="font-size:0.76rem;color:#71717A;">${esc(u.country)}</div>` : '';
+        const fokozat = u.degree ? `<strong>${esc(u.degree)}</strong>` : '-';
+        const iko = u.ikoMembership ? `<div style="font-size:0.76rem;color:#52525B;">IKO ID: ${esc(u.ikoMembership)}</div>` : '';
+        const regIdo = u.registeredAt ? esc(u.registeredAt) : '<span style="color:#71717A;">Alapértelmezett</span>';
+
+        const approveBtn = st !== 'APPROVED'
+            ? `<button type="button" class="btn btn-outline-green" style="padding:5px 10px;font-size:0.78rem;" onclick="jovahagyEdzoRegisztracio(${u.id})">${TatamiMaster.icon('check', 13)} Engedélyezés + E-mail</button>`
+            : '';
+        const rejectBtn = st !== 'REJECTED'
+            ? `<button type="button" class="btn btn-danger" style="padding:5px 10px;font-size:0.78rem;" onclick="elutasitEdzoRegisztracio(${u.id})">${TatamiMaster.icon('x', 13)} Elutasítás + E-mail</button>`
+            : '';
+
+        return `<tr style="${st === 'PENDING' ? 'background:#FFFBEB;' : ''}">
+            <td>
+                <div style="font-weight:800;color:#18181B;">${nev}</div>
+                <div style="font-size:0.8rem;color:#52525B;">${email}</div>
+                ${tel}
+            </td>
+            <td>${klub}${branch}${orszag}</td>
+            <td>${fokozat}${iko}</td>
+            <td style="font-size:0.8rem;">${regIdo}</td>
+            <td>${stBadge}</td>
+            <td style="white-space:nowrap;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                    ${approveBtn}
+                    ${rejectBtn}
+                    <button type="button" class="btn btn-outline" style="padding:5px 9px;font-size:0.76rem;" onclick="torolEdzoRegisztracio(${u.id})" title="Fiók végleges törlése">${TatamiMaster.icon('trash', 13)}</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+async function jovahagyEdzoRegisztracio(userId) {
+    const u = globalEdzoFiokok.find(x => x.id === userId);
+    const nev = u ? (u.fullName || u.username) : ('#' + userId);
+    const klub = (u && u.club) ? ` (${u.club})` : '';
+    if (!confirm(`ENGEDÉLYEZÉS ÉS MEGERŐSÍTŐ E-MAIL KÜLDÉSE:\n\nBiztosan jóváhagyod ${nev}${klub} edzői regisztrációját?\n\nA rendszer azonnal kiküldi a megerősítő e-mailt az info@tatamimaster.hu címről, és az edző beléphet nevezni.`)) {
+        return;
+    }
+
+    const res = await TatamiMaster.apiSend(`Users/${userId}/approve`, 'POST', {});
+    if (res && res.ok) {
+        let data = null;
+        try { data = await res.json(); } catch (e) {}
+        const emailInfo = (data && data.emailSent)
+            ? 'Megerősítő e-mail elküldve!'
+            : `Státusz frissítve (${data && data.emailMessage ? data.emailMessage : 'helyi mentés'}).`;
+        TatamiMaster.toast(`${nev} regisztrációja ENGEDÉLYEZVE! ${emailInfo}`);
+        await betoltEdzoRegisztraciokAdmin();
+    }
+}
+
+async function elutasitEdzoRegisztracio(userId) {
+    const u = globalEdzoFiokok.find(x => x.id === userId);
+    const nev = u ? (u.fullName || u.username) : ('#' + userId);
+    const alapIndok = (document.getElementById('adminElutasitasAlapIndok')?.value || '').trim() ||
+        'Az IKO versenyrendszerben megrendezett versenyekre más szervezethez (pl. Shinkyokushin) tartozó csapatok és egyesületek nem nevezhetnek.';
+
+    const indok = prompt(
+        `REGISZTRÁCIÓ ELUTASÍTÁSA ÉS E-MAIL KÜLDÉSE (${nev}):\n\nAdd meg vagy hagyd jóvá az elutasító e-mailbe kerülő hivatalos indoklást:`,
+        u && u.rejectionReason ? u.rejectionReason : alapIndok
+    );
+    if (indok === null) return;
+
+    const res = await TatamiMaster.apiSend(`Users/${userId}/reject`, 'POST', { reason: indok.trim() || alapIndok });
+    if (res && res.ok) {
+        let data = null;
+        try { data = await res.json(); } catch (e) {}
+        const emailInfo = (data && data.emailSent)
+            ? 'Elutasító e-mail elküldve!'
+            : `Státusz frissítve (${data && data.emailMessage ? data.emailMessage : 'helyi mentés'}).`;
+        TatamiMaster.toast(`${nev} regisztrációja ELUTASÍTVA! ${emailInfo}`);
+        await betoltEdzoRegisztraciokAdmin();
+    }
+}
+
+async function torolEdzoRegisztracio(userId) {
+    const u = globalEdzoFiokok.find(x => x.id === userId);
+    const nev = u ? (u.fullName || u.username) : ('#' + userId);
+    if (!confirm(`Biztosan véglegesen törlöd ${nev} edzői fiókját?`)) return;
+    const res = await TatamiMaster.apiSend(`Users/${userId}`, 'DELETE');
+    if (res && res.ok) {
+        TatamiMaster.toast(`${nev} fiókja törölve.`);
+        await betoltEdzoRegisztraciokAdmin();
+    }
+}
+
+async function betoltEmailBeallitasokAdmin() {
+    try {
+        const s = await TatamiMaster.apiGet('Users/email-settings');
+        if (!s || typeof s !== 'object') return;
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+        setVal('emailFromAddress', s.fromEmail || 'info@tatamimaster.hu');
+        setVal('emailFromName', s.fromName || 'TatamiMaster Versenyrendszer');
+        setVal('emailReplyTo', s.replyToEmail || '');
+        setVal('emailSmtpHost', s.smtpHost || '127.0.0.1');
+        setVal('emailSmtpPort', s.smtpPort || 25);
+        setVal('emailSmtpUser', s.smtpUsername || '');
+        setVal('emailSmtpPass', s.smtpPassword || '');
+        if (s.defaultRejectionReason) setVal('adminElutasitasAlapIndok', s.defaultRejectionReason);
+        const sslEl = document.getElementById('emailUseSsl');
+        if (sslEl) sslEl.checked = Boolean(s.useSsl);
+    } catch (e) {}
+}
+
+async function mentEmailBeallitasokAdmin() {
+    const payload = {
+        fromEmail: (document.getElementById('emailFromAddress')?.value || 'info@tatamimaster.hu').trim(),
+        fromName: (document.getElementById('emailFromName')?.value || 'TatamiMaster Versenyrendszer').trim(),
+        replyToEmail: (document.getElementById('emailReplyTo')?.value || '').trim(),
+        smtpHost: (document.getElementById('emailSmtpHost')?.value || '127.0.0.1').trim(),
+        smtpPort: parseInt(document.getElementById('emailSmtpPort')?.value || '25', 10) || 25,
+        smtpUsername: (document.getElementById('emailSmtpUser')?.value || '').trim(),
+        smtpPassword: document.getElementById('emailSmtpPass')?.value || '',
+        useSsl: Boolean(document.getElementById('emailUseSsl')?.checked),
+        defaultRejectionReason: (document.getElementById('adminElutasitasAlapIndok')?.value || '').trim()
+    };
+
+    const res = await TatamiMaster.apiSend('Users/email-settings', 'PUT', payload);
+    if (res && res.ok) {
+        TatamiMaster.toast("E-mail küldő beállítások (info@tatamimaster.hu) sikeresen elmentve!");
+    }
+}
+
+async function kuldTesztEmailAdmin() {
+    const toEmail = (document.getElementById('tesztEmailCimzett')?.value || '').trim();
+    const outSpan = document.getElementById('tesztEmailEredmenySpan');
+    if (!toEmail) {
+        TatamiMaster.toast("Add meg a teszt e-mail címzettjét!", "figyelem");
+        return;
+    }
+    if (outSpan) {
+        outSpan.style.color = '#52525B';
+        outSpan.innerText = 'Küldés folyamatban...';
+    }
+    await mentEmailBeallitasokAdmin();
+    const res = await TatamiMaster.apiSend('Users/test-email', 'POST', { toEmail });
+    if (res && res.ok) {
+        const data = await res.json();
+        if (outSpan) {
+            outSpan.style.color = data.sent ? '#18181B' : '#990000';
+            outSpan.innerText = data.message || (data.sent ? 'Teszt e-mail elküldve!' : 'Küldési hiba.');
+        }
+        TatamiMaster.toast(data.message || 'Teszt e-mail művelet kész.', data.sent ? 'siker' : 'figyelem');
+    }
+}
+
 

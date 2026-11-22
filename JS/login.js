@@ -343,6 +343,7 @@ async function regisztracioKuldese(event) {
         id: Date.now(),
         username: email,
         displayName: teljesNev,
+        fullName: teljesNev,
         email: email,
         firstName: firstName,
         lastName: lastName,
@@ -356,11 +357,13 @@ async function regisztracioKuldese(event) {
         dateOfBirth: `${dobYear}-${dobMonth}-${dobDay}`,
         passwordHash: jelszoHash,
         hcaptchaVerified: true,
+        approvalStatus: 'PENDING',
         role: 'COACH' // Szerveroldalon is kényszerített Edzői rang
     };
 
-    // 1. Beküldjük a C# Backend /api/Users/register végpontjára (PBKDF2 hasheléssel + aláírt tokennel)
+    // 1. Beküldjük a C# Backend /api/Users/register végpontjára (PBKDF2 hasheléssel + PENDING elbírálási státusszal + info@tatamimaster.hu e-maillel)
     let szerverElert = false;
+    let szerverUzenet = '';
     try {
         const regRes = await fetch(TatamiMaster.API_URL + '/Users/register', {
             method: 'POST',
@@ -368,7 +371,15 @@ async function regisztracioKuldese(event) {
             body: JSON.stringify({
                 username: email,
                 password: pass,
-                role: 'COACH'
+                role: 'COACH',
+                email: email,
+                fullName: teljesNev,
+                club: clubName,
+                branchief: branchief,
+                phone: phone,
+                country: country,
+                degree: degree,
+                ikoMembership: ikoMembership
             })
         });
         szerverElert = true;
@@ -390,17 +401,46 @@ async function regisztracioKuldese(event) {
         if (mentettUser && mentettUser.id) ujEdzoProfil.id = mentettUser.id;
         if (mentettUser && mentettUser.token) ujEdzoProfil.token = mentettUser.token;
         if (mentettUser && mentettUser.role) ujEdzoProfil.role = mentettUser.role;
+        if (mentettUser && mentettUser.approvalStatus) ujEdzoProfil.approvalStatus = mentettUser.approvalStatus;
+        if (mentettUser && mentettUser.message) szerverUzenet = mentettUser.message;
     } catch (e) {
         if (!szerverElert) {
-            console.warn("C# Users/register végpont nem elérhető, offline edzői profil mentve.");
+            console.warn("C# Users/register végpont nem elérhető, offline edzői profil mentve (PENDING).");
         }
     }
 
     // 2. Elmentjük a helyi regisztrált edzői profilok listájába (nyers jelszó NÉLKÜL)
+    regisztraltEdzok = regisztraltEdzok.filter(u => (u.email || '').toLowerCase() !== email.toLowerCase());
     regisztraltEdzok.push(ujEdzoProfil);
     localStorage.setItem('regisztraltEdzok', JSON.stringify(regisztraltEdzok));
 
-    // 3. Automatikusan kiválasztjuk az éppen aktuális versenyt, beléptetjük az új edzőt és átirányítjuk a nevezési felületre
+    // 3. Ha a regisztráció elbírálásra vár (PENDING), NEM léptetjük be, hanem értesítjük az elbírálásról és az e-mailről
+    if ((ujEdzoProfil.approvalStatus || 'PENDING').toUpperCase() !== 'APPROVED') {
+        const regForm = document.getElementById('coachRegForm');
+        if (regForm) regForm.reset();
+        initSzulDatumMezok();
+        resetHCaptcha('register');
+        valtsAuthFul('login');
+
+        const loginUserInp = document.getElementById('loginUsername');
+        if (loginUserInp) loginUserInp.value = email;
+
+        const noticeBox = document.getElementById('loginStatusNotice');
+        const infoSzoveg = szerverUzenet ||
+            `Köszönjük a regisztrációdat, ${teljesNev} (${clubName})! A regisztrációd jelenleg szervezői elbírálás alatt áll. Automatikus visszaigazoló e-mailt küldtünk a(z) ${email} címre. Amint jóváhagyásra kerül a fiókod, újabb e-mailben értesítünk, és utána tudsz bejelentkezni.`;
+
+        if (noticeBox) {
+            noticeBox.innerHTML = `<div style="font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                ${TatamiMaster.icon('check', 16)} Regisztrációd beérkezett — jelenleg elbírálás alatt áll!
+            </div>
+            <div>${TatamiMaster.escapeHtml(infoSzoveg)}</div>`;
+            noticeBox.style.display = 'block';
+        }
+        alert(infoSzoveg);
+        return;
+    }
+
+    // Ha Admin közvetlenül APPROVED státusszal hozta létre
     TatamiMaster.valasztdAutoAktualisVersenyt();
 
     const munkamenetProfil = Object.assign({}, ujEdzoProfil);
@@ -453,10 +493,11 @@ async function bejelentkezes(event) {
             sikeresUser = {
                 id: authUser.id,
                 username: authUser.username,
-                displayName: (helyiEdzo && helyiEdzo.displayName) ? helyiEdzo.displayName : (authUser.displayName || authUser.username),
-                club: helyiEdzo ? helyiEdzo.club : '',
-                degree: helyiEdzo ? helyiEdzo.degree : '',
+                displayName: authUser.fullName || (helyiEdzo && helyiEdzo.displayName) || authUser.displayName || authUser.username,
+                club: authUser.club || (helyiEdzo ? helyiEdzo.club : ''),
+                degree: authUser.degree || (helyiEdzo ? helyiEdzo.degree : ''),
                 role: (authUser.role || 'COACH').toUpperCase(),
+                approvalStatus: (authUser.approvalStatus || 'APPROVED').toUpperCase(),
                 token: authUser.token || ''
             };
         } else {
@@ -477,10 +518,17 @@ async function bejelentkezes(event) {
             ((u.passwordHash && u.passwordHash === bevittHash) || (u.password && u.password === uPass))
         );
         if (regTalalat) {
-            const tiszta = Object.assign({}, regTalalat);
-            delete tiszta.password;
-            delete tiszta.passwordHash;
-            sikeresUser = tiszta;
+            const st = (regTalalat.approvalStatus || 'APPROVED').toUpperCase();
+            if (st === 'PENDING') {
+                szerverHibaUzenet = 'A regisztrációd jelenleg még szervezői elbírálás alatt áll! Amint jóváhagyásra kerül, e-mailben értesítünk.';
+            } else if (st === 'REJECTED') {
+                szerverHibaUzenet = 'A regisztrációdat a szervezőség elutasította (zárt IKO versenyrendszer).';
+            } else {
+                const tiszta = Object.assign({}, regTalalat);
+                delete tiszta.password;
+                delete tiszta.passwordHash;
+                sikeresUser = tiszta;
+            }
         } else {
             szerverHibaUzenet = 'A hitelesítő szerver jelenleg nem elérhető!';
         }

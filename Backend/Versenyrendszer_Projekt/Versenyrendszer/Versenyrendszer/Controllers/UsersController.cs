@@ -11,6 +11,7 @@ namespace Versenyrendszer.Controllers
     {
         private readonly AppDbContext _context;
         private readonly AuthService _auth;
+        private readonly EmailService _emailService;
 
         public sealed class LoginDto
         {
@@ -20,10 +21,21 @@ namespace Versenyrendszer.Controllers
             public string? Honeypot { get; set; }
         }
 
-        public UsersController(AppDbContext context, AuthService auth)
+        public sealed class RejectRegistrationDto
+        {
+            public string? Reason { get; set; }
+        }
+
+        public sealed class TestEmailDto
+        {
+            public string? ToEmail { get; set; }
+        }
+
+        public UsersController(AppDbContext context, AuthService auth, EmailService emailService)
         {
             _context = context;
             _auth = auth;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -35,7 +47,18 @@ namespace Versenyrendszer.Controllers
                 {
                     id = u.Id,
                     username = u.Username,
-                    role = AuthService.NormalizeRole(u.Role)
+                    role = AuthService.NormalizeRole(u.Role),
+                    approvalStatus = AuthService.NormalizeApprovalStatus(u.ApprovalStatus),
+                    email = string.IsNullOrWhiteSpace(u.Email) ? u.Username : u.Email,
+                    fullName = u.FullName ?? string.Empty,
+                    club = u.Club ?? string.Empty,
+                    branchief = u.Branchief ?? string.Empty,
+                    phone = u.Phone ?? string.Empty,
+                    country = u.Country ?? string.Empty,
+                    degree = u.Degree ?? string.Empty,
+                    ikoMembership = u.IkoMembership ?? string.Empty,
+                    rejectionReason = u.RejectionReason ?? string.Empty,
+                    registeredAt = u.RegisteredAt ?? string.Empty
                 })
                 .ToListAsync();
 
@@ -67,7 +90,8 @@ namespace Versenyrendszer.Controllers
             var uname = dto.Username.Trim();
             var candidates = await _context.Users.ToListAsync();
             var user = candidates.FirstOrDefault(u =>
-                string.Equals(u.Username?.Trim(), uname, StringComparison.OrdinalIgnoreCase));
+                string.Equals(u.Username?.Trim(), uname, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrWhiteSpace(u.Email) && string.Equals(u.Email.Trim(), uname, StringComparison.OrdinalIgnoreCase)));
 
             if (user == null || !AuthService.VerifyPassword(dto.Password, user.Password, out bool needsRehash))
             {
@@ -77,20 +101,55 @@ namespace Versenyrendszer.Controllers
 
             _auth.ResetFailures(ip);
             var normalizedRole = AuthService.NormalizeRole(user.Role);
-            if (needsRehash || !string.Equals(user.Role, normalizedRole, StringComparison.Ordinal))
+            var approvalStatus = AuthService.NormalizeApprovalStatus(user.ApprovalStatus);
+
+            if (needsRehash ||
+                !string.Equals(user.Role, normalizedRole, StringComparison.Ordinal) ||
+                !string.Equals(user.ApprovalStatus, approvalStatus, StringComparison.Ordinal))
             {
-                user.Password = AuthService.HashPassword(dto.Password);
+                if (needsRehash)
+                {
+                    user.Password = AuthService.HashPassword(dto.Password);
+                }
                 user.Role = normalizedRole;
+                user.ApprovalStatus = approvalStatus;
                 await _context.SaveChangesAsync();
             }
 
+            if (normalizedRole == "COACH" && approvalStatus == "PENDING")
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    error = "A regisztrációd jelenleg még szervezői elbírálás alatt áll! Amint jóváhagyásra kerül, e-mailben értesítünk, és utána tudsz bejelentkezni.",
+                    approvalStatus = "PENDING"
+                });
+            }
+
+            if (normalizedRole == "COACH" && approvalStatus == "REJECTED")
+            {
+                var defaultReason = _emailService.GetSettings(maskPassword: true).DefaultRejectionReason;
+                var reason = string.IsNullOrWhiteSpace(user.RejectionReason) ? defaultReason : user.RejectionReason;
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    error = $"A regisztrációdat a szervezőség elutasította. Indoklás: {reason}",
+                    approvalStatus = "REJECTED",
+                    rejectionReason = reason
+                });
+            }
+
             var token = _auth.CreateToken(user.Id, user.Username, normalizedRole);
+            var displayName = string.IsNullOrWhiteSpace(user.FullName) ? user.Username : user.FullName;
             return Ok(new
             {
                 id = user.Id,
                 username = user.Username,
-                displayName = user.Username,
+                displayName,
+                fullName = user.FullName ?? string.Empty,
+                email = string.IsNullOrWhiteSpace(user.Email) ? user.Username : user.Email,
+                club = user.Club ?? string.Empty,
+                degree = user.Degree ?? string.Empty,
                 role = normalizedRole,
+                approvalStatus,
                 token
             });
         }
@@ -111,7 +170,7 @@ namespace Versenyrendszer.Controllers
         {
             if (user == null || string.IsNullOrWhiteSpace(user.Username))
             {
-                return BadRequest(new { error = "A felhasználónév megadása kötelező!" });
+                return BadRequest(new { error = "A felhasználónév / e-mail cím megadása kötelező!" });
             }
 
             if (string.IsNullOrEmpty(user.Password) || user.Password.Length < 4)
@@ -120,38 +179,170 @@ namespace Versenyrendszer.Controllers
             }
 
             var cleanUsername = user.Username.Trim();
+            var cleanEmail = string.IsNullOrWhiteSpace(user.Email) ? cleanUsername : user.Email.Trim();
+
             var exists = await _context.Users
                 .AsNoTracking()
                 .ToListAsync();
-            if (exists.Any(u => string.Equals(u.Username?.Trim(), cleanUsername, StringComparison.OrdinalIgnoreCase)))
+
+            var existingAccount = exists.FirstOrDefault(u =>
+                string.Equals(u.Username?.Trim(), cleanUsername, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrWhiteSpace(u.Email) && string.Equals(u.Email.Trim(), cleanEmail, StringComparison.OrdinalIgnoreCase)));
+
+            if (existingAccount != null)
             {
+                var existStatus = AuthService.NormalizeApprovalStatus(existingAccount.ApprovalStatus);
+                if (existStatus == "PENDING")
+                {
+                    return Conflict(new { error = "Ezzel az e-mail címmel már beérkezett egy regisztráció, amely jelenleg elbírálás alatt áll!" });
+                }
                 return Conflict(new { error = "Ezzel a felhasználónévvel vagy e-mail címmel már létezik fiók!" });
             }
 
             var callerToken = AuthService.ExtractTokenFromRequest(Request);
             var caller = _auth.ValidateToken(callerToken);
-            var assignedRole = (caller.Valid && caller.Role == "ADMIN")
+            bool isAdminCaller = caller.Valid && caller.Role == "ADMIN";
+
+            var assignedRole = isAdminCaller
                 ? AuthService.NormalizeRole(user.Role)
                 : "COACH";
+
+            var assignedStatus = isAdminCaller
+                ? (string.IsNullOrWhiteSpace(user.ApprovalStatus) ? "APPROVED" : AuthService.NormalizeApprovalStatus(user.ApprovalStatus))
+                : "PENDING";
 
             var entity = new User
             {
                 Username = cleanUsername,
                 Password = AuthService.HashPassword(user.Password),
-                Role = assignedRole
+                Role = assignedRole,
+                ApprovalStatus = assignedStatus,
+                Email = cleanEmail,
+                FullName = (user.FullName ?? string.Empty).Trim(),
+                Club = (user.Club ?? string.Empty).Trim(),
+                Branchief = (user.Branchief ?? string.Empty).Trim(),
+                Phone = (user.Phone ?? string.Empty).Trim(),
+                Country = (user.Country ?? string.Empty).Trim(),
+                Degree = (user.Degree ?? string.Empty).Trim(),
+                IkoMembership = (user.IkoMembership ?? string.Empty).Trim(),
+                RejectionReason = string.Empty,
+                RegisteredAt = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm")
             };
 
             _context.Users.Add(entity);
             await _context.SaveChangesAsync();
+
+            var displayName = string.IsNullOrWhiteSpace(entity.FullName) ? entity.Username : entity.FullName;
+
+            if (assignedStatus == "PENDING")
+            {
+                var emailRes = await _emailService.SendRegistrationPendingEmailAsync(entity);
+                return Ok(new
+                {
+                    id = entity.Id,
+                    username = entity.Username,
+                    displayName,
+                    email = entity.Email,
+                    club = entity.Club,
+                    role = entity.Role,
+                    approvalStatus = "PENDING",
+                    emailSent = emailRes.Sent,
+                    emailMessage = emailRes.Message,
+                    message = "Köszönjük a regisztrációdat! A regisztrációd jelenleg szervezői elbírálás alatt áll. Automatikus visszaigazoló e-mailt küldtünk, és az elbírálás eredményéről is e-mailben értesítünk."
+                });
+            }
 
             var token = _auth.CreateToken(entity.Id, entity.Username, entity.Role);
             return Ok(new
             {
                 id = entity.Id,
                 username = entity.Username,
-                displayName = entity.Username,
+                displayName,
+                email = entity.Email,
+                club = entity.Club,
                 role = entity.Role,
+                approvalStatus = entity.ApprovalStatus,
                 token
+            });
+        }
+
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> ApproveUser(int id)
+        {
+            var existing = await _context.Users.FindAsync(id);
+            if (existing == null) return NotFound(new { error = "A felhasználó nem található!" });
+
+            existing.ApprovalStatus = "APPROVED";
+            existing.RejectionReason = string.Empty;
+            await _context.SaveChangesAsync();
+
+            var emailRes = await _emailService.SendRegistrationApprovedEmailAsync(existing);
+            return Ok(new
+            {
+                id = existing.Id,
+                username = existing.Username,
+                fullName = existing.FullName,
+                club = existing.Club,
+                approvalStatus = existing.ApprovalStatus,
+                emailSent = emailRes.Sent,
+                emailMessage = emailRes.Message
+            });
+        }
+
+        [HttpPost("{id}/reject")]
+        public async Task<IActionResult> RejectUser(int id, [FromBody] RejectRegistrationDto? dto)
+        {
+            var existing = await _context.Users.FindAsync(id);
+            if (existing == null) return NotFound(new { error = "A felhasználó nem található!" });
+
+            var defaultReason = _emailService.GetSettings(maskPassword: true).DefaultRejectionReason;
+            var reason = string.IsNullOrWhiteSpace(dto?.Reason) ? defaultReason : dto!.Reason!.Trim();
+
+            existing.ApprovalStatus = "REJECTED";
+            existing.RejectionReason = reason;
+            await _context.SaveChangesAsync();
+
+            var emailRes = await _emailService.SendRegistrationRejectedEmailAsync(existing, reason);
+            return Ok(new
+            {
+                id = existing.Id,
+                username = existing.Username,
+                fullName = existing.FullName,
+                club = existing.Club,
+                approvalStatus = existing.ApprovalStatus,
+                rejectionReason = existing.RejectionReason,
+                emailSent = emailRes.Sent,
+                emailMessage = emailRes.Message
+            });
+        }
+
+        [HttpGet("email-settings")]
+        public IActionResult GetEmailSettings()
+        {
+            return Ok(_emailService.GetSettings(maskPassword: true));
+        }
+
+        [HttpPut("email-settings")]
+        public IActionResult PutEmailSettings([FromBody] EmailService.EmailSettingsDto? dto)
+        {
+            if (dto == null) return BadRequest(new { error = "Hiányzó e-mail beállítások." });
+            var saved = _emailService.SaveSettings(dto);
+            return Ok(saved);
+        }
+
+        [HttpPost("test-email")]
+        public async Task<IActionResult> SendTestEmail([FromBody] TestEmailDto? dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.ToEmail))
+            {
+                return BadRequest(new { error = "Add meg a teszt e-mail címzettjét!" });
+            }
+
+            var res = await _emailService.SendTestEmailAsync(dto.ToEmail);
+            return Ok(new
+            {
+                sent = res.Sent,
+                message = res.Message
             });
         }
 
@@ -173,6 +364,19 @@ namespace Versenyrendszer.Controllers
                     : AuthService.HashPassword(user.Password);
             }
             existing.Role = AuthService.NormalizeRole(user.Role);
+            if (!string.IsNullOrWhiteSpace(user.ApprovalStatus))
+            {
+                existing.ApprovalStatus = AuthService.NormalizeApprovalStatus(user.ApprovalStatus);
+            }
+            if (!string.IsNullOrWhiteSpace(user.Email)) existing.Email = user.Email.Trim();
+            if (!string.IsNullOrWhiteSpace(user.FullName)) existing.FullName = user.FullName.Trim();
+            if (!string.IsNullOrWhiteSpace(user.Club)) existing.Club = user.Club.Trim();
+            if (!string.IsNullOrWhiteSpace(user.Branchief)) existing.Branchief = user.Branchief.Trim();
+            if (!string.IsNullOrWhiteSpace(user.Phone)) existing.Phone = user.Phone.Trim();
+            if (!string.IsNullOrWhiteSpace(user.Country)) existing.Country = user.Country.Trim();
+            if (!string.IsNullOrWhiteSpace(user.Degree)) existing.Degree = user.Degree.Trim();
+            if (!string.IsNullOrWhiteSpace(user.IkoMembership)) existing.IkoMembership = user.IkoMembership.Trim();
+            if (user.RejectionReason != null) existing.RejectionReason = user.RejectionReason.Trim();
 
             await _context.SaveChangesAsync();
             return NoContent();

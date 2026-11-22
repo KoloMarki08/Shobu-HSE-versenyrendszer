@@ -61,6 +61,26 @@ jobs:
 
             chmod -R 775 /var/www/tatamimaster/frontend 2>/dev/null || true
             chmod -R 775 /var/www/tatamimaster/backend 2>/dev/null || true
+
+            # Postfix helyi kimenő levelezőszerver (info@tatamimaster.hu -> 127.0.0.1:25) automatikus konfigurálása
+            if ! command -v postconf >/dev/null 2>&1; then
+              sudo DEBIAN_FRONTEND=noninteractive apt-get update -y || true
+              echo "postfix postfix/mailname string tatamimaster.hu" | sudo debconf-set-selections || true
+              echo "postfix postfix/main_mailer_type string 'Internet Site'" | sudo debconf-set-selections || true
+              sudo DEBIAN_FRONTEND=noninteractive apt-get install -y postfix || true
+            fi
+            if command -v postconf >/dev/null 2>&1; then
+              echo "tatamimaster.hu" | sudo tee /etc/mailname >/dev/null || true
+              sudo postconf -e "myhostname = mail.tatamimaster.hu" || true
+              sudo postconf -e "mydomain = tatamimaster.hu" || true
+              sudo postconf -e "myorigin = tatamimaster.hu" || true
+              sudo postconf -e "inet_interfaces = loopback-only" || true
+              sudo postconf -e "inet_protocols = ipv4" || true
+              sudo postconf -e "mydestination = localhost.tatamimaster.hu, localhost" || true
+              sudo systemctl enable postfix || true
+              sudo systemctl restart postfix || true
+            fi
+
             sudo systemctl restart tatamimaster.service
 
             rm -rf /tmp/deploy_pkg_extract /tmp/deploy_pkg.tar.gz

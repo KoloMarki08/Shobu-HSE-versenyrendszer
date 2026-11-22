@@ -29,6 +29,7 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<LiveArenaStateService>();
 builder.Services.AddSingleton<AuthService>();
+builder.Services.AddSingleton<EmailService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
