@@ -77,8 +77,11 @@ jobs:
               sudo postconf -e "inet_interfaces = loopback-only" || true
               sudo postconf -e "inet_protocols = ipv4" || true
               sudo postconf -e "mydestination = localhost.tatamimaster.hu, localhost" || true
+              sudo postconf -e "smtpd_tls_security_level = none" || true
+              sudo postconf -e "smtp_tls_security_level = may" || true
               sudo systemctl enable postfix || true
-              sudo systemctl restart postfix || true
+              sudo systemctl stop postfix || true
+              sudo systemctl start postfix || true
             fi
 
             sudo systemctl restart tatamimaster.service

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
@@ -290,6 +291,20 @@ namespace Versenyrendszer.Services
         private async Task<(bool Sent, string Message)> SendEmailInternalAsync(string toEmail, string subject, string htmlBody)
         {
             var settings = GetSettings(maskPassword: false);
+            bool isLocalHost = string.Equals(settings.SmtpHost, "127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(settings.SmtpHost, "localhost", StringComparison.OrdinalIgnoreCase);
+
+            // 1. Linux VPS-en ha a helyi Postfix (/usr/sbin/sendmail) elérhető és nincs külső SMTP megadva,
+            // közvetlenül a Postfix helyi postdrop sorába adjuk át az RFC 5322 MIME üzenetet (azonnali, TLS-tanúsítványhiba nélküli kézbesítés)
+            if (isLocalHost && string.IsNullOrWhiteSpace(settings.SmtpUsername) && File.Exists("/usr/sbin/sendmail"))
+            {
+                var sendmailRes = await TrySendViaLocalSendmailAsync(settings, toEmail, subject, htmlBody);
+                if (sendmailRes.Sent)
+                {
+                    return sendmailRes;
+                }
+            }
+
             try
             {
                 using var message = new MailMessage();
@@ -323,13 +338,80 @@ namespace Versenyrendszer.Services
 
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(9));
                 await client.SendMailAsync(message, cts.Token);
-                Console.WriteLine($"[EMAIL ELKÜLDVE]: {settings.FromEmail} -> {toEmail} ({subject})");
+                Console.WriteLine($"[EMAIL ELKÜLDVE - SMTP]: {settings.FromEmail} -> {toEmail} ({subject})");
                 return (true, $"E-mail sikeresen elküldve a(z) {toEmail} címre ({settings.FromEmail} feladóval).");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[EMAIL KÜLDÉSI FIGYELMEZTETÉS - {toEmail}]: {ex.Message}");
-                return (false, $"Az e-mail küldés nem sikerült ({settings.SmtpHost}:{settings.SmtpPort}): {ex.Message}");
+                var detail = ex.InnerException != null ? $"{ex.Message} ({ex.InnerException.Message})" : ex.Message;
+                Console.WriteLine($"[EMAIL KÜLDÉSI FIGYELMEZTETÉS - {toEmail}]: {detail}");
+                return (false, $"Az e-mail küldés nem sikerült ({settings.SmtpHost}:{settings.SmtpPort}): {detail}");
+            }
+        }
+
+        private static async Task<(bool Sent, string Message)> TrySendViaLocalSendmailAsync(
+            EmailSettingsDto settings,
+            string toEmail,
+            string subject,
+            string htmlBody)
+        {
+            try
+            {
+                var subjectB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(subject));
+                var fromNameB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(settings.FromName));
+                var bodyB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(htmlBody), Base64FormattingOptions.InsertLineBreaks);
+
+                var mime = new StringBuilder();
+                mime.AppendLine($"From: =?UTF-8?B?{fromNameB64}?= <{settings.FromEmail}>");
+                mime.AppendLine($"To: <{toEmail}>");
+                if (IsLikelyEmail(settings.ReplyToEmail))
+                {
+                    mime.AppendLine($"Reply-To: <{settings.ReplyToEmail.Trim()}>");
+                }
+                mime.AppendLine($"Subject: =?UTF-8?B?{subjectB64}?=");
+                mime.AppendLine($"Date: {DateTimeOffset.Now:R}");
+                mime.AppendLine($"Message-ID: <{Guid.NewGuid():N}@tatamimaster.hu>");
+                mime.AppendLine("MIME-Version: 1.0");
+                mime.AppendLine("Content-Type: text/html; charset=UTF-8");
+                mime.AppendLine("Content-Transfer-Encoding: base64");
+                mime.AppendLine();
+                mime.AppendLine(bodyB64);
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "/usr/sbin/sendmail",
+                    UseShellExecute = false,
+                    RedirectStandardInput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+                psi.ArgumentList.Add("-t");
+                psi.ArgumentList.Add("-i");
+                psi.ArgumentList.Add("-f");
+                psi.ArgumentList.Add(settings.FromEmail);
+
+                using var proc = Process.Start(psi);
+                if (proc == null)
+                {
+                    return (false, "A /usr/sbin/sendmail nem indítható.");
+                }
+
+                await proc.StandardInput.WriteAsync(mime.ToString());
+                proc.StandardInput.Close();
+                var stderr = await proc.StandardError.ReadToEndAsync();
+                await proc.WaitForExitAsync();
+
+                if (proc.ExitCode == 0)
+                {
+                    Console.WriteLine($"[EMAIL ELKÜLDVE - POSTFIX SENDMAIL]: {settings.FromEmail} -> {toEmail} ({subject})");
+                    return (true, $"E-mail sikeresen elküldve a(z) {toEmail} címre ({settings.FromEmail} feladóval).");
+                }
+
+                return (false, $"Sendmail hiba ({proc.ExitCode}): {stderr}");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
             }
         }
     }
