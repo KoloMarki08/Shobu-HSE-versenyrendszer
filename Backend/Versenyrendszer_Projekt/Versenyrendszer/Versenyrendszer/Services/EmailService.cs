@@ -284,6 +284,9 @@ namespace Versenyrendszer.Services
             sb.Append("Üdvözlettel,<br><strong style=\"color:#18181B;\">TatamiMaster Versenyrendszer Szervezőség</strong><br>");
             sb.Append("<a href=\"https://tatamimaster.hu\" style=\"color:#990000;text-decoration:none;\">https://tatamimaster.hu</a>");
             sb.Append("</div>");
+            sb.Append("<div style=\"margin-top:14px;padding:10px 12px;background:#FAF8F5;border:1px solid #E4E0D7;border-radius:6px;font-size:11.5px;color:#52525B;font-style:italic;\">");
+            sb.Append("Ez egy automatikus üzenet, kérjük, ne válaszolj erre a levélre!");
+            sb.Append("</div>");
             sb.Append("</div></div></body></html>");
             return sb.ToString();
         }
