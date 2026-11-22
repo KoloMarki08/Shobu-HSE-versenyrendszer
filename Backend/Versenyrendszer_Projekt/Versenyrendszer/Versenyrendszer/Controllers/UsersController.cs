@@ -266,6 +266,23 @@ namespace Versenyrendszer.Controllers
             });
         }
 
+        [HttpPost("{id}/resend-pending")]
+        public async Task<IActionResult> ResendPendingEmail(int id)
+        {
+            var existing = await _context.Users.FindAsync(id);
+            if (existing == null) return NotFound(new { error = "A felhasználó nem található!" });
+
+            var emailRes = await _emailService.SendRegistrationPendingEmailAsync(existing);
+            return Ok(new
+            {
+                id = existing.Id,
+                username = existing.Username,
+                approvalStatus = existing.ApprovalStatus,
+                emailSent = emailRes.Sent,
+                emailMessage = emailRes.Message
+            });
+        }
+
         [HttpPost("{id}/approve")]
         public async Task<IActionResult> ApproveUser(int id)
         {

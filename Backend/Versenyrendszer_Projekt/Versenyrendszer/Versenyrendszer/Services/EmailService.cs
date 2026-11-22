@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Mail;
+using System.Net.Security;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Versenyrendszer.Models;
@@ -256,12 +258,10 @@ namespace Versenyrendszer.Services
             sb.Append("<body style=\"margin:0;padding:24px;background-color:#F3F0EA;font-family:'Segoe UI',Arial,sans-serif;color:#18181B;\">");
             sb.Append("<div style=\"max-width:600px;margin:0 auto;background:#FFFFFF;border:1px solid #E4E0D7;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(24,24,27,0.06);\">");
 
-            // Fejléc
             sb.Append("<div style=\"background:#18181B;color:#FAF8F5;padding:20px 26px;border-bottom:3px solid #990000;\">");
             sb.Append("<div style=\"font-size:18px;font-weight:900;letter-spacing:0.6px;\">TATAMI MASTER&#8482; <span style=\"color:#FCA5A5;font-weight:700;font-size:14px;margin-left:6px;\">IKO VERSENYRENDSZER</span></div>");
             sb.Append("</div>");
 
-            // Tartalom
             sb.Append("<div style=\"padding:26px;\">");
             sb.Append($"<div style=\"display:inline-block;background:{badgeBg};color:#FAF8F5;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:800;letter-spacing:0.5px;margin-bottom:14px;\">{WebUtility.HtmlEncode(badgeText)}</div>");
             sb.Append($"<h2 style=\"margin:0 0 16px 0;font-size:20px;color:#18181B;\">{WebUtility.HtmlEncode(title)}</h2>");
@@ -291,20 +291,34 @@ namespace Versenyrendszer.Services
         private async Task<(bool Sent, string Message)> SendEmailInternalAsync(string toEmail, string subject, string htmlBody)
         {
             var settings = GetSettings(maskPassword: false);
-            bool isLocalHost = string.Equals(settings.SmtpHost, "127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                               string.Equals(settings.SmtpHost, "localhost", StringComparison.OrdinalIgnoreCase);
+            bool isLocalOrDirect = string.Equals(settings.SmtpHost, "127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(settings.SmtpHost, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(settings.SmtpHost, "DIRECT", StringComparison.OrdinalIgnoreCase);
 
-            // 1. Linux VPS-en ha a helyi Postfix (/usr/sbin/sendmail) elérhető és nincs külső SMTP megadva,
-            // közvetlenül a Postfix helyi postdrop sorába adjuk át az RFC 5322 MIME üzenetet (azonnali, TLS-tanúsítványhiba nélküli kézbesítés)
-            if (isLocalHost && string.IsNullOrWhiteSpace(settings.SmtpUsername) && File.Exists("/usr/sbin/sendmail"))
+            // 1. Ha nincs külső hitelesített SMTP megadva (alapértelmezett VPS mód: info@tatamimaster.hu),
+            // közvetlenül a címzett domain MX szerverének (Direct-to-MX, EHLO mail.tatamimaster.hu + STARTTLS) kézbesítjük a VPS-ről (80.249.163.58, SPF=PASS)!
+            if (isLocalOrDirect && string.IsNullOrWhiteSpace(settings.SmtpUsername))
             {
-                var sendmailRes = await TrySendViaLocalSendmailAsync(settings, toEmail, subject, htmlBody);
-                if (sendmailRes.Sent)
+                var directRes = await TrySendDirectToMxAsync(settings, toEmail, subject, htmlBody);
+                if (directRes.Sent)
                 {
-                    return sendmailRes;
+                    return directRes;
                 }
+
+                // Ha a helyi /usr/sbin/sendmail elérhető, másodlagos útvonalként megpróbáljuk
+                if (File.Exists("/usr/sbin/sendmail"))
+                {
+                    var sendmailRes = await TrySendViaLocalSendmailAsync(settings, toEmail, subject, htmlBody);
+                    if (sendmailRes.Sent)
+                    {
+                        return sendmailRes;
+                    }
+                }
+
+                return directRes;
             }
 
+            // 2. Külső hitelesített SMTP szerver használata (ha az Admin megadott egyedi SMTP kiszolgálót/jelszót)
             try
             {
                 using var message = new MailMessage();
@@ -349,6 +363,313 @@ namespace Versenyrendszer.Services
             }
         }
 
+        private static string BuildMimeMessage(EmailSettingsDto settings, string toEmail, string subject, string htmlBody)
+        {
+            var subjectB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(subject));
+            var fromNameB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(settings.FromName));
+            var bodyB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(htmlBody), Base64FormattingOptions.InsertLineBreaks);
+
+            var mime = new StringBuilder();
+            mime.Append($"From: =?UTF-8?B?{fromNameB64}?= <{settings.FromEmail}>\r\n");
+            mime.Append($"To: <{toEmail}>\r\n");
+            if (IsLikelyEmail(settings.ReplyToEmail))
+            {
+                mime.Append($"Reply-To: <{settings.ReplyToEmail.Trim()}>\r\n");
+            }
+            mime.Append($"Subject: =?UTF-8?B?{subjectB64}?=\r\n");
+            mime.Append($"Date: {DateTimeOffset.UtcNow:R}\r\n");
+            mime.Append($"Message-ID: <{Guid.NewGuid():N}@mail.tatamimaster.hu>\r\n");
+            mime.Append("MIME-Version: 1.0\r\n");
+            mime.Append("Content-Type: text/html; charset=UTF-8\r\n");
+            mime.Append("Content-Transfer-Encoding: base64\r\n");
+            mime.Append("\r\n");
+            mime.Append(bodyB64.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+            mime.Append("\r\n");
+            return mime.ToString();
+        }
+
+        private static async Task<(bool Sent, string Message)> TrySendDirectToMxAsync(
+            EmailSettingsDto settings,
+            string toEmail,
+            string subject,
+            string htmlBody)
+        {
+            var atIdx = toEmail.LastIndexOf('@');
+            if (atIdx <= 0 || atIdx >= toEmail.Length - 1)
+            {
+                return (false, "Érvénytelen címzett e-mail cím.");
+            }
+
+            var recipientDomain = toEmail.Substring(atIdx + 1).Trim();
+            var mxHosts = await ResolveMxHostsAsync(recipientDomain);
+            if (mxHosts.Count == 0)
+            {
+                mxHosts.Add(recipientDomain);
+            }
+
+            var mimePayload = BuildMimeMessage(settings, toEmail, subject, htmlBody);
+            var lastErr = "Nem sikerült csatlakozni a címzett levelezőszerveréhez.";
+
+            foreach (var mxHost in mxHosts.Take(3))
+            {
+                try
+                {
+                    var ipv4List = (await Dns.GetHostAddressesAsync(mxHost))
+                        .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)
+                        .ToArray();
+
+                    if (ipv4List.Length == 0)
+                    {
+                        lastErr = $"Nincs IPv4 cím a(z) {mxHost} MX szerverhez.";
+                        continue;
+                    }
+
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                    using var tcp = new TcpClient(AddressFamily.InterNetwork);
+                    await tcp.ConnectAsync(ipv4List[0], 25, cts.Token);
+
+                    Stream activeStream = tcp.GetStream();
+                    var reader = new StreamReader(activeStream, Encoding.ASCII, false, 1024, leaveOpen: true);
+                    var writer = new StreamWriter(activeStream, Encoding.ASCII, 1024, leaveOpen: true) { NewLine = "\r\n", AutoFlush = true };
+
+                    var greeting = await ReadSmtpResponseAsync(reader, cts.Token);
+                    if (greeting.Code != 220)
+                    {
+                        lastErr = $"{mxHost} greeting hiba: {greeting.FullText}";
+                        continue;
+                    }
+
+                    await writer.WriteLineAsync("EHLO mail.tatamimaster.hu");
+                    var ehlo = await ReadSmtpResponseAsync(reader, cts.Token);
+                    if (ehlo.Code != 250)
+                    {
+                        await writer.WriteLineAsync("HELO mail.tatamimaster.hu");
+                        ehlo = await ReadSmtpResponseAsync(reader, cts.Token);
+                        if (ehlo.Code != 250)
+                        {
+                            lastErr = $"{mxHost} EHLO hiba: {ehlo.FullText}";
+                            continue;
+                        }
+                    }
+
+                    if (ehlo.FullText.Contains("STARTTLS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await writer.WriteLineAsync("STARTTLS");
+                        var tlsResp = await ReadSmtpResponseAsync(reader, cts.Token);
+                        if (tlsResp.Code == 220)
+                        {
+                            var sslStream = new SslStream(tcp.GetStream(), leaveInnerStreamOpen: false, (_, _, _, _) => true);
+                            await sslStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
+                            {
+                                TargetHost = mxHost
+                            }, cts.Token);
+
+                            activeStream = sslStream;
+                            reader = new StreamReader(activeStream, Encoding.ASCII, false, 1024, leaveOpen: true);
+                            writer = new StreamWriter(activeStream, Encoding.ASCII, 1024, leaveOpen: true) { NewLine = "\r\n", AutoFlush = true };
+
+                            await writer.WriteLineAsync("EHLO mail.tatamimaster.hu");
+                            ehlo = await ReadSmtpResponseAsync(reader, cts.Token);
+                            if (ehlo.Code != 250)
+                            {
+                                lastErr = $"{mxHost} TLS EHLO hiba: {ehlo.FullText}";
+                                continue;
+                            }
+                        }
+                    }
+
+                    await writer.WriteLineAsync($"MAIL FROM:<{settings.FromEmail}>");
+                    var mailFrom = await ReadSmtpResponseAsync(reader, cts.Token);
+                    if (mailFrom.Code != 250)
+                    {
+                        lastErr = $"{mxHost} MAIL FROM hiba: {mailFrom.FullText}";
+                        continue;
+                    }
+
+                    await writer.WriteLineAsync($"RCPT TO:<{toEmail}>");
+                    var rcptTo = await ReadSmtpResponseAsync(reader, cts.Token);
+                    if (rcptTo.Code != 250 && rcptTo.Code != 251)
+                    {
+                        lastErr = $"{mxHost} RCPT TO hiba: {rcptTo.FullText}";
+                        continue;
+                    }
+
+                    await writer.WriteLineAsync("DATA");
+                    var dataResp = await ReadSmtpResponseAsync(reader, cts.Token);
+                    if (dataResp.Code != 354)
+                    {
+                        lastErr = $"{mxHost} DATA hiba: {dataResp.FullText}";
+                        continue;
+                    }
+
+                    await writer.WriteAsync(mimePayload + ".\r\n");
+                    await writer.FlushAsync();
+                    var queuedResp = await ReadSmtpResponseAsync(reader, cts.Token);
+                    if (queuedResp.Code != 250)
+                    {
+                        lastErr = $"{mxHost} üzenet-elfogadási hiba: {queuedResp.FullText}";
+                        continue;
+                    }
+
+                    try { await writer.WriteLineAsync("QUIT"); } catch { }
+                    Console.WriteLine($"[EMAIL ELKÜLDVE - DIRECT MX ({mxHost})]: {settings.FromEmail} -> {toEmail} ({subject})");
+                    return (true, $"E-mail sikeresen kézbesítve a(z) {toEmail} címre ({settings.FromEmail} feladóval, MX: {mxHost}).");
+                }
+                catch (Exception ex)
+                {
+                    lastErr = $"{mxHost}: {ex.Message}";
+                }
+            }
+
+            Console.WriteLine($"[DIRECT MX KÜLDÉSI FIGYELMEZTETÉS - {toEmail}]: {lastErr}");
+            return (false, $"E-mail küldés nem sikerült: {lastErr}");
+        }
+
+        private static async Task<(int Code, string FullText)> ReadSmtpResponseAsync(StreamReader reader, CancellationToken ct)
+        {
+            var sb = new StringBuilder();
+            int code = 0;
+            while (true)
+            {
+                var line = await reader.ReadLineAsync(ct);
+                if (line == null) break;
+                sb.AppendLine(line);
+                if (line.Length >= 3 && int.TryParse(line.Substring(0, 3), out int parsed))
+                {
+                    code = parsed;
+                    if (line.Length == 3 || line[3] == ' ')
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return (code, sb.ToString().Trim());
+        }
+
+        public static async Task<List<string>> ResolveMxHostsAsync(string domain)
+        {
+            var results = new List<(int Preference, string Host)>();
+            var dnsServers = new[] { "1.1.1.1", "8.8.8.8" };
+
+            foreach (var dnsIp in dnsServers)
+            {
+                try
+                {
+                    var query = BuildDnsMxQuery(domain);
+                    using var udp = new UdpClient();
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                    await udp.SendAsync(query, new IPEndPoint(IPAddress.Parse(dnsIp), 53), cts.Token);
+                    var recv = await udp.ReceiveAsync(cts.Token);
+                    var buf = recv.Buffer;
+                    if (buf.Length < 12) continue;
+
+                    int qdCount = (buf[4] << 8) | buf[5];
+                    int anCount = (buf[6] << 8) | buf[7];
+                    int offset = 12;
+
+                    for (int q = 0; q < qdCount; q++)
+                    {
+                        ReadDnsName(buf, ref offset);
+                        offset += 4;
+                    }
+
+                    for (int a = 0; a < anCount && offset + 10 <= buf.Length; a++)
+                    {
+                        ReadDnsName(buf, ref offset);
+                        if (offset + 10 > buf.Length) break;
+                        int type = (buf[offset] << 8) | buf[offset + 1];
+                        int rdLen = (buf[offset + 8] << 8) | buf[offset + 9];
+                        offset += 10;
+                        int nextOffset = offset + rdLen;
+                        if (nextOffset > buf.Length) break;
+
+                        if (type == 15 && rdLen >= 3)
+                        {
+                            int pref = (buf[offset] << 8) | buf[offset + 1];
+                            int nameOffset = offset + 2;
+                            string mxHost = ReadDnsName(buf, ref nameOffset).TrimEnd('.');
+                            if (!string.IsNullOrWhiteSpace(mxHost))
+                            {
+                                results.Add((pref, mxHost));
+                            }
+                        }
+                        offset = nextOffset;
+                    }
+
+                    if (results.Count > 0) break;
+                }
+                catch
+                {
+                }
+            }
+
+            return results
+                .OrderBy(r => r.Preference)
+                .Select(r => r.Host)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static byte[] BuildDnsMxQuery(string domain)
+        {
+            var ms = new MemoryStream();
+            // Header (12 bytes): ID=0x1A2B, Flags=0x0100 (RD), QDCOUNT=1
+            ms.Write(new byte[] { 0x1A, 0x2B, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            var labels = domain.Trim().TrimEnd('.').Split('.', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var label in labels)
+            {
+                var bytes = Encoding.ASCII.GetBytes(label);
+                ms.WriteByte((byte)bytes.Length);
+                ms.Write(bytes, 0, bytes.Length);
+            }
+            ms.WriteByte(0x00);
+            // QTYPE = 15 (MX), QCLASS = 1 (IN)
+            ms.Write(new byte[] { 0x00, 0x0F, 0x00, 0x01 });
+            return ms.ToArray();
+        }
+
+        private static string ReadDnsName(byte[] buf, ref int offset)
+        {
+            var labels = new List<string>();
+            int cur = offset;
+            bool jumped = false;
+            int jumps = 0;
+
+            while (cur < buf.Length && jumps < 16)
+            {
+                byte len = buf[cur];
+                if (len == 0)
+                {
+                    if (!jumped) offset = cur + 1;
+                    break;
+                }
+
+                if ((len & 0xC0) == 0xC0)
+                {
+                    if (cur + 1 >= buf.Length) break;
+                    int ptr = ((len & 0x3F) << 8) | buf[cur + 1];
+                    if (!jumped) offset = cur + 2;
+                    cur = ptr;
+                    jumped = true;
+                    jumps++;
+                }
+                else
+                {
+                    cur++;
+                    if (cur + len > buf.Length) break;
+                    labels.Add(Encoding.ASCII.GetString(buf, cur, len));
+                    cur += len;
+                    if (!jumped) offset = cur;
+                }
+            }
+
+            return string.Join(".", labels);
+        }
+
         private static async Task<(bool Sent, string Message)> TrySendViaLocalSendmailAsync(
             EmailSettingsDto settings,
             string toEmail,
@@ -357,25 +678,7 @@ namespace Versenyrendszer.Services
         {
             try
             {
-                var subjectB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(subject));
-                var fromNameB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(settings.FromName));
-                var bodyB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(htmlBody), Base64FormattingOptions.InsertLineBreaks);
-
-                var mime = new StringBuilder();
-                mime.AppendLine($"From: =?UTF-8?B?{fromNameB64}?= <{settings.FromEmail}>");
-                mime.AppendLine($"To: <{toEmail}>");
-                if (IsLikelyEmail(settings.ReplyToEmail))
-                {
-                    mime.AppendLine($"Reply-To: <{settings.ReplyToEmail.Trim()}>");
-                }
-                mime.AppendLine($"Subject: =?UTF-8?B?{subjectB64}?=");
-                mime.AppendLine($"Date: {DateTimeOffset.Now:R}");
-                mime.AppendLine($"Message-ID: <{Guid.NewGuid():N}@tatamimaster.hu>");
-                mime.AppendLine("MIME-Version: 1.0");
-                mime.AppendLine("Content-Type: text/html; charset=UTF-8");
-                mime.AppendLine("Content-Transfer-Encoding: base64");
-                mime.AppendLine();
-                mime.AppendLine(bodyB64);
+                var mime = BuildMimeMessage(settings, toEmail, subject, htmlBody);
 
                 var psi = new ProcessStartInfo
                 {
@@ -396,10 +699,10 @@ namespace Versenyrendszer.Services
                     return (false, "A /usr/sbin/sendmail nem indítható.");
                 }
 
-                await proc.StandardInput.WriteAsync(mime.ToString());
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await proc.StandardInput.WriteAsync(mime.AsMemory(), cts.Token);
                 proc.StandardInput.Close();
-                var stderr = await proc.StandardError.ReadToEndAsync();
-                await proc.WaitForExitAsync();
+                await proc.WaitForExitAsync(cts.Token);
 
                 if (proc.ExitCode == 0)
                 {
@@ -407,7 +710,7 @@ namespace Versenyrendszer.Services
                     return (true, $"E-mail sikeresen elküldve a(z) {toEmail} címre ({settings.FromEmail} feladóval).");
                 }
 
-                return (false, $"Sendmail hiba ({proc.ExitCode}): {stderr}");
+                return (false, $"Sendmail hiba ({proc.ExitCode})");
             }
             catch (Exception ex)
             {
