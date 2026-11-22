@@ -91,9 +91,21 @@
             </div>
 
             <div id="edzoiNevezesUrlapok">
-                <p style="color: #52525B; font-size: 0.92rem; margin-bottom: 18px;">
-                    Használd a <strong>Csapat-sablont (Állandó Versenyzői Keretet)</strong>, hogy ne kelljen minden versenyen újra begépelni a karatékákat! A sablonban a <strong>név és a születési idő rögzített (nem módosítható)</strong>, a fejlődő adatok (<strong>övfokozat és testsúly</strong>) viszont bármikor frissíthetők, és egyetlen kattintással benevezhető a teljes csapat.
-                </p>
+                <!-- EDZŐI FÜLVÁLASZTÓ SÁV A TISZTA, KOMPAKT ELRENDEZÉSHEZ -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;background:#FAF8F5;border:1px solid #E4E0D7;padding:6px;border-radius:10px;margin-bottom:16px;">
+                    <button type="button" id="coachFulBtn_sablon" class="btn btn-outline-green" style="flex:1;min-width:190px;padding:9px 14px;font-size:0.84rem;font-weight:800;" onclick="valtsCoachNevezesFul('sablon')">
+                        1. Csapat-sablon (Állandó Keret &amp; 1 Kattintásos Nevezés)
+                    </button>
+                    <button type="button" id="coachFulBtn_egyeni" class="btn btn-outline" style="flex:1;min-width:190px;padding:9px 14px;font-size:0.84rem;font-weight:700;" onclick="valtsCoachNevezesFul('egyeni')">
+                        2. + Új Egyéni Versenyző Felvétele
+                    </button>
+                    <button type="button" id="coachFulBtn_csapat" class="btn btn-outline" style="flex:1;min-width:190px;padding:9px 14px;font-size:0.84rem;font-weight:700;" onclick="valtsCoachNevezesFul('csapat')">
+                        3. Csapat Kata &amp; Utólagos Kategória-nevezés
+                    </button>
+                    <button type="button" id="coachFulBtn_all" class="btn btn-outline" style="padding:9px 14px;font-size:0.8rem;font-weight:700;" onclick="valtsCoachNevezesFul('all')">
+                        Mindet Mutat
+                    </button>
+                </div>
 
                 <!-- 0. EDZŐI CSAPAT-SABLON (ÁLLANDÓ EGYESÜLETI VERSENYZŐI KERET) -->
                 <div id="coachCsapatSablonBox" style="background: #FFFFFF; border: 2px solid #18181B; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
@@ -162,7 +174,7 @@
                 </div>
 
                 <!-- 1. ÚJ VERSENYZŐ FELVÉTELE + TÖBB KATEGÓRIA BEPIPÁLÁSA EGYSZERRE -->
-                <div style="background: #FAF8F5; border: 1px solid #E4E0D7; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
+                <div id="coachEgyeniNevezesBox" style="display: none; background: #FAF8F5; border: 1px solid #E4E0D7; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
                     <strong style="display: flex; align-items: center; gap: 8px; color: #18181B; margin-bottom: 12px; font-size: 0.98rem;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
                         1. Új versenyző regisztrálása (Több kategória is bepipálható egyszerre):
@@ -200,7 +212,7 @@
                 </div>
 
                 <!-- 2. CSAPAT KATA (TEAM KATA) ÖSSZERAKÓ VARÁZSLÓ -->
-                <div style="background: #FAF8F5; border: 1px solid #E4E0D7; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
+                <div id="coachTeamKataBox" style="display: none; background: #FAF8F5; border: 1px solid #E4E0D7; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
                     <strong style="display: flex; align-items: center; gap: 8px; color: #18181B; margin-bottom: 8px; font-size: 0.98rem;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         2. Csapat Kata (Team Kata / Synchron Kata) nevezése:
@@ -222,7 +234,7 @@
                 </div>
 
                 <!-- 3. MÁR MEGLÉVŐ VERSENYZŐ NEVEZÉSE TOVÁBBI KATEGÓRIÁBA -->
-                <div class="add-form-container" style="margin-bottom: 0;">
+                <div id="coachUtolagosNevezesBox" class="add-form-container" style="display: none; margin-bottom: 0;">
                     <strong style="color: #18181B; display: inline-flex; align-items: center; gap: 6px;">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                         3. Meglévő versenyző utólagos nevezése további kategóriába:

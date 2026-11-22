@@ -118,6 +118,31 @@
             background: #F3F0EA;
             transform: translateY(-1px);
         }
+        .reg-section-box {
+            background: #FAF8F5;
+            border: 1px solid #E4E0D7;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .reg-section-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #18181B;
+            margin: 0 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #E4E0D7;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .reg-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+            gap: 12px;
+        }
     </style>
 </head>
 <body>
@@ -328,129 +353,152 @@
 
                 <form onsubmit="regisztracioKuldese(event)" id="coachRegForm">
 
-                    <div class="reg-group">
-                        <label class="reg-label">Username (Felhasználónév)<span class="req">*</span></label>
-                        <input type="text" id="regUsername" class="reg-input" placeholder="Pl. KoloMarki vagy Tornai.Balint" required minlength="3">
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Email (Hivatalos E-mail cím - ide érkezik a visszaigazolás)<span class="req">*</span></label>
-                        <input type="email" id="regEmail" class="reg-input" placeholder="pelda@klub.hu" required>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">First name (Keresztnév)<span class="req">*</span></label>
-                        <input type="text" id="regFirstName" class="reg-input" required>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Last name (Vezetéknév)<span class="req">*</span></label>
-                        <input type="text" id="regLastName" class="reg-input" required>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Phone (Telefonszám)<span class="req">*</span></label>
-                        <input type="tel" id="regPhone" class="reg-input" placeholder="+36 30 123 4567" required>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Club name (Klub neve)<span class="req">*</span></label>
-                        <input type="text" id="regClubName" class="reg-input" placeholder="Pl. Shobu HSE" required>
-                        <button type="button" class="club-change-btn" onclick="valasszMeglevoKlubot()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Change selected Club
-                        </button>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Branchief<span class="req">*</span></label>
-                        <input type="text" id="regBranchief" class="reg-input" required>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Country (Ország)<span class="req">*</span></label>
-                        <select id="regCountry" class="reg-input" required>
-                            <option value="">-- Select Country --</option>
-                            <option value="Hungary" selected>Hungary (Magyarország)</option>
-                            <option value="Poland">Poland</option>
-                            <option value="Romania">Romania</option>
-                            <option value="Slovakia">Slovakia</option>
-                            <option value="Ukraine">Ukraine</option>
-                            <option value="Austria">Austria</option>
-                            <option value="Germany">Germany</option>
-                            <option value="Croatia">Croatia</option>
-                            <option value="Serbia">Serbia</option>
-                            <option value="Bulgaria">Bulgaria</option>
-                            <option value="Spain">Spain</option>
-                            <option value="France">France</option>
-                            <option value="Japan">Japan</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Degree (Övfokozat)</label>
-                        <select id="regDegree" class="reg-input">
-                            <option value="">-- Select Degree --</option>
-                            <option value="10. kyu">10. kyu</option>
-                            <option value="9. kyu">9. kyu</option>
-                            <option value="8. kyu">8. kyu</option>
-                            <option value="7. kyu">7. kyu</option>
-                            <option value="6. kyu">6. kyu</option>
-                            <option value="5. kyu">5. kyu</option>
-                            <option value="4. kyu">4. kyu</option>
-                            <option value="3. kyu">3. kyu</option>
-                            <option value="2. kyu">2. kyu</option>
-                            <option value="1. kyu">1. kyu</option>
-                            <option value="1. dan">1. dan (Senpai)</option>
-                            <option value="2. dan">2. dan (Senpai)</option>
-                            <option value="3. dan">3. dan (Sensei)</option>
-                            <option value="4. dan">4. dan (Sensei)</option>
-                            <option value="5. dan">5. dan (Shihan)</option>
-                            <option value="6. dan">6. dan (Shihan)</option>
-                            <option value="7. dan">7. dan (Shihan)</option>
-                            <option value="8. dan">8. dan (Kancho)</option>
-                        </select>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">IKO Membership</label>
-                        <input type="text" id="regIkoMembership" class="reg-input" placeholder="Opcionális tagsági azonosító">
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Sex (Nem)<span class="req">*</span></label>
-                        <select id="regSex" class="reg-input" required>
-                            <option value="">-- Select --</option>
-                            <option value="Male">Male (Férfi)</option>
-                            <option value="Female">Female (Nő)</option>
-                        </select>
-                    </div>
-
-                    <div class="reg-group">
-                        <label class="reg-label">Date of Birth<span class="req">*</span></label>
-                        <div class="dob-row">
-                            <div class="dob-col">
-                                <label class="reg-label" style="font-size: 0.78rem;">Year<span class="req">*</span></label>
-                                <select id="regDobYear" class="reg-input" required></select>
+                    <!-- I. FIÓK ÉS BELÉPÉSI ADATOK -->
+                    <div class="reg-section-box">
+                        <div class="reg-section-title">1. Fiók és Belépési Adatok</div>
+                        <div class="reg-grid-2">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Felhasználónév (Username)<span class="req">*</span></label>
+                                <input type="text" id="regUsername" class="reg-input" placeholder="Pl. KoloMarki" required minlength="3">
                             </div>
-                            <div class="dob-col">
-                                <label class="reg-label" style="font-size: 0.78rem;">Month<span class="req">*</span></label>
-                                <select id="regDobMonth" class="reg-input" required></select>
-                            </div>
-                            <div class="dob-col">
-                                <label class="reg-label" style="font-size: 0.78rem;">Day<span class="req">*</span></label>
-                                <select id="regDobDay" class="reg-input" required></select>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">E-mail cím (Ide jön az értesítés)<span class="req">*</span></label>
+                                <input type="email" id="regEmail" class="reg-input" placeholder="pelda@klub.hu" required>
                             </div>
                         </div>
                     </div>
 
-                    <div class="reg-group">
-                        <label class="reg-label">Password (Jelszó)<span class="req">*</span></label>
-                        <input type="password" id="regPassword" class="reg-input" placeholder="Min. 8 karakter, szám és speciális karakter" required oninput="frissitJelszoErossegMero()">
-                        <div id="regPasswordStrengthBox" style="margin-top:8px;padding:10px 12px;background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;">
+                    <!-- II. SZEMÉLYES ÉS EGYESÜLETI (IKO) ADATOK -->
+                    <div class="reg-section-box">
+                        <div class="reg-section-title">2. Személyes és Egyesületi (IKO) Adatok</div>
+
+                        <div class="reg-grid-2" style="margin-bottom:12px;">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Vezetéknév (Last name)<span class="req">*</span></label>
+                                <input type="text" id="regLastName" class="reg-input" placeholder="Pl. Kovács" required>
+                            </div>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Keresztnév (First name)<span class="req">*</span></label>
+                                <input type="text" id="regFirstName" class="reg-input" placeholder="Pl. Péter" required>
+                            </div>
+                        </div>
+
+                        <div class="reg-grid-2" style="margin-bottom:12px;">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Klub / Egyesület neve<span class="req">*</span></label>
+                                <input type="text" id="regClubName" class="reg-input" placeholder="Pl. Shobu HSE" required>
+                                <button type="button" class="club-change-btn" onclick="valasszMeglevoKlubot()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    Választás meglévő klubokból
+                                </button>
+                            </div>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Branch Chief<span class="req">*</span></label>
+                                <input type="text" id="regBranchief" class="reg-input" placeholder="Pl. Shihan ..." required>
+                            </div>
+                        </div>
+
+                        <div class="reg-grid-2" style="margin-bottom:12px;">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Telefonszám (Phone)<span class="req">*</span></label>
+                                <input type="tel" id="regPhone" class="reg-input" placeholder="+36 30 123 4567" required>
+                            </div>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Ország (Country)<span class="req">*</span></label>
+                                <select id="regCountry" class="reg-input" required>
+                                    <option value="">-- Válassz országot --</option>
+                                    <option value="Hungary" selected>Hungary (Magyarország)</option>
+                                    <option value="Poland">Poland</option>
+                                    <option value="Romania">Romania</option>
+                                    <option value="Slovakia">Slovakia</option>
+                                    <option value="Ukraine">Ukraine</option>
+                                    <option value="Austria">Austria</option>
+                                    <option value="Germany">Germany</option>
+                                    <option value="Croatia">Croatia</option>
+                                    <option value="Serbia">Serbia</option>
+                                    <option value="Bulgaria">Bulgaria</option>
+                                    <option value="Spain">Spain</option>
+                                    <option value="France">France</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="reg-grid-2" style="margin-bottom:12px;">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Övfokozat (Degree)</label>
+                                <select id="regDegree" class="reg-input">
+                                    <option value="">-- Válassz övfokozatot --</option>
+                                    <option value="10. kyu">10. kyu</option>
+                                    <option value="9. kyu">9. kyu</option>
+                                    <option value="8. kyu">8. kyu</option>
+                                    <option value="7. kyu">7. kyu</option>
+                                    <option value="6. kyu">6. kyu</option>
+                                    <option value="5. kyu">5. kyu</option>
+                                    <option value="4. kyu">4. kyu</option>
+                                    <option value="3. kyu">3. kyu</option>
+                                    <option value="2. kyu">2. kyu</option>
+                                    <option value="1. kyu">1. kyu</option>
+                                    <option value="1. dan">1. dan (Senpai)</option>
+                                    <option value="2. dan">2. dan (Senpai)</option>
+                                    <option value="3. dan">3. dan (Sensei)</option>
+                                    <option value="4. dan">4. dan (Sensei)</option>
+                                    <option value="5. dan">5. dan (Shihan)</option>
+                                    <option value="6. dan">6. dan (Shihan)</option>
+                                    <option value="7. dan">7. dan (Shihan)</option>
+                                    <option value="8. dan">8. dan (Kancho)</option>
+                                </select>
+                            </div>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">IKO Tagsági szám (Opcionális)</label>
+                                <input type="text" id="regIkoMembership" class="reg-input" placeholder="Opcionális IKO azonosító">
+                            </div>
+                        </div>
+
+                        <div class="reg-grid-2">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Nem (Sex)<span class="req">*</span></label>
+                                <select id="regSex" class="reg-input" required>
+                                    <option value="">-- Válassz --</option>
+                                    <option value="Male">Férfi (Male)</option>
+                                    <option value="Female">Nő (Female)</option>
+                                </select>
+                            </div>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Születési dátum (Év / Hó / Nap)<span class="req">*</span></label>
+                                <div class="dob-row">
+                                    <div class="dob-col">
+                                        <select id="regDobYear" class="reg-input" required aria-label="Születési év"></select>
+                                    </div>
+                                    <div class="dob-col">
+                                        <select id="regDobMonth" class="reg-input" required aria-label="Születési hónap"></select>
+                                    </div>
+                                    <div class="dob-col">
+                                        <select id="regDobDay" class="reg-input" required aria-label="Születési nap"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- III. BIZTONSÁGOS JELSZÓ ÉS ERŐSSÉGMÉRŐ -->
+                    <div class="reg-section-box">
+                        <div class="reg-section-title">3. Biztonságos Jelszó Beállítása</div>
+                        <div class="reg-grid-2" style="margin-bottom:10px;">
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Jelszó (Password)<span class="req">*</span></label>
+                                <input type="password" id="regPassword" class="reg-input" placeholder="Min. 8 karakter, szám és spec. jel" required oninput="frissitJelszoErossegMero()">
+                            </div>
+                            <div class="reg-group" style="margin-bottom:0;">
+                                <label class="reg-label">Jelszó megerősítése<span class="req">*</span></label>
+                                <input type="password" id="regConfirmPassword" class="reg-input" placeholder="Jelszó újra" required>
+                            </div>
+                        </div>
+
+                        <div id="regPasswordStrengthBox" style="padding:10px 12px;background:#FFFFFF;border:1px solid #E4E0D7;border-radius:8px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.78rem;">
-                                <span style="color:#52525B;font-weight:700;">Jelszó erőssége:</span>
+                                <span style="color:#52525B;font-weight:700;">Jelszó biztonsági szintje:</span>
                                 <strong id="pwdStrengthText" style="color:#71717A;">Még nincs megadva</strong>
                             </div>
                             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">
@@ -466,11 +514,6 @@
                                 <div id="pwdRuleCase" style="font-weight:600;">[ ] Kis- és nagybetű (a-z, A-Z)</div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="reg-group" style="margin-bottom: 18px;">
-                        <label class="reg-label">Confirm password<span class="req">*</span></label>
-                        <input type="password" id="regConfirmPassword" class="reg-input" required>
                     </div>
 
                     <!-- hCaptcha "Ember vagyok" ellenőrző doboz (Regisztráció) -->

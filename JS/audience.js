@@ -1382,6 +1382,26 @@ const SABLON_OV_OPCIOK = [
     '1. dan', '2. dan', '3. dan', '4. dan', '5. dan'
 ];
 
+function valtsCoachNevezesFul(ful) {
+    const sablonBox = document.getElementById('coachCsapatSablonBox');
+    const egyeniBox = document.getElementById('coachEgyeniNevezesBox');
+    const teamBox = document.getElementById('coachTeamKataBox');
+    const utolagosBox = document.getElementById('coachUtolagosNevezesBox');
+
+    if (sablonBox) sablonBox.style.display = (ful === 'sablon' || ful === 'all') ? 'block' : 'none';
+    if (egyeniBox) egyeniBox.style.display = (ful === 'egyeni' || ful === 'all') ? 'block' : 'none';
+    if (teamBox) teamBox.style.display = (ful === 'csapat' || ful === 'all') ? 'block' : 'none';
+    if (utolagosBox) utolagosBox.style.display = (ful === 'csapat' || ful === 'all') ? 'flex' : 'none';
+
+    ['sablon', 'egyeni', 'csapat', 'all'].forEach(k => {
+        const btn = document.getElementById('coachFulBtn_' + k);
+        if (!btn) return;
+        const aktiv = (k === ful);
+        btn.className = aktiv ? 'btn btn-outline-green' : 'btn btn-outline';
+        btn.style.fontWeight = aktiv ? '800' : '700';
+    });
+}
+
 function lekerCoachSablonKlub() {
     const sablonInp = document.getElementById('coachSablonKlubNev');
     if (sablonInp && sablonInp.value.trim()) return sablonInp.value.trim();

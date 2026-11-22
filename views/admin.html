@@ -74,6 +74,24 @@
         <!-- ELBÍRÁLÁSRA VÁRÓ EDZŐI REGISZTRÁCIÓK FIGYELMEZTETŐ SÁV -->
         <div id="pendingCoachAlertBanner" class="pro-card" style="display:none;padding:12px 18px;margin-bottom:18px;border:2px solid #990000;background:#FAF5F5;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"></div>
 
+        <!-- GYORSMENÜ / LÉPÉSVÁLASZTÓ SÁV (1 KATTINTÁSOS UGRÁS A 7 MENÜPONT KÖZÖTT) -->
+        <div id="adminQuickStepNavBar" class="pro-card" style="padding:12px 16px;margin-bottom:18px;background:#FAF8F5;border:1.5px solid #CFC9BC;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="font-size:0.78rem;font-weight:800;color:#52525B;text-transform:uppercase;letter-spacing:0.4px;margin-right:4px;">Gyorsmenü:</span>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-versenyek" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-versenyek', true)">1. Versenyek</button>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-versenyzok" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-versenyzok', true)">2. Versenyzők &amp; CSV</button>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-kategoriak" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-kategoriak', true)">3. Kategóriák</button>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-nevezesek" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-nevezesek', true)">4. Nevezések</button>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-tatamik" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-tatamik', true)">5. Tatamik &amp; Sorsolás</button>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-agrajz" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-agrajz', true)">6. Ágrajzok &amp; Nyomtatás</button>
+                <button type="button" class="btn btn-outline tab-btn" data-tab="tab-edzo-regisztraciok" style="padding:6px 11px;font-size:0.78rem;font-weight:700;" onclick="ugorjAdminTabra('tab-edzo-regisztraciok', true)">7. Edzői Regisztrációk &amp; E-mail</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn btn-outline-blue" style="padding:5px 10px;font-size:0.75rem;" onclick="expandAllAdminTabs()" title="Minden menüpont lenyitása">Összes Lenyitása</button>
+                <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:0.75rem;" onclick="collapseAllAdminTabs()" title="Minden menüpont bezárása">Összes Bezárása</button>
+            </div>
+        </div>
+
         <!-- =====================================================================
              1. MENÜ: VERSENYEK LÉTREHOZÁSA, PLAKÁT ÉS VERSENYKIÍRÁS KEZELÉSE
              ===================================================================== -->
