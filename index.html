@@ -329,7 +329,12 @@
                 <form onsubmit="regisztracioKuldese(event)" id="coachRegForm">
 
                     <div class="reg-group">
-                        <label class="reg-label">Login (Correct Email)<span class="req">*</span></label>
+                        <label class="reg-label">Username (Felhasználónév)<span class="req">*</span></label>
+                        <input type="text" id="regUsername" class="reg-input" placeholder="Pl. KoloMarki vagy Tornai.Balint" required minlength="3">
+                    </div>
+
+                    <div class="reg-group">
+                        <label class="reg-label">Email (Hivatalos E-mail cím - ide érkezik a visszaigazolás)<span class="req">*</span></label>
                         <input type="email" id="regEmail" class="reg-input" placeholder="pelda@klub.hu" required>
                     </div>
 
@@ -441,8 +446,26 @@
                     </div>
 
                     <div class="reg-group">
-                        <label class="reg-label">Password<span class="req">*</span></label>
-                        <input type="password" id="regPassword" class="reg-input" required>
+                        <label class="reg-label">Password (Jelszó)<span class="req">*</span></label>
+                        <input type="password" id="regPassword" class="reg-input" placeholder="Min. 8 karakter, szám és speciális karakter" required oninput="frissitJelszoErossegMero()">
+                        <div id="regPasswordStrengthBox" style="margin-top:8px;padding:10px 12px;background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:0.78rem;">
+                                <span style="color:#52525B;font-weight:700;">Jelszó erőssége:</span>
+                                <strong id="pwdStrengthText" style="color:#71717A;">Még nincs megadva</strong>
+                            </div>
+                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">
+                                <div id="pwdMeterSeg1" style="height:6px;border-radius:4px;background:#E4E0D7;transition:background 0.2s;"></div>
+                                <div id="pwdMeterSeg2" style="height:6px;border-radius:4px;background:#E4E0D7;transition:background 0.2s;"></div>
+                                <div id="pwdMeterSeg3" style="height:6px;border-radius:4px;background:#E4E0D7;transition:background 0.2s;"></div>
+                                <div id="pwdMeterSeg4" style="height:6px;border-radius:4px;background:#E4E0D7;transition:background 0.2s;"></div>
+                            </div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px;font-size:0.76rem;color:#52525B;">
+                                <div id="pwdRuleLen" style="font-weight:600;">[ ] Legalább 8 karakter hosszú</div>
+                                <div id="pwdRuleSpec" style="font-weight:600;">[ ] Min. 1 speciális karakter (!@#$%._-)</div>
+                                <div id="pwdRuleNum" style="font-weight:600;">[ ] Min. 1 számjegy (0-9)</div>
+                                <div id="pwdRuleCase" style="font-weight:600;">[ ] Kis- és nagybetű (a-z, A-Z)</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="reg-group" style="margin-bottom: 18px;">

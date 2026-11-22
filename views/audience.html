@@ -91,9 +91,75 @@
             </div>
 
             <div id="edzoiNevezesUrlapok">
-                <p style="color: #52525B; font-size: 0.92rem; margin-bottom: 20px;">
-                    Egy versenyzőnél egyszerre <strong>több kategóriát is bepipálhatsz</strong> (pl. Egyéni Kata + Kumite), alatta pedig 3 versenyzőből összeállíthatsz <strong>Csapat Kata (Team Kata)</strong> egységet is!
+                <p style="color: #52525B; font-size: 0.92rem; margin-bottom: 18px;">
+                    Használd a <strong>Csapat-sablont (Állandó Versenyzői Keretet)</strong>, hogy ne kelljen minden versenyen újra begépelni a karatékákat! A sablonban a <strong>név és a születési idő rögzített (nem módosítható)</strong>, a fejlődő adatok (<strong>övfokozat és testsúly</strong>) viszont bármikor frissíthetők, és egyetlen kattintással benevezhető a teljes csapat.
                 </p>
+
+                <!-- 0. EDZŐI CSAPAT-SABLON (ÁLLANDÓ EGYESÜLETI VERSENYZŐI KERET) -->
+                <div id="coachCsapatSablonBox" style="background: #FFFFFF; border: 2px solid #18181B; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #E4E0D7;">
+                        <div>
+                            <strong style="display:flex;align-items:center;gap:8px;color:#18181B;font-size:1.02rem;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Csapat-sablon (Állandó Egyesületi Versenyzői Keret &amp; 1 Kattintásos Csapatnevezés)
+                            </strong>
+                            <small style="color:#52525B;display:block;margin-top:3px;">
+                                Rögzített (zárolt) adatok: <strong>Név, Születési dátum, Nem</strong> &bull; Fejlődés szerint módosítható adatok: <strong>Övfokozat (kyu/dan), Testsúly (kg), Kata/Kumite indulás</strong>
+                            </small>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <label for="coachSablonKlubNev" style="font-size:0.8rem;font-weight:800;color:#18181B;">Egyesület:</label>
+                            <input type="text" id="coachSablonKlubNev" class="input-field" style="max-width:190px;font-weight:800;" placeholder="Pl. Shobu HSE" onchange="renderCoachCsapatSablon()">
+                            <button type="button" class="btn btn-outline-blue" style="padding:7px 12px;font-size:0.78rem;" onclick="importalKlubVersenyzokSablonba()" title="A versenyen már szereplő egyesületi versenyzők bemásolása a sablonba">
+                                Meglévő Klubtagok Beemelése
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Új karatéka hozzáadása a sablonhoz -->
+                    <div style="background:#FAF8F5;border:1px solid #E4E0D7;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+                        <div style="font-size:0.82rem;font-weight:800;color:#18181B;margin-bottom:8px;">
+                            + Új versenyző felvétele a Csapat-sablonba (a név és a születési dátum mentés után rögzített lesz):
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                            <input type="text" id="sablonUjNev" placeholder="Versenyző neve * (rögzített)" class="input-field" style="flex:1.4;min-width:165px;">
+                            <input type="date" id="sablonUjSzulDatum" title="Születési dátum (Év-Hónap-Nap) - mentés után nem módosítható" class="input-field" style="max-width:160px;">
+                            <select id="sablonUjNem" class="input-field" style="max-width:130px;">
+                                <option value="Férfi">Férfi / Fiú</option>
+                                <option value="Női">Női / Lány</option>
+                            </select>
+                            <select id="sablonUjOv" class="input-field" style="max-width:125px;">
+                                <option value="10. kyu">10. kyu</option>
+                                <option value="9. kyu">9. kyu</option>
+                                <option value="8. kyu">8. kyu</option>
+                                <option value="7. kyu">7. kyu</option>
+                                <option value="6. kyu">6. kyu</option>
+                                <option value="5. kyu">5. kyu</option>
+                                <option value="4. kyu">4. kyu</option>
+                                <option value="3. kyu">3. kyu</option>
+                                <option value="2. kyu">2. kyu</option>
+                                <option value="1. kyu">1. kyu</option>
+                                <option value="1. dan">1. dan</option>
+                                <option value="2. dan">2. dan</option>
+                                <option value="3. dan">3. dan</option>
+                                <option value="4. dan">4. dan</option>
+                            </select>
+                            <input type="number" id="sablonUjSuly" placeholder="Súly (kg) *" class="input-field" style="max-width:105px;">
+                            <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+                                <input type="checkbox" id="sablonUjKataCb" checked style="width:15px;height:15px;accent-color:#18181B;"> Kata
+                            </label>
+                            <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+                                <input type="checkbox" id="sablonUjKumiteCb" checked style="width:15px;height:15px;accent-color:#18181B;"> Kumite
+                            </label>
+                            <button type="button" class="btn btn-outline-green" style="padding:8px 14px;font-size:0.82rem;" onclick="hozzadTagCsapatSablonhoz()">
+                                + Hozzáadás a Sablonhoz
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- A Csapat-sablon táblázata -->
+                    <div id="coachCsapatSablonContainer"></div>
+                </div>
 
                 <!-- 1. ÚJ VERSENYZŐ FELVÉTELE + TÖBB KATEGÓRIA BEPIPÁLÁSA EGYSZERRE -->
                 <div style="background: #FAF8F5; border: 1px solid #E4E0D7; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px;">

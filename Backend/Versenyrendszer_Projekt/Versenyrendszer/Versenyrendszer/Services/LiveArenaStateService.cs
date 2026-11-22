@@ -249,8 +249,13 @@ namespace Versenyrendszer.Services
             long dVer;
             lock (_sync)
             {
+                var preservedRoster = _sharedState["tatamiKlubSablonok_v1"]?.DeepClone();
                 _tatamiStates.Clear();
                 _sharedState = new JsonObject();
+                if (preservedRoster != null)
+                {
+                    _sharedState["tatamiKlubSablonok_v1"] = preservedRoster;
+                }
                 _latestTatamiKey = null;
                 _version++;
                 _dataVersion++;

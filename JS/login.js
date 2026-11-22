@@ -287,6 +287,40 @@ async function valasszMeglevoKlubot() {
     }
 }
 
+// ÉLŐ JELSZÓ-ERŐSSÉG MÉRŐ ÉS FELTÉTEL-ELLENŐRZŐ
+function frissitJelszoErossegMero() {
+    const passEl = document.getElementById('regPassword');
+    const pass = passEl ? passEl.value : '';
+    const info = TatamiMaster.ertekelJelszoErosseg(pass);
+
+    const textEl = document.getElementById('pwdStrengthText');
+    if (textEl) {
+        textEl.innerText = info.label;
+        textEl.style.color = info.color;
+    }
+
+    for (let i = 1; i <= 4; i++) {
+        const seg = document.getElementById('pwdMeterSeg' + i);
+        if (seg) {
+            seg.style.background = (pass.length > 0 && i <= Math.max(1, info.score)) ? info.color : '#E4E0D7';
+        }
+    }
+
+    const setRuleUI = (id, ok, text) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = `${ok ? '[OK]' : '[ ]'} ${text}`;
+        el.style.color = ok ? '#15803D' : '#52525B';
+        el.style.fontWeight = ok ? '800' : '600';
+    };
+
+    setRuleUI('pwdRuleLen', info.minLen, 'Legalább 8 karakter hosszú');
+    setRuleUI('pwdRuleSpec', info.hasSpecial, 'Min. 1 speciális karakter (!@#$%._-)');
+    setRuleUI('pwdRuleNum', info.hasDigit, 'Min. 1 számjegy (0-9)');
+    setRuleUI('pwdRuleCase', info.hasCase, 'Kis- és nagybetű (a-z, A-Z)');
+    return info;
+}
+
 // REGISZTRÁCIÓ MENTÉSE -> hCaptcha "Ember vagyok" ELLENŐRZÉSSEL
 async function regisztracioKuldese(event) {
     event.preventDefault();
@@ -301,7 +335,9 @@ async function regisztracioKuldese(event) {
         return;
     }
 
+    const rawUsername = (document.getElementById('regUsername')?.value || '').trim();
     const email = document.getElementById('regEmail').value.trim();
+    const username = rawUsername || email;
     const firstName = document.getElementById('regFirstName').value.trim();
     const lastName = document.getElementById('regLastName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
@@ -317,22 +353,29 @@ async function regisztracioKuldese(event) {
     const pass = document.getElementById('regPassword').value;
     const confirmPass = document.getElementById('regConfirmPassword').value;
 
+    if (username.length < 3) {
+        errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} A felhasználónévnek legalább 3 karakter hosszúnak kell lennie!`;
+        errDiv.style.display = 'block';
+        return;
+    }
+
     if (pass !== confirmPass) {
         errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} A két jelszó nem egyezik meg (Password / Confirm password)!`;
         errDiv.style.display = 'block';
         return;
     }
 
-    if (pass.length < 4) {
-        errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} A jelszónak legalább 4 karakter hosszúnak kell lennie!`;
+    const pwdCheck = TatamiMaster.ertekelJelszoErosseg(pass);
+    if (!pwdCheck.isValid) {
+        errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} A jelszó nem elég biztonságos! Hiányzik: <strong>${TatamiMaster.escapeHtml(pwdCheck.hianyzoFeltetelek.join(', '))}</strong>.`;
         errDiv.style.display = 'block';
         return;
     }
 
-    // Ellenőrizzük, hogy nincs-e már regisztrálva ez az e-mail cím
+    // Ellenőrizzük, hogy nincs-e már regisztrálva ez az e-mail cím vagy felhasználónév
     let regisztraltEdzok = JSON.parse(localStorage.getItem('regisztraltEdzok') || '[]');
-    if (regisztraltEdzok.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-        errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} Ezzel az e-mail címmel már regisztráltak!`;
+    if (regisztraltEdzok.some(u => (u.email && u.email.toLowerCase() === email.toLowerCase()) || (u.username && u.username.toLowerCase() === username.toLowerCase()))) {
+        errDiv.innerHTML = `${TatamiMaster.icon('alert', 16)} Ezzel a felhasználónévvel vagy e-mail címmel már regisztráltak!`;
         errDiv.style.display = 'block';
         return;
     }
@@ -341,7 +384,7 @@ async function regisztracioKuldese(event) {
     const jelszoHash = TatamiMaster.hashClientPassword(pass);
     const ujEdzoProfil = {
         id: Date.now(),
-        username: email,
+        username: username,
         displayName: teljesNev,
         fullName: teljesNev,
         email: email,
@@ -369,7 +412,7 @@ async function regisztracioKuldese(event) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                username: email,
+                username: username,
                 password: pass,
                 role: 'COACH',
                 email: email,
@@ -419,11 +462,12 @@ async function regisztracioKuldese(event) {
         const regForm = document.getElementById('coachRegForm');
         if (regForm) regForm.reset();
         initSzulDatumMezok();
+        frissitJelszoErossegMero();
         resetHCaptcha('register');
         valtsAuthFul('login');
 
         const loginUserInp = document.getElementById('loginUsername');
-        if (loginUserInp) loginUserInp.value = email;
+        if (loginUserInp) loginUserInp.value = username;
 
         const noticeBox = document.getElementById('loginStatusNotice');
         const infoSzoveg = szerverUzenet ||

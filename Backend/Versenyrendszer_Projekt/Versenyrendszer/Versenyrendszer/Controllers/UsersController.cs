@@ -173,7 +173,24 @@ namespace Versenyrendszer.Controllers
                 return BadRequest(new { error = "A felhasználónév / e-mail cím megadása kötelező!" });
             }
 
-            if (string.IsNullOrEmpty(user.Password) || user.Password.Length < 4)
+            var callerToken = AuthService.ExtractTokenFromRequest(Request);
+            var caller = _auth.ValidateToken(callerToken);
+            bool isAdminCaller = caller.Valid && caller.Role == "ADMIN";
+
+            if (!isAdminCaller)
+            {
+                if (string.IsNullOrEmpty(user.Password) || user.Password.Length < 8 ||
+                    !user.Password.Any(char.IsDigit) ||
+                    !user.Password.Any(char.IsLetter) ||
+                    !user.Password.Any(c => !char.IsLetterOrDigit(c) && !char.IsWhiteSpace(c)))
+                {
+                    return BadRequest(new
+                    {
+                        error = "A jelszónak legalább 8 karakter hosszúnak kell lennie, és tartalmaznia kell betűt, számot, valamint legalább 1 speciális karaktert!"
+                    });
+                }
+            }
+            else if (string.IsNullOrEmpty(user.Password) || user.Password.Length < 4)
             {
                 return BadRequest(new { error = "A jelszónak legalább 4 karakter hosszúnak kell lennie!" });
             }
@@ -187,21 +204,20 @@ namespace Versenyrendszer.Controllers
 
             var existingAccount = exists.FirstOrDefault(u =>
                 string.Equals(u.Username?.Trim(), cleanUsername, StringComparison.OrdinalIgnoreCase) ||
-                (!string.IsNullOrWhiteSpace(u.Email) && string.Equals(u.Email.Trim(), cleanEmail, StringComparison.OrdinalIgnoreCase)));
+                string.Equals(u.Username?.Trim(), cleanEmail, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrWhiteSpace(u.Email) &&
+                 (string.Equals(u.Email.Trim(), cleanEmail, StringComparison.OrdinalIgnoreCase) ||
+                  string.Equals(u.Email.Trim(), cleanUsername, StringComparison.OrdinalIgnoreCase))));
 
             if (existingAccount != null)
             {
                 var existStatus = AuthService.NormalizeApprovalStatus(existingAccount.ApprovalStatus);
                 if (existStatus == "PENDING")
                 {
-                    return Conflict(new { error = "Ezzel az e-mail címmel már beérkezett egy regisztráció, amely jelenleg elbírálás alatt áll!" });
+                    return Conflict(new { error = "Ezzel a felhasználónévvel vagy e-mail címmel már beérkezett egy regisztráció, amely jelenleg elbírálás alatt áll!" });
                 }
                 return Conflict(new { error = "Ezzel a felhasználónévvel vagy e-mail címmel már létezik fiók!" });
             }
-
-            var callerToken = AuthService.ExtractTokenFromRequest(Request);
-            var caller = _auth.ValidateToken(callerToken);
-            bool isAdminCaller = caller.Valid && caller.Role == "ADMIN";
 
             var assignedRole = isAdminCaller
                 ? AuthService.NormalizeRole(user.Role)

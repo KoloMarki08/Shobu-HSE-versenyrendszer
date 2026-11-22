@@ -156,6 +156,10 @@ function ellenorizEdzoiMod() {
             if (klubInput && user.club && !klubInput.value) {
                 klubInput.value = user.club;
             }
+            const sablonKlubInput = document.getElementById('coachSablonKlubNev');
+            if (sablonKlubInput && user.club && !sablonKlubInput.value) {
+                sablonKlubInput.value = user.club;
+            }
             const teamInput = document.getElementById('teamKataCsapatNev');
             if (teamInput && user.club && !teamInput.value) {
                 teamInput.value = user.club + ' - A csapat';
@@ -237,6 +241,7 @@ async function audienceAdatokBetoltese() {
         frissitKlubMenetrendPanel();
         audienceAgrajzFrissites();
         rajzolAudienceVersenyzokTabla();
+        renderCoachCsapatSablon();
     } catch (e) {
         console.error("Hiba az élő adatok lekérésekor:", e);
     }
@@ -897,7 +902,29 @@ async function coachUjVersenyzoEsNevezes() {
             });
         }
 
-        alert(`${nev} sikeresen regisztrálva és benevezve ${kijeloltKatIdk.length} db kategóriába!`);
+        // Automatikusan elmentjük a versenyzőt az edző állandó Csapat-sablonjába is!
+        const vanKata = kijeloltKatIdk.some(id => {
+            const k = audKategoriak.find(x => x.id === id);
+            return k && (k.matchType || '').toUpperCase() === 'KATA';
+        });
+        const vanKumite = kijeloltKatIdk.some(id => {
+            const k = audKategoriak.find(x => x.id === id);
+            return k && (k.matchType || '').toUpperCase() === 'KUMITE';
+        });
+        TatamiMaster.hozzadVagyFrissitKlubSablonTag(klub, {
+            name: nev,
+            birthDate: szulDatum,
+            birthYear: szulEv,
+            gender: nem || 'Férfi',
+            belt: ov,
+            weight: suly,
+            defaultKata: vanKata,
+            defaultKumite: vanKumite
+        });
+        const sablonKlubInp = document.getElementById('coachSablonKlubNev');
+        if (sablonKlubInp && !sablonKlubInp.value) sablonKlubInp.value = klub;
+
+        alert(`${nev} sikeresen regisztrálva, benevezve (${kijeloltKatIdk.length} kategóriába) és elmentve a Csapat-sablonba!`);
         document.getElementById('coachUjNev').value = '';
         document.getElementById('coachUjSuly').value = '';
         const szulDatumEl = document.getElementById('coachUjSzulDatum');
@@ -1343,3 +1370,425 @@ function rajzolAudienceVersenyzokTabla() {
     html += `</tbody></table></div>`;
     cont.innerHTML = html;
 }
+
+// =========================================================
+// 0. EDZŐI CSAPAT-SABLON (ÁLLANDÓ EGYESÜLETI VERSENYZŐI KERET)
+// Rögzített (zárolt): Név, Születési dátum/év, Nem
+// Fejlődő (módosítható): Övfokozat (belt), Súly (weight kg), Kata/Kumite indulás
+// =========================================================
+const SABLON_OV_OPCIOK = [
+    '10. kyu', '9. kyu', '8. kyu', '7. kyu', '6. kyu',
+    '5. kyu', '4. kyu', '3. kyu', '2. kyu', '1. kyu',
+    '1. dan', '2. dan', '3. dan', '4. dan', '5. dan'
+];
+
+function lekerCoachSablonKlub() {
+    const sablonInp = document.getElementById('coachSablonKlubNev');
+    if (sablonInp && sablonInp.value.trim()) return sablonInp.value.trim();
+
+    const user = TatamiMaster.lekerBejelentkezes();
+    if (user && user.club && user.club.trim()) {
+        if (sablonInp) sablonInp.value = user.club.trim();
+        return user.club.trim();
+    }
+
+    const ujKlubInp = document.getElementById('coachUjKlub');
+    if (ujKlubInp && ujKlubInp.value.trim()) {
+        if (sablonInp) sablonInp.value = ujKlubInp.value.trim();
+        return ujKlubInp.value.trim();
+    }
+
+    if (sablonInp) sablonInp.value = 'Shobu HSE';
+    return 'Shobu HSE';
+}
+
+function renderCoachCsapatSablon() {
+    const cont = document.getElementById('coachCsapatSablonContainer');
+    if (!cont) return;
+
+    const klub = lekerCoachSablonKlub();
+    const sablonLista = TatamiMaster.lekerKlubCsapatSablon(klub);
+    const esc = (s) => TatamiMaster.escapeHtml(s || '');
+
+    if (sablonLista.length === 0) {
+        cont.innerHTML = `
+            <div style="background:#FAF8F5;border:1px dashed #CFC9BC;border-radius:8px;padding:14px 16px;color:#52525B;font-size:0.86rem;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span>A(z) <strong>${esc(klub)}</strong> egyesületnek még nincs mentett Csapat-sablonja. Vegyél fel fent új karatékákat a sablonba, vagy emeld be a már versenyre regisztrált klubtagokat!</span>
+                <button type="button" class="btn btn-outline-blue" style="padding:6px 12px;font-size:0.78rem;" onclick="importalKlubVersenyzokSablonba()">
+                    Meglévő Klubtagok Beemelése
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `<div style="overflow-x:auto;">
+        <table class="data-table" style="margin-bottom:12px;font-size:0.84rem;">
+            <thead>
+                <tr>
+                    <th style="width:36px;text-align:center;">
+                        <input type="checkbox" title="Összes kijelölése / törlése" checked onchange="toggleOsszesSablonKijeloles(this.checked)" style="width:16px;height:16px;accent-color:#18181B;">
+                    </th>
+                    <th>Versenyző neve <span style="font-size:0.7rem;color:#71717A;font-weight:700;">(RÖGZÍTETT)</span></th>
+                    <th>Születési idő &amp; Kor <span style="font-size:0.7rem;color:#71717A;font-weight:700;">(RÖGZÍTETT)</span></th>
+                    <th>Nem <span style="font-size:0.7rem;color:#71717A;font-weight:700;">(RÖGZÍTETT)</span></th>
+                    <th>Övfokozat <span style="font-size:0.7rem;color:#15803D;font-weight:800;">(FEJLŐDŐ - MÓDOSÍTHATÓ)</span></th>
+                    <th>Súly (kg) <span style="font-size:0.7rem;color:#15803D;font-weight:800;">(FEJLŐDŐ - MÓDOSÍTHATÓ)</span></th>
+                    <th>Indulás &amp; Ajánlott Kategória ezen a versenyen</th>
+                    <th>Sablon</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    for (const m of sablonLista) {
+        const mId = esc(m.memberId);
+        const szulKijelzes = m.birthDate ? m.birthDate : String(m.birthYear || 2010);
+        const kor = TatamiMaster.szamolVersenyzoKor(m);
+
+        // Ellenőrizzük, hogy ezen a versenyen már be van-e nevezve
+        const meglevoVersenyzo = audVersenyzok.find(v =>
+            (v.name || '').trim().toLowerCase() === (m.name || '').trim().toLowerCase() &&
+            (v.club || '').trim().toLowerCase() === klub.toLowerCase()
+        );
+        const meglevoKatNevek = meglevoVersenyzo
+            ? audNevezesek.filter(n => n.competitorId === meglevoVersenyzo.id)
+                .map(n => audKategoriak.find(k => k.id === n.categoryId)?.name)
+                .filter(Boolean)
+            : [];
+
+        // Automatikus kategória-ajánlás a rögzített születési idő és a FRISSÍTETT súly alapján
+        const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(
+            audKategoriak,
+            m.birthDate || m.birthYear,
+            m.weight,
+            m.gender
+        );
+        const ajanlottKatNevek = [];
+        if (m.defaultKata && ajanlas.kataIds.length > 0) {
+            const kObj = audKategoriak.find(k => k.id === ajanlas.kataIds[0]);
+            if (kObj) ajanlottKatNevek.push(kObj.name);
+        }
+        if (m.defaultKumite && ajanlas.kumiteIds.length > 0) {
+            const kObj = audKategoriak.find(k => k.id === ajanlas.kumiteIds[0]);
+            if (kObj) ajanlottKatNevek.push(kObj.name);
+        }
+
+        const ovOpciokHtml = SABLON_OV_OPCIOK.map(ov =>
+            `<option value="${esc(ov)}" ${String(m.belt).toLowerCase() === ov.toLowerCase() ? 'selected' : ''}>${esc(ov)}</option>`
+        ).join('') + (!SABLON_OV_OPCIOK.some(o => o.toLowerCase() === String(m.belt || '').toLowerCase())
+            ? `<option value="${esc(m.belt)}" selected>${esc(m.belt)}</option>`
+            : '');
+
+        const statuszSor = meglevoKatNevek.length > 0
+            ? `<div style="margin-top:4px;font-size:0.74rem;color:#15803D;font-weight:800;">MÁR BENEVEZVE: ${esc(meglevoKatNevek.join(', '))}</div>`
+            : (ajanlottKatNevek.length > 0
+                ? `<div style="margin-top:4px;font-size:0.74rem;color:#27272A;">Besorolás: <strong>${esc(ajanlottKatNevek.join(' + '))}</strong></div>`
+                : `<div style="margin-top:4px;font-size:0.74rem;color:#990000;">Nincs pontos kor/súly találat a meghirdetett kategóriák között</div>`);
+
+        html += `<tr style="${m.selected !== false ? '' : 'opacity:0.65;'}">
+            <td style="text-align:center;">
+                <input type="checkbox" ${m.selected !== false ? 'checked' : ''} onchange="valtoztatSablonTagMezo('${mId}', 'selected', this.checked)" style="width:16px;height:16px;accent-color:#18181B;">
+            </td>
+            <td>
+                <div style="display:flex;align-items:center;gap:5px;font-weight:800;color:#18181B;">
+                    ${TatamiMaster.icon('lock', 12)}
+                    <span>${esc(m.name)}</span>
+                </div>
+            </td>
+            <td>
+                <div style="display:inline-flex;align-items:center;gap:4px;background:#F3F0EA;border:1px solid #CFC9BC;padding:2px 8px;border-radius:6px;font-size:0.78rem;color:#3F3F46;font-weight:700;" title="A születési dátum rögzített adat, nem módosítható">
+                    ${TatamiMaster.icon('lock', 11)}
+                    <span>${esc(szulKijelzes)} (${kor} év)</span>
+                </div>
+            </td>
+            <td>
+                <span style="background:#F3F0EA;border:1px solid #CFC9BC;padding:2px 7px;border-radius:6px;font-size:0.76rem;color:#3F3F46;font-weight:700;">
+                    ${esc(m.gender || 'Férfi')}
+                </span>
+            </td>
+            <td>
+                <select class="input-field" style="padding:4px 8px;font-size:0.82rem;font-weight:700;min-width:105px;border-color:#18181B;" onchange="valtoztatSablonTagMezo('${mId}', 'belt', this.value)">
+                    ${ovOpciokHtml}
+                </select>
+            </td>
+            <td>
+                <div style="display:inline-flex;align-items:center;gap:4px;">
+                    <input type="number" class="input-field" style="padding:4px 8px;font-size:0.84rem;font-weight:800;width:76px;border-color:#18181B;" value="${m.weight || 50}" min="12" max="180" onchange="valtoztatSablonTagMezo('${mId}', 'weight', this.value)">
+                    <span style="font-size:0.78rem;font-weight:700;color:#52525B;">kg</span>
+                </div>
+            </td>
+            <td>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                        <input type="checkbox" ${m.defaultKata ? 'checked' : ''} onchange="valtoztatSablonTagMezo('${mId}', 'defaultKata', this.checked)" style="accent-color:#18181B;"> Kata
+                    </label>
+                    <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                        <input type="checkbox" ${m.defaultKumite ? 'checked' : ''} onchange="valtoztatSablonTagMezo('${mId}', 'defaultKumite', this.checked)" style="accent-color:#18181B;"> Kumite
+                    </label>
+                </div>
+                ${statuszSor}
+            </td>
+            <td style="white-space:nowrap;">
+                <button type="button" class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;" onclick="torolTagCsapatSablonbol('${mId}')" title="Karatéka eltávolítása a sablonból">
+                    ${TatamiMaster.icon('trash', 13)}
+                </button>
+            </td>
+        </tr>`;
+    }
+
+    const kijeloltDb = sablonLista.filter(m => m.selected !== false).length;
+    html += `</tbody></table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <span style="font-size:0.82rem;color:#52525B;font-weight:700;">
+                Sablonban szereplő karatékák: <strong>${sablonLista.length} fő</strong> (Nevezésre kijelölve: <strong>${kijeloltDb} fő</strong>)
+            </span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-outline-blue" style="padding:9px 16px;font-size:0.84rem;font-weight:700;" onclick="mentCsapatSablonModositasok()">
+                    ${TatamiMaster.icon('save', 15)} Fejlődő adatok (Öv és Súly) Mentése
+                </button>
+                <button type="button" class="btn btn-outline-green" style="padding:10px 20px;font-size:0.9rem;font-weight:800;" onclick="nevezKijeloltekCsapatSablonbol()">
+                    ${TatamiMaster.icon('check', 16)} Kijelölt Versenyzők (${kijeloltDb} fő) Benevezése a Sablonból (1 Kattintással)
+                </button>
+            </div>
+        </div>`;
+
+    cont.innerHTML = html;
+}
+
+function hozzadTagCsapatSablonhoz() {
+    const klub = lekerCoachSablonKlub();
+    const nevEl = document.getElementById('sablonUjNev');
+    const szulEl = document.getElementById('sablonUjSzulDatum');
+    const nemEl = document.getElementById('sablonUjNem');
+    const ovEl = document.getElementById('sablonUjOv');
+    const sulyEl = document.getElementById('sablonUjSuly');
+    const kataEl = document.getElementById('sablonUjKataCb');
+    const kumiteEl = document.getElementById('sablonUjKumiteCb');
+
+    const nev = (nevEl?.value || '').trim();
+    const szul = (szulEl?.value || '').trim();
+    const nem = nemEl?.value || 'Férfi';
+    const ov = ovEl?.value || '10. kyu';
+    const suly = parseInt(sulyEl?.value || '0', 10);
+
+    if (!nev || !szul || !suly) {
+        alert("Kérlek add meg a versenyző nevét, pontos születési dátumát (Év-Hónap-Nap) és aktuális súlyát (kg) a Csapat-sablonba való felvételhez!");
+        return;
+    }
+
+    const szulNorm = TatamiMaster.normalizalSzulDatum(szul);
+    TatamiMaster.hozzadVagyFrissitKlubSablonTag(klub, {
+        name: nev,
+        birthDate: szulNorm.hasFullDate ? szulNorm.birthDate : '',
+        birthYear: szulNorm.birthYear || 2010,
+        gender: nem,
+        belt: ov,
+        weight: suly,
+        defaultKata: kataEl ? kataEl.checked : true,
+        defaultKumite: kumiteEl ? kumiteEl.checked : true,
+        selected: true
+    });
+
+    if (nevEl) nevEl.value = '';
+    if (szulEl) szulEl.value = '';
+    if (sulyEl) sulyEl.value = '';
+
+    renderCoachCsapatSablon();
+    TatamiMaster.toast(`${nev} felvéve a(z) ${klub} állandó Csapat-sablonjába! (Név és születési dátum rögzítve)`);
+}
+
+function importalKlubVersenyzokSablonba() {
+    const klub = lekerCoachSablonKlub();
+    const klubTagok = audVersenyzok.filter(v =>
+        (v.club || '').trim().toLowerCase() === klub.toLowerCase() &&
+        String(v.belt || '').toUpperCase() !== 'TEAM KATA'
+    );
+
+    if (klubTagok.length === 0) {
+        alert(`Jelenleg nincs a(z) „${klub}” egyesülethez tartozó versenyző ezen a versenyen. Vegyél fel új versenyzőket a fenti űrlapon!`);
+        return;
+    }
+
+    for (const v of klubTagok) {
+        const regKatok = audNevezesek.filter(n => n.competitorId === v.id)
+            .map(n => audKategoriak.find(k => k.id === n.categoryId))
+            .filter(Boolean);
+        const hasKata = regKatok.length === 0 || regKatok.some(k => (k.matchType || '').toUpperCase() === 'KATA');
+        const hasKumite = regKatok.length === 0 || regKatok.some(k => (k.matchType || '').toUpperCase() === 'KUMITE');
+
+        TatamiMaster.hozzadVagyFrissitKlubSablonTag(klub, {
+            name: v.name,
+            birthDate: v.birthDate || '',
+            birthYear: v.birthYear || 2010,
+            gender: v.gender || 'Férfi',
+            belt: v.belt || '10. kyu',
+            weight: v.weight || 50,
+            defaultKata: hasKata,
+            defaultKumite: hasKumite,
+            selected: true
+        });
+    }
+
+    renderCoachCsapatSablon();
+    TatamiMaster.toast(`${klubTagok.length} fő beemelve a(z) ${klub} Csapat-sablonjába!`);
+}
+
+function valtoztatSablonTagMezo(memberId, mezo, ertek) {
+    // Kizárólag a fejlődő mezők (belt, weight, defaultKata, defaultKumite, selected) módosíthatók!
+    const engedelyezettMezok = ['belt', 'weight', 'defaultKata', 'defaultKumite', 'selected'];
+    if (!engedelyezettMezok.includes(mezo)) return;
+
+    const klub = lekerCoachSablonKlub();
+    const lista = TatamiMaster.lekerKlubCsapatSablon(klub);
+    const tag = lista.find(m => String(m.memberId) === String(memberId));
+    if (!tag) return;
+
+    if (mezo === 'weight') {
+        tag.weight = Math.max(10, parseInt(ertek, 10) || tag.weight || 50);
+    } else if (mezo === 'belt') {
+        tag.belt = String(ertek || tag.belt).trim();
+    } else {
+        tag[mezo] = Boolean(ertek);
+    }
+
+    TatamiMaster.mentKlubCsapatSablon(klub, lista);
+    renderCoachCsapatSablon();
+}
+
+function toggleOsszesSablonKijeloles(checked) {
+    const klub = lekerCoachSablonKlub();
+    const lista = TatamiMaster.lekerKlubCsapatSablon(klub);
+    for (const m of lista) {
+        m.selected = Boolean(checked);
+    }
+    TatamiMaster.mentKlubCsapatSablon(klub, lista);
+    renderCoachCsapatSablon();
+}
+
+function torolTagCsapatSablonbol(memberId) {
+    const klub = lekerCoachSablonKlub();
+    const lista = TatamiMaster.lekerKlubCsapatSablon(klub);
+    const tag = lista.find(m => String(m.memberId) === String(memberId));
+    if (!tag) return;
+    if (!confirm(`Biztosan eltávolítod ${tag.name} versenyzőt a(z) ${klub} Csapat-sablonból?`)) return;
+
+    TatamiMaster.torolKlubSablonTag(klub, memberId);
+    renderCoachCsapatSablon();
+    TatamiMaster.toast(`${tag.name} eltávolítva a Csapat-sablonból.`);
+}
+
+async function mentCsapatSablonModositasok() {
+    const klub = lekerCoachSablonKlub();
+    const lista = TatamiMaster.lekerKlubCsapatSablon(klub);
+    TatamiMaster.mentKlubCsapatSablon(klub, lista, true);
+
+    // Ha a versenyző már szerepel az aktuális versenyen, ott is szinkronizáljuk a frissített övfokozatát és súlyát!
+    let frissitettDb = 0;
+    for (const m of lista) {
+        const meglevo = audVersenyzok.find(v =>
+            (v.name || '').trim().toLowerCase() === (m.name || '').trim().toLowerCase() &&
+            (v.club || '').trim().toLowerCase() === klub.toLowerCase()
+        );
+        if (meglevo && (meglevo.belt !== m.belt || Number(meglevo.weight) !== Number(m.weight))) {
+            await TatamiMaster.apiSend('Competitors/' + meglevo.id, 'PUT', {
+                id: meglevo.id,
+                name: meglevo.name, // Rögzített név!
+                club: meglevo.club,
+                belt: m.belt,
+                weight: m.weight,
+                birthYear: meglevo.birthYear, // Rögzített születési év!
+                birthDate: meglevo.birthDate || m.birthDate || '',
+                gender: meglevo.gender || m.gender || ''
+            });
+            frissitettDb++;
+        }
+    }
+
+    if (frissitettDb > 0) {
+        await audienceAdatokBetoltese();
+    }
+    TatamiMaster.toast(`Csapat-sablon elmentve! (${lista.length} sablon-tag${frissitettDb > 0 ? ', ' + frissitettDb + ' benevezett versenyző öve/súlya frissítve a versenyben is' : ''})`);
+}
+
+async function nevezKijeloltekCsapatSablonbol() {
+    if (TatamiMaster.isNevezesLezarva()) {
+        alert("A nevezés lezárult! Új versenyzők vagy csapatok benevezése már nem lehetséges.");
+        return;
+    }
+
+    const klub = lekerCoachSablonKlub();
+    const lista = TatamiMaster.lekerKlubCsapatSablon(klub);
+    const kijeloltek = lista.filter(m => m.selected !== false);
+
+    if (kijeloltek.length === 0) {
+        alert("Jelölj ki legalább 1 versenyzőt a Csapat-sablonban a benevezéshez!");
+        return;
+    }
+
+    let benevezettVersenyzoDb = 0;
+    let ujNevezesDb = 0;
+
+    for (const m of kijeloltek) {
+        // 1. Megnézzük, szerepel-e már a versenyző az aktuális verseny Competitors táblájában
+        let versObj = audVersenyzok.find(v =>
+            (v.name || '').trim().toLowerCase() === (m.name || '').trim().toLowerCase() &&
+            (v.club || '').trim().toLowerCase() === klub.toLowerCase()
+        );
+
+        if (!versObj) {
+            const compRes = await TatamiMaster.apiSend('Competitors', 'POST', {
+                name: m.name,
+                club: klub,
+                belt: m.belt || '10. kyu',
+                weight: m.weight || 50,
+                birthYear: m.birthYear || 2010,
+                birthDate: m.birthDate || '',
+                gender: m.gender || 'Férfi'
+            });
+            if (compRes && compRes.ok) {
+                versObj = await compRes.json();
+                audVersenyzok.push(versObj);
+            }
+        } else if (versObj.belt !== m.belt || Number(versObj.weight) !== Number(m.weight)) {
+            // Frissítjük a fejlődő adatokat (övfokozat, súly), a név és születési idő változatlan marad
+            versObj.belt = m.belt;
+            versObj.weight = m.weight;
+            await TatamiMaster.apiSend('Competitors/' + versObj.id, 'PUT', versObj);
+        }
+
+        if (!versObj || !versObj.id) continue;
+
+        // 2. Meghatározzuk az ajánlott Kata / Kumite kategóriákat a versenyző rögzített kora és frissített súlya alapján
+        const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(
+            audKategoriak,
+            m.birthDate || m.birthYear,
+            m.weight,
+            m.gender
+        );
+        const celKatIdk = [];
+        if (m.defaultKata && ajanlas.kataIds.length > 0) celKatIdk.push(ajanlas.kataIds[0]);
+        if (m.defaultKumite && ajanlas.kumiteIds.length > 0) celKatIdk.push(ajanlas.kumiteIds[0]);
+
+        let kapottNevezest = false;
+        for (const katId of celKatIdk) {
+            const marBenne = audNevezesek.some(n => n.competitorId === versObj.id && n.categoryId === katId);
+            if (!marBenne) {
+                const regRes = await TatamiMaster.apiSend('Registrations', 'POST', {
+                    competitorId: versObj.id,
+                    categoryId: katId
+                });
+                if (regRes && regRes.ok) {
+                    ujNevezesDb++;
+                    kapottNevezest = true;
+                }
+            } else {
+                kapottNevezest = true;
+            }
+        }
+        if (kapottNevezest) benevezettVersenyzoDb++;
+    }
+
+    await audienceAdatokBetoltese();
+    TatamiMaster.toast(`Csapat-sablon nevezés kész! ${benevezettVersenyzoDb} versenyző (${ujNevezesDb} új kategórianevezés) rögzítve a frissített övfokozatokkal és súlyokkal!`);
+}
+

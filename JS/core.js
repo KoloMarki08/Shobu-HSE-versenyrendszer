@@ -402,6 +402,8 @@ const TatamiMaster = {
                 localStorage.setItem('tatamiVersenyBeallitasok', JSON.stringify(val));
             } else if (key === 'versenyzoExtraAdatok' && typeof val === 'object') {
                 localStorage.setItem('tatamiVersenyzoExtraAdatok', JSON.stringify(val));
+            } else if (key === 'tatamiKlubSablonok_v1' && typeof val === 'object') {
+                localStorage.setItem('tatamiKlubSablonok_v1', JSON.stringify(val));
             }
         } catch (e) {}
     },
@@ -3732,6 +3734,194 @@ const TatamiMaster = {
 
         const klubLista = Object.values(klubPontok).sort((a, b) => (b.pont - a.pont) || (b.arany - a.arany));
         return { kategoriaEredmenyek, klubLista };
+    },
+
+    // ========================================================================
+    // JELSZÓ-ERŐSSÉG MÉRŐ ÉS BIZTONSÁGI ELLENŐRZŐ (MIN. 8 KARAKTER, SPEC. KARAKTER, SZÁM, BETŰ)
+    // ========================================================================
+    ertekelJelszoErosseg: function(jelszo) {
+        const s = String(jelszo || '');
+        const minLen = s.length >= 8;
+        const hasLower = /[a-záéíóöőúüű]/.test(s);
+        const hasUpper = /[A-ZÁÉÍÓÖŐÚÜŰ]/.test(s);
+        const hasCase = hasLower && hasUpper;
+        const hasDigit = /\d/.test(s);
+        const hasSpecial = /[^A-Za-z0-9ÁÉÍÓÖŐÚÜŰáéíóöőúüű\s]/.test(s);
+
+        let score = 0;
+        if (minLen) score++;
+        if (hasCase) score++;
+        if (hasDigit) score++;
+        if (hasSpecial) score++;
+
+        const isValid = minLen && hasSpecial && hasDigit && (hasLower || hasUpper);
+        let label = 'Még nincs megadva';
+        let color = '#A1A1AA';
+
+        if (s.length > 0) {
+            if (score <= 1) {
+                label = 'Gyenge (nem elég biztonságos)';
+                color = '#990000';
+            } else if (score === 2) {
+                label = 'Közepes (hiányzó biztonsági feltétel)';
+                color = '#D97706';
+            } else if (score === 3) {
+                label = isValid ? 'Erős (megfelelő jelszó)' : 'Majdnem kész (hiányzó kötelező elem)';
+                color = isValid ? '#2563EB' : '#D97706';
+            } else {
+                label = 'Nagyon erős (Maximális biztonság)';
+                color = '#15803D';
+            }
+        }
+
+        const hianyzoFeltetelek = [];
+        if (!minLen) hianyzoFeltetelek.push('legalább 8 karakter');
+        if (!hasSpecial) hianyzoFeltetelek.push('legalább 1 speciális karakter (pl. !@#$%&*._-)');
+        if (!hasDigit) hianyzoFeltetelek.push('legalább 1 számjegy (0-9)');
+        if (!hasLower && !hasUpper) hianyzoFeltetelek.push('legalább 1 betű');
+
+        return {
+            minLen,
+            hasLower,
+            hasUpper,
+            hasCase,
+            hasDigit,
+            hasSpecial,
+            score,
+            isValid,
+            label,
+            color,
+            hianyzoFeltetelek
+        };
+    },
+
+    // ========================================================================
+    // EDZŐI CSAPAT-SABLON (ÁLLANDÓ EGYESÜLETI VERSENYZŐI KERET)
+    // Rögzített (nem módosítható): name, birthDate, birthYear, gender
+    // Fejlődő (módosítható): belt (övfokozat), weight (testsúly kg), defaultKata, defaultKumite
+    // ========================================================================
+    KLUB_SABLON_STORAGE_KEY: 'tatamiKlubSablonok_v1',
+
+    normalizalKlubKulcs: function(klubNev) {
+        return String(klubNev || '').trim().toLowerCase();
+    },
+
+    lekerOsszesKlubCsapatSablon: function() {
+        const raw = this.safeJsonParse(this.KLUB_SABLON_STORAGE_KEY, {});
+        return (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+    },
+
+    lekerKlubCsapatSablon: function(klubNev) {
+        const kulcs = this.normalizalKlubKulcs(klubNev);
+        if (!kulcs) return [];
+        const osszes = this.lekerOsszesKlubCsapatSablon();
+        const lista = osszes[kulcs];
+        return Array.isArray(lista) ? lista : [];
+    },
+
+    mentKlubCsapatSablon: function(klubNev, ujLista, szinkronizalSzerverre = true) {
+        const kulcs = this.normalizalKlubKulcs(klubNev);
+        if (!kulcs) return [];
+        const osszes = this.lekerOsszesKlubCsapatSablon();
+        const regiLista = Array.isArray(osszes[kulcs]) ? osszes[kulcs] : [];
+        const regiMap = new Map();
+        for (const r of regiLista) {
+            if (r && r.memberId) regiMap.set(String(r.memberId), r);
+        }
+
+        const tisztitott = [];
+        for (const item of (Array.isArray(ujLista) ? ujLista : [])) {
+            if (!item) continue;
+            const mId = String(item.memberId || ('mbr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)));
+            const meglevo = regiMap.get(mId);
+
+            // Ha a versenyző már szerepelt a sablonban, a NEVE, SZÜLETÉSI IDEJE és NEME RÖGZÍTETT (nem írható felül!)
+            const nev = meglevo ? meglevo.name : String(item.name || '').trim();
+            if (!nev) continue;
+
+            const szulNorm = this.normalizalSzulDatum(meglevo ? (meglevo.birthDate || meglevo.birthYear) : (item.birthDate || item.birthYear || 2010));
+            const birthYear = meglevo ? (parseInt(meglevo.birthYear, 10) || szulNorm.birthYear || 2010) : (szulNorm.birthYear || 2010);
+            const birthDate = meglevo ? (meglevo.birthDate || (szulNorm.hasFullDate ? szulNorm.birthDate : '')) : (szulNorm.hasFullDate ? szulNorm.birthDate : '');
+            const gender = meglevo ? (meglevo.gender || item.gender || 'Férfi') : (item.gender || 'Férfi');
+
+            // Fejlődő adatok (bármikor szabadon módosíthatók: övfokozat, súly, versenyszám preferencia)
+            const belt = String(item.belt || (meglevo ? meglevo.belt : '10. kyu') || '10. kyu').trim();
+            const weight = Math.max(10, parseInt(item.weight !== undefined ? item.weight : (meglevo ? meglevo.weight : 50), 10) || 50);
+            const defaultKata = item.defaultKata !== undefined ? Boolean(item.defaultKata) : (meglevo ? Boolean(meglevo.defaultKata) : true);
+            const defaultKumite = item.defaultKumite !== undefined ? Boolean(item.defaultKumite) : (meglevo ? Boolean(meglevo.defaultKumite) : true);
+            const selected = item.selected !== undefined ? Boolean(item.selected) : true;
+
+            tisztitott.push({
+                memberId: mId,
+                name: nev,
+                club: String(klubNev || item.club || '').trim(),
+                birthYear,
+                birthDate,
+                gender,
+                belt,
+                weight,
+                defaultKata,
+                defaultKumite,
+                selected,
+                lockedIdentity: true
+            });
+        }
+
+        osszes[kulcs] = tisztitott;
+        const jsonStr = JSON.stringify(osszes);
+        localStorage.setItem(this.KLUB_SABLON_STORAGE_KEY, jsonStr);
+        if (szinkronizalSzerverre && typeof this.kuldesLiveMegosztottAllapot === 'function') {
+            const delta = {};
+            delta[kulcs] = tisztitott;
+            this.kuldesLiveMegosztottAllapot(this.KLUB_SABLON_STORAGE_KEY, delta, true);
+        }
+        return tisztitott;
+    },
+
+    hozzadVagyFrissitKlubSablonTag: function(klubNev, tagAdat) {
+        const kulcs = this.normalizalKlubKulcs(klubNev);
+        if (!kulcs || !tagAdat || !tagAdat.name) return [];
+        const lista = this.lekerKlubCsapatSablon(klubNev);
+        const tisztaNev = String(tagAdat.name).trim().toLowerCase();
+        const szulNorm = this.normalizalSzulDatum(tagAdat.birthDate || tagAdat.birthYear || 2010);
+
+        const idx = lista.findIndex(m =>
+            (tagAdat.memberId && String(m.memberId) === String(tagAdat.memberId)) ||
+            (String(m.name || '').trim().toLowerCase() === tisztaNev &&
+             (Number(m.birthYear) === Number(szulNorm.birthYear) || !m.birthYear))
+        );
+
+        if (idx >= 0) {
+            // Meglévő sablon-tagnál csak a fejlődő adatok (öv, súly, versenyszámok) frissülnek, a név és születési idő nem!
+            if (tagAdat.belt) lista[idx].belt = String(tagAdat.belt).trim();
+            if (tagAdat.weight) lista[idx].weight = parseInt(tagAdat.weight, 10) || lista[idx].weight;
+            if (tagAdat.defaultKata !== undefined) lista[idx].defaultKata = Boolean(tagAdat.defaultKata);
+            if (tagAdat.defaultKumite !== undefined) lista[idx].defaultKumite = Boolean(tagAdat.defaultKumite);
+            if (tagAdat.selected !== undefined) lista[idx].selected = Boolean(tagAdat.selected);
+            if (!lista[idx].birthDate && szulNorm.hasFullDate) lista[idx].birthDate = szulNorm.birthDate;
+        } else {
+            lista.push({
+                memberId: 'mbr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                name: String(tagAdat.name).trim(),
+                club: String(klubNev).trim(),
+                birthYear: szulNorm.birthYear || 2010,
+                birthDate: szulNorm.hasFullDate ? szulNorm.birthDate : '',
+                gender: tagAdat.gender || 'Férfi',
+                belt: String(tagAdat.belt || '10. kyu').trim(),
+                weight: parseInt(tagAdat.weight, 10) || 50,
+                defaultKata: tagAdat.defaultKata !== undefined ? Boolean(tagAdat.defaultKata) : true,
+                defaultKumite: tagAdat.defaultKumite !== undefined ? Boolean(tagAdat.defaultKumite) : true,
+                selected: true,
+                lockedIdentity: true
+            });
+        }
+
+        return this.mentKlubCsapatSablon(klubNev, lista);
+    },
+
+    torolKlubSablonTag: function(klubNev, memberId) {
+        const lista = this.lekerKlubCsapatSablon(klubNev).filter(m => String(m.memberId) !== String(memberId));
+        return this.mentKlubCsapatSablon(klubNev, lista);
     }
 };
 
