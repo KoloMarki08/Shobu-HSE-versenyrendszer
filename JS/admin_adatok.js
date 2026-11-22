@@ -28,6 +28,12 @@ window.onload = function() {
             mindenAdatFrissitese();
         }, 350);
     });
+
+    // Automatikus nevezési határidő ellenőrző (15 mp-enként frissíti a zárolási állapotot, ha lejárt az óra:perc határidő)
+    setInterval(() => {
+        frissitNevezesZarolasUI();
+        frissitAdminAktivVersenyBar();
+    }, 15000);
 };
 
 function nyitAdminQrPlakat(versenyId = null) {
@@ -52,7 +58,12 @@ function toggleNevezesZarolas() {
 }
 
 function frissitNevezesZarolasUI() {
-    const lezarva = TatamiMaster.isNevezesLezarva();
+    const aktId = TatamiMaster.lekerAktualisVersenyId();
+    const lezarva = TatamiMaster.isNevezesLezarva(aktId);
+    const beallitas = TatamiMaster.lekerVersenyBeallitas(aktId);
+    const hataridoStr = beallitas && beallitas.registrationDeadline ? TatamiMaster.formazNevezesiHatarido(beallitas.registrationDeadline) : '';
+    const hataridoLejart = TatamiMaster.isNevezesiHataridoLejart(aktId);
+
     const headerBtn = document.getElementById('btnNevezesZarolasHeader');
     if (headerBtn) {
         if (lezarva) {
@@ -69,20 +80,24 @@ function frissitNevezesZarolasUI() {
         bar.style.background = lezarva ? '#FAF5F5' : '#FAF8F5';
     });
 
+    const hataridoExtraHtml = hataridoStr
+        ? ` <span style="background:#FFFFFF;border:1px solid ${hataridoLejart ? '#990000' : '#CFC9BC'};color:${hataridoLejart ? '#990000' : '#18181B'};padding:2px 8px;border-radius:6px;font-size:0.78rem;font-weight:700;">Nevezési határidő: ${TatamiMaster.escapeHtml(hataridoStr)}${hataridoLejart ? ' (LEJÁRT)' : ''}</span>`
+        : '';
+
     document.querySelectorAll('.nevezes-zarolas-status').forEach(st => {
         if (lezarva) {
             st.innerHTML = `
                 <span style="background:#990000;color:#FAF8F5;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:5px;">
                     ${TatamiMaster.icon('lock', 14)} NEVEZÉS LEZÁRVA
                 </span>
-                <span style="color:#990000;font-weight:600;">Új versenyzők és nevezések leadása jelenleg zárolva van (edzői és admin felületen is).</span>
+                <span style="color:#990000;font-weight:600;">Új versenyzők és nevezések leadása jelenleg zárolva van (edzői és admin felületen is).</span>${hataridoExtraHtml}
             `;
         } else {
             st.innerHTML = `
                 <span style="background:#18181B;color:#FAF8F5;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:5px;">
                     ${TatamiMaster.icon('unlock', 14)} NEVEZÉS NYITVA
                 </span>
-                <span style="color:#52525B;">Az edzők és az adminisztrátor szabadon adhatnak le új egyéni és csapat nevezéseket.</span>
+                <span style="color:#52525B;">Az edzők és az adminisztrátor szabadon adhatnak le új egyéni és csapat nevezéseket.</span>${hataridoExtraHtml}
             `;
         }
     });
@@ -207,6 +222,14 @@ function frissitAdminAktivVersenyBar() {
             ? `<span style="background:#18181B;color:#FAF8F5;padding:4px 9px;border-radius:6px;font-weight:700;font-size:0.75rem;display:inline-flex;align-items:center;gap:4px;">${TatamiMaster.icon('check', 12)} AUTOMATIKUSAN AKTUÁLIS</span>`
             : `<button type="button" class="btn btn-outline-green" style="padding:4px 9px;font-size:0.76rem;" onclick="adminValtsAutomatikusVersenyre()">${TatamiMaster.icon('refresh', 12)} Vissza az aktuális versenyre</button>`;
 
+        const beallitas = TatamiMaster.lekerVersenyBeallitas(aktVerseny.id);
+        const korSzabalySzoveg = (beallitas.ageRule === 'EUROPEAN')
+            ? 'Európai szabály (születési év)'
+            : 'Japán szabály (versenynapi életkor)';
+        const hataridoSzoveg = beallitas.registrationDeadline
+            ? ` &bull; Nevezési határidő: <strong>${TatamiMaster.escapeHtml(TatamiMaster.formazNevezesiHatarido(beallitas.registrationDeadline))}</strong>`
+            : '';
+
         meta.innerHTML = `
             ${autoStatusHtml}
             <span style="background:#F3F0EA;border:1px solid #CFC9BC;color:#18181B;padding:4px 9px;border-radius:6px;font-weight:700;font-size:0.78rem;">
@@ -214,6 +237,7 @@ function frissitAdminAktivVersenyBar() {
             </span>
             <span>${TatamiMaster.icon('calendar', 14)} <strong>${datumSzoveg}</strong></span>
             <span>&bull; ${TatamiMaster.icon('user', 14)} Szervező: <strong>${szervezoSzoveg}</strong></span>
+            <span>&bull; Korhatár: <strong>${korSzabalySzoveg}</strong>${hataridoSzoveg}</span>
             <span style="color:${lezarva ? '#990000' : '#18181B'};font-weight:700;">
                 &bull; ${lezarva ? `${TatamiMaster.icon('lock', 13)} Nevezés lezárva` : `${TatamiMaster.icon('unlock', 13)} Nevezés nyitva`}
             </span>
@@ -312,6 +336,11 @@ function versenyekAdminBetoltese() {
         const extra = mellekletek[v.name] || {};
         const safeNameAttr = (v.name || '').replace(/'/g, "");
         const stat = szamolAdottVersenyStat(v.id);
+        const vBeallitas = TatamiMaster.lekerVersenyBeallitas(v.id);
+        const hataridoInfoHtml = vBeallitas.registrationDeadline
+            ? `<div style="font-size:0.74rem;color:${TatamiMaster.isNevezesiHataridoLejart(v.id) ? '#990000' : '#3F3F46'};font-weight:700;margin-top:2px;">Határidő: ${TatamiMaster.escapeHtml(TatamiMaster.formazNevezesiHatarido(vBeallitas.registrationDeadline))}</div>`
+            : '';
+        const korSzabalyInfoHtml = `<div style="font-size:0.72rem;color:#52525B;margin-top:1px;">${vBeallitas.ageRule === 'EUROPEAN' ? 'Európai szabály (szül. év)' : 'Japán szabály (versenynapi kor)'}</div>`;
 
         const plakatGomb = extra.plakat
             ? `<button class="btn btn-outline" style="padding:4px 9px;font-size:0.78rem;" onclick="mutatAdminPlakatNagyban('${safeNameAttr}')">${TatamiMaster.icon('image', 13)} Plakát</button>`
@@ -337,7 +366,7 @@ function versenyekAdminBetoltese() {
                 </div>
             </td>
             <td>${TatamiMaster.escapeHtml(v.organizer || '-')}</td>
-            <td>${TatamiMaster.icon('calendar', 14)} ${datumSzoveg}</td>
+            <td>${TatamiMaster.icon('calendar', 14)} ${datumSzoveg}${hataridoInfoHtml}${korSzabalyInfoHtml}</td>
             <td>
                 <span style="background:${isLezart ? '#990000' : '#18181B'};color:#FAF8F5;padding:3px 9px;border-radius:6px;font-weight:700;font-size:0.78rem;">
                     ${statuszSzoveg}
@@ -382,6 +411,7 @@ async function letrehozAlapTatamikEsKategoriakVersenyhez(versenyId) {
     }
 
     const alapKategoriak = [
+        { name: 'Ovis & Gyerek Csipeszharc (Vegyes, 4-7 év)', matchType: 'KUMITE', gender: 'Vegyes', minAge: 4, maxAge: 7 },
         { name: 'Gyerek 3,2,1 Fiú Kata (8-11 év)',      matchType: 'KATA',   gender: 'Férfi', minAge: 8,  maxAge: 11 },
         { name: 'Gyerek 3,2,1 Lány Kata (8-11 év)',     matchType: 'KATA',   gender: 'Női',   minAge: 8,  maxAge: 11 },
         { name: 'Serdülő & Ifjúsági Kata (12-15 év)',   matchType: 'KATA',   gender: 'Vegyes',minAge: 12, maxAge: 15 },
@@ -404,6 +434,8 @@ async function hozzadVersenyAdminbol() {
     const nevInput = document.getElementById('adminUjVersenyNev');
     const szervezoInput = document.getElementById('adminUjVersenySzervezo');
     const datumInput = document.getElementById('adminUjVersenyDatum');
+    const hataridoInput = document.getElementById('adminUjVersenyHatarido');
+    const korSzabalyInput = document.getElementById('adminUjVersenyKorSzabaly');
     const statuszInput = document.getElementById('adminUjVersenyStatusz');
     const plakatInput = document.getElementById('adminUjVersenyPlakatFile');
     const kiirasInput = document.getElementById('adminUjVersenyKiirasFile');
@@ -413,6 +445,8 @@ async function hozzadVersenyAdminbol() {
     const nev = (nevInput?.value || '').trim();
     const szervezo = (szervezoInput?.value || '').trim() || 'Shobu HSE';
     const datum = datumInput?.value;
+    const hatarido = (hataridoInput?.value || '').trim();
+    const korSzabaly = (korSzabalyInput?.value === 'EUROPEAN') ? 'EUROPEAN' : 'JAPAN';
     const statusz = statuszInput?.value || 'ÉLŐ / NYITVA';
 
     if (!nev) {
@@ -436,7 +470,9 @@ async function hozzadVersenyAdminbol() {
         name: nev,
         date: datum ? new Date(datum).toISOString() : new Date().toISOString(),
         status: statusz,
-        organizer: szervezo
+        organizer: szervezo,
+        registrationDeadline: hatarido,
+        ageRule: korSzabaly
     });
 
     if (res.ok) {
@@ -446,6 +482,11 @@ async function hozzadVersenyAdminbol() {
         } catch (e) {}
 
         if (letrejottVerseny && letrejottVerseny.id) {
+            TatamiMaster.mentVersenyBeallitas(letrejottVerseny.id, {
+                registrationDeadline: hatarido,
+                ageRule: korSzabaly,
+                manualUnlockedAfterDeadline: false
+            });
             if (!alapStrukturaCb || alapStrukturaCb.checked) {
                 await letrehozAlapTatamikEsKategoriakVersenyhez(letrejottVerseny.id);
             }
@@ -456,6 +497,7 @@ async function hozzadVersenyAdminbol() {
 
         if (nevInput) nevInput.value = '';
         if (szervezoInput) szervezoInput.value = '';
+        if (hataridoInput) hataridoInput.value = '';
         if (plakatInput) plakatInput.value = '';
         if (kiirasInput) kiirasInput.value = '';
         TatamiMaster.toast(`„${nev}” verseny létrehozva` + ((!azonnaliValtasCb || azonnaliValtasCb.checked) ? ' és kiválasztva szerkesztésre!' : '!'));
@@ -463,28 +505,118 @@ async function hozzadVersenyAdminbol() {
     }
 }
 
-async function szerkesztVersenyTeljes(id) {
+function bezarVersenyEditModal() {
+    const m = document.getElementById('tmVersenyEditModal');
+    if (m) m.remove();
+}
+
+function szerkesztVersenyTeljes(id) {
     const v = globalVersenyek.find(x => x.id === id);
     if (!v) return;
 
-    const ujNev = prompt("Verseny megnevezése:", v.name);
-    if (ujNev === null) return;
-    const ujSzervezo = prompt("Szervező egyesület / Főrendező:", v.organizer || "");
-    if (ujSzervezo === null) return;
+    bezarVersenyEditModal();
+    const esc = (s) => TatamiMaster.escapeHtml(s);
+    const vBeallitas = TatamiMaster.lekerVersenyBeallitas(id);
     const regiDatum = v.date ? new Date(v.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-    const ujDatum = prompt("Verseny dátuma (ÉÉÉÉ-HH-NN):", regiDatum);
-    if (ujDatum === null) return;
-    const ujStatusz = prompt("Verseny státusza (ÉLŐ / NYITVA, NEVEZÉS ALATT, LEZÁRULT):", v.status || "ÉLŐ / NYITVA");
-    if (ujStatusz === null) return;
+    const regiHatarido = vBeallitas.registrationDeadline || '';
+    const regiKorSzabaly = vBeallitas.ageRule || 'JAPAN';
+    const regiStatusz = v.status || 'ÉLŐ / NYITVA';
 
-    v.name = ujNev.trim() || v.name;
-    v.organizer = ujSzervezo.trim() || v.organizer;
-    v.date = ujDatum ? new Date(ujDatum).toISOString() : v.date;
-    v.status = ujStatusz.trim() || v.status;
+    const modal = document.createElement('div');
+    modal.id = 'tmVersenyEditModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(24,24,27,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.onclick = (e) => { if (e.target === modal) bezarVersenyEditModal(); };
+
+    modal.innerHTML = `
+        <div style="background:#FFFFFF;border:1.5px solid #18181B;border-radius:12px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;padding:20px 18px;box-shadow:0 20px 45px rgba(0,0,0,0.28);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid #E4E0D7;padding-bottom:10px;">
+                <h3 style="margin:0;font-size:1.08rem;font-weight:800;color:#18181B;display:flex;align-items:center;gap:8px;">
+                    ${TatamiMaster.icon('edit', 18)} Verseny Adatainak, Nevezési Határidejének és Szabályának Szerkesztése
+                </h3>
+                <button type="button" onclick="bezarVersenyEditModal()" style="background:transparent;border:none;cursor:pointer;color:#71717A;padding:4px;">
+                    ${TatamiMaster.icon('x', 20)}
+                </button>
+            </div>
+            <form onsubmit="event.preventDefault(); mentVersenyEditModal(${id});">
+                <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
+                    <div>
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">1. Verseny hivatalos megnevezése *</label>
+                        <input type="text" id="editVersenyNev" class="form-control" value="${esc(v.name || '')}" required>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">2. Szervező egyesület / Főrendező *</label>
+                        <input type="text" id="editVersenySzervezo" class="form-control" value="${esc(v.organizer || '')}">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div>
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">3. Verseny dátuma (ÉÉÉÉ-HH-NN) *</label>
+                            <input type="date" id="editVersenyDatum" class="form-control" value="${esc(regiDatum)}" required>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">4. Verseny állapota</label>
+                            <select id="editVersenyStatusz" class="form-control">
+                                <option value="ÉLŐ / NYITVA" ${regiStatusz === 'ÉLŐ / NYITVA' ? 'selected' : ''}>ÉLŐ / NYITVA</option>
+                                <option value="NEVEZÉS ALATT" ${regiStatusz === 'NEVEZÉS ALATT' ? 'selected' : ''}>NEVEZÉS ALATT</option>
+                                <option value="LEZÁRULT" ${regiStatusz === 'LEZÁRULT' ? 'selected' : ''}>LEZÁRULT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.8rem;font-weight:700;color:#27272A;">5. Nevezési határidő (Dátum és óra:perc – automatikus nevezéslezárás)</label>
+                            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:0.72rem;" onclick="document.getElementById('editVersenyHatarido').value=''">Határidő törlése</button>
+                        </div>
+                        <input type="datetime-local" id="editVersenyHatarido" class="form-control" value="${esc(regiHatarido)}">
+                        <small style="color:#52525B;font-size:0.74rem;display:block;margin-top:3px;">Amint az óra eléri a megadott időpontot (pl. 12:00), a nevezés minden edzői és admin gépen automatikusan lezárul.</small>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">6. Korhatár-számítási szabályrendszer *</label>
+                        <select id="editVersenyKorSzabaly" class="form-control">
+                            <option value="JAPAN" ${regiKorSzabaly !== 'EUROPEAN' ? 'selected' : ''}>Japán szabály (Verseny napján betöltött pontos életkor: Év-Hó-Nap)</option>
+                            <option value="EUROPEAN" ${regiKorSzabaly === 'EUROPEAN' ? 'selected' : ''}>Európai szabály (Csak születési év alapján: Verseny éve - Születési év)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="bezarVersenyEditModal()">Mégse</button>
+                    <button type="submit" class="btn btn-outline-green" style="padding:9px 18px;">
+                        ${TatamiMaster.icon('check', 16)} Verseny Beállításainak Mentése
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function mentVersenyEditModal(id) {
+    const v = globalVersenyek.find(x => x.id === id);
+    if (!v) return;
+
+    const ujNev = (document.getElementById('editVersenyNev')?.value || '').trim();
+    const ujSzervezo = (document.getElementById('editVersenySzervezo')?.value || '').trim();
+    const ujDatum = (document.getElementById('editVersenyDatum')?.value || '').trim();
+    const ujStatusz = (document.getElementById('editVersenyStatusz')?.value || '').trim();
+    const ujHatarido = (document.getElementById('editVersenyHatarido')?.value || '').trim();
+    const ujKorSzabaly = (document.getElementById('editVersenyKorSzabaly')?.value === 'EUROPEAN') ? 'EUROPEAN' : 'JAPAN';
+
+    v.name = ujNev || v.name;
+    v.organizer = ujSzervezo || v.organizer;
+    if (ujDatum) v.date = new Date(ujDatum).toISOString();
+    v.status = ujStatusz || v.status;
+    v.registrationDeadline = ujHatarido;
+    v.ageRule = ujKorSzabaly;
+
+    TatamiMaster.mentVersenyBeallitas(id, {
+        registrationDeadline: ujHatarido,
+        ageRule: ujKorSzabaly,
+        manualUnlockedAfterDeadline: false
+    });
 
     const res = await TatamiMaster.apiSend('Tournaments/' + id, 'PUT', v);
-    if (res.ok) {
-        TatamiMaster.toast(`"${v.name}" adatai frissítve!`);
+    bezarVersenyEditModal();
+    if (res && res.ok) {
+        TatamiMaster.toast(`„${v.name}” adatai, nevezési határideje és korhatár-szabálya frissítve!`);
         await mindenAdatFrissitese();
     }
 }
@@ -555,6 +687,35 @@ function frissitAdminKpiEsCheckboxok() {
     }
 }
 
+function lekerAdminUrlapSzulErtek() {
+    const datumVal = (document.getElementById('ujVersenyzoSzulDatum')?.value || '').trim();
+    const evVal = (document.getElementById('ujVersenyzoSzulEv')?.value || '').trim();
+    return datumVal || evVal || '';
+}
+
+function szinkronizalAdminSzulDatum() {
+    const datumInput = document.getElementById('ujVersenyzoSzulDatum');
+    const evInput = document.getElementById('ujVersenyzoSzulEv');
+    const korInfo = document.getElementById('ujVersenyzoKorInfo');
+    const nyers = lekerAdminUrlapSzulErtek();
+    const norm = TatamiMaster.normalizalSzulDatum(nyers);
+
+    if (evInput && norm.birthYear) {
+        evInput.value = String(norm.birthYear);
+    }
+    if (korInfo) {
+        if (norm.birthYear) {
+            const kor = TatamiMaster.szamolVersenyzoKor(nyers);
+            const ref = TatamiMaster.lekerAktivVersenyDatumEsKorSzabaly();
+            const szabNev = ref.ageRule === 'EUROPEAN' ? 'Európai szabály' : 'Japán szabály';
+            korInfo.innerText = (kor !== null) ? `Versenynapon: ${kor} éves (${szabNev})` : '';
+        } else {
+            korInfo.innerText = '';
+        }
+    }
+    frissitAdminKategoriaAjanlas();
+}
+
 function frissitAdminKategoriaAjanlas(meglevoBepipalt = null) {
     const cbCont = document.getElementById('adminUjVersenyzoKatCheckboxes');
     if (!cbCont) return;
@@ -565,12 +726,12 @@ function frissitAdminKategoriaAjanlas(meglevoBepipalt = null) {
     const lezarva = TatamiMaster.isNevezesLezarva();
 
     const sulyVal = document.getElementById('ujVersenyzoSuly')?.value || '';
-    const szulEvVal = document.getElementById('ujVersenyzoSzulEv')?.value || '';
+    const szulVal = lekerAdminUrlapSzulErtek();
     const nemVal = document.getElementById('ujVersenyzoNem')?.value || '';
-    const vanBemenet = Boolean(sulyVal || szulEvVal || nemVal);
+    const vanBemenet = Boolean(sulyVal || szulVal || nemVal);
 
     const ajanlas = vanBemenet
-        ? TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, szulEvVal, sulyVal, nemVal)
+        ? TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, szulVal, sulyVal, nemVal)
         : { ajanlottIds: [] };
     const ajanlottSet = new Set(ajanlas.ajanlottIds || []);
 
@@ -583,14 +744,18 @@ function frissitAdminKategoriaAjanlas(meglevoBepipalt = null) {
 
     cbCont.innerHTML = rendezett.map(k => {
         const isAj = ajanlottSet.has(k.id);
+        const isVegyes = TatamiMaster.isVegyesKategoria(k);
         const ajBadge = isAj
             ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">AJÁNLOTT</span>`
+            : '';
+        const vegyesBadge = isVegyes
+            ? ` <span style="background:#18181B;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.66rem;font-weight:700;">VEGYES</span>`
             : '';
         const extraStyle = isAj ? 'border-color:#990000;background:#FAF5F5;' : '';
         return `
             <label class="kat-check-item" style="${extraStyle}">
                 <input type="checkbox" class="admin-uj-kat-cb" value="${k.id}" ${bepipalt.includes(k.id) ? 'checked' : ''} ${lezarva ? 'disabled' : ''}>
-                <span><strong>${TatamiMaster.escapeHtml(k.name)}</strong> <small style="color:#52525B;">[${TatamiMaster.escapeHtml(k.matchType)}]</small>${ajBadge}</span>
+                <span><strong>${TatamiMaster.escapeHtml(k.name)}</strong> <small style="color:#52525B;">[${TatamiMaster.escapeHtml(k.matchType)}]</small>${vegyesBadge}${ajBadge}</span>
             </label>
         `;
     }).join('');
@@ -598,11 +763,11 @@ function frissitAdminKategoriaAjanlas(meglevoBepipalt = null) {
 
 function alkalmazAdminAjanlottKategoriak() {
     const sulyVal = document.getElementById('ujVersenyzoSuly')?.value || '';
-    const szulEvVal = document.getElementById('ujVersenyzoSzulEv')?.value || '';
+    const szulVal = lekerAdminUrlapSzulErtek();
     const nemVal = document.getElementById('ujVersenyzoNem')?.value || '';
-    const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, szulEvVal, sulyVal, nemVal);
+    const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, szulVal, sulyVal, nemVal);
     if (!ajanlas.ajanlottIds || ajanlas.ajanlottIds.length === 0) {
-        TatamiMaster.toast("Add meg a születési évet és/vagy testsúlyt az ajánláshoz!", "figyelem");
+        TatamiMaster.toast("Add meg a születési dátumot és/vagy testsúlyt az ajánláshoz!", "figyelem");
         return [];
     }
     frissitAdminKategoriaAjanlas(ajanlas.ajanlottIds);
@@ -649,7 +814,10 @@ function kovetkeztetKategoriaCimket(versenyzokLista) {
     let ferfiPont = 0;
 
     for (const v of versenyzokLista) {
-        if (v.birthYear && Number(v.birthYear) > 1920) {
+        const vKor = TatamiMaster.szamolVersenyzoKor(v);
+        if (vKor !== null && vKor > 0) {
+            korok.push(vKor);
+        } else if (v.birthYear && Number(v.birthYear) > 1920) {
             korok.push(aktEv - Number(v.birthYear));
         }
         const vNevs = (globalNevezesek || []).filter(n => n.competitorId === v.id);
@@ -767,7 +935,8 @@ function frissitArvaEsBesorolatlanPanel(letszamMap = null) {
 
     const sorokHtml = erintettLista.map(item => {
         const v = item.v;
-        const kor = v.birthYear ? (aktEv - Number(v.birthYear)) : 0;
+        const kor = TatamiMaster.szamolVersenyzoKor(v) || (v.birthYear ? (aktEv - Number(v.birthYear)) : 0);
+        const szulSzoveg = TatamiMaster.formazSzulDatum(v);
         const elsoSoloReg = item.soloNevs[0] || null;
         const soloRegId = elsoSoloReg ? elsoSoloReg.id : 0;
         const soloKat = elsoSoloReg ? (globalKategoriak || []).find(k => k.id === elsoSoloReg.categoryId) : null;
@@ -780,7 +949,7 @@ function frissitArvaEsBesorolatlanPanel(letszamMap = null) {
                 <input type="checkbox" class="arva-osszevon-cb" value="${v.id}" data-reg-id="${soloRegId}" onchange="frissitArvaOsszevonoJavaslat()" style="width:16px;height:16px;accent-color:#18181B;cursor:pointer;">
             </td>
             <td><strong>${esc(v.name)}</strong> <small style="color:#52525B;">(${esc(v.club || '-')})</small></td>
-            <td>${kor > 0 ? kor + ' év (' + v.birthYear + ')' : (v.birthYear || '-')} &bull; <strong>${v.weight || 0} kg</strong> &bull; ${esc(v.belt || '-')}</td>
+            <td>${kor > 0 ? kor + ' év (' + esc(szulSzoveg) + ')' : esc(szulSzoveg)} &bull; <strong>${v.weight || 0} kg</strong> &bull; ${esc(v.belt || '-')}</td>
             <td>${allapotCimke}</td>
             <td style="white-space:nowrap;">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -1070,7 +1239,7 @@ function versenyzokBetoltese() {
                 <td>${esc(v.club || '-')}</td>
                 <td><span style="background:#F3F0EA;color:#18181B;border:1px solid #CFC9BC;padding:3px 8px;border-radius:6px;font-weight:700;font-size:0.84rem;">${esc(v.belt || '-')}</span></td>
                 <td><strong>${v.weight} kg</strong></td>
-                <td>${v.birthYear}</td>
+                <td>${esc(TatamiMaster.formazSzulDatumEsKor(v))}</td>
                 <td>${nevezettKatNevek}</td>
                 <td style="white-space:nowrap;">
                     <button class="btn btn-outline" style="padding:5px 10px;font-size:0.8rem;" onclick="szerkesztVersenyzoTeljes(${v.id})">${TatamiMaster.icon('edit', 14)} Szerkesztés</button>
@@ -1084,7 +1253,7 @@ function versenyzokBetoltese() {
 
 async function hozzadVersenyzo() {
     if (TatamiMaster.isNevezesLezarva()) {
-        TatamiMaster.toast("A nevezés le van zárva! Új versenyző felvételéhez előbb nyisd meg a nevezést.", "hiba");
+        TatamiMaster.toast("A nevezés le van zárva (vagy lejárt a nevezési határidő)! Új versenyző felvételéhez előbb nyisd meg a nevezést.", "hiba");
         return;
     }
 
@@ -1092,7 +1261,11 @@ async function hozzadVersenyzo() {
     const klub = document.getElementById('ujVersenyzoKlub').value.trim() || "Shobu HSE";
     const ov = document.getElementById('ujVersenyzoOv').value.trim() || "10. kyu";
     const suly = parseInt(document.getElementById('ujVersenyzoSuly').value) || 60;
-    const szulEv = parseInt(document.getElementById('ujVersenyzoSzulEv').value) || 2008;
+    const nyersSzul = lekerAdminUrlapSzulErtek() || '2008';
+    const szulNorm = TatamiMaster.normalizalSzulDatum(nyersSzul);
+    const szulEv = szulNorm.birthYear || 2008;
+    const szulDatum = szulNorm.hasFullDate ? szulNorm.birthDate : '';
+    const nem = document.getElementById('ujVersenyzoNem')?.value || '';
 
     if (!nev) {
         TatamiMaster.toast("Add meg a versenyző nevét!", "figyelem");
@@ -1102,7 +1275,7 @@ async function hozzadVersenyzo() {
     const kijeloltKatIdk = Array.from(document.querySelectorAll('.admin-uj-kat-cb:checked')).map(cb => parseInt(cb.value));
 
     const res = await TatamiMaster.apiSend('Competitors', 'POST', {
-        name: nev, club: klub, belt: ov, weight: suly, birthYear: szulEv
+        name: nev, club: klub, belt: ov, weight: suly, birthYear: szulEv, birthDate: szulDatum, gender: nem
     });
 
     if (res.ok) {
@@ -1116,6 +1289,12 @@ async function hozzadVersenyzo() {
 
         document.getElementById('ujVersenyzoNev').value = '';
         document.getElementById('ujVersenyzoSuly').value = '';
+        const szulDatumEl = document.getElementById('ujVersenyzoSzulDatum');
+        if (szulDatumEl) szulDatumEl.value = '';
+        const szulEvEl = document.getElementById('ujVersenyzoSzulEv');
+        if (szulEvEl) szulEvEl.value = '';
+        const korInfoEl = document.getElementById('ujVersenyzoKorInfo');
+        if (korInfoEl) korInfoEl.innerText = '';
         document.querySelectorAll('.admin-uj-kat-cb').forEach(cb => cb.checked = false);
 
         TatamiMaster.toast(`${nev} felvéve` + (kijeloltKatIdk.length > 0 ? ` és benevezve ${kijeloltKatIdk.length} kategóriába!` : '!'));
@@ -1127,11 +1306,11 @@ async function hozzadVersenyzo() {
 // 1.1 TÖMEGES EXCEL / CSV NEVEZÉS IMPORTÁLÁS ÉS EXPORTÁLÁS
 // =========================================================
 function letoltMintaNevezesCsv() {
-    const fejlec = ['Név', 'Klub', 'Övfokozat', 'Testsúly (kg)', 'Születési év', 'Nem', 'Kategória / Típus'];
+    const fejlec = ['Név', 'Klub', 'Övfokozat', 'Testsúly (kg)', 'Születési dátum (ÉÉÉÉ-HH-NN)', 'Nem', 'Kategória / Típus'];
     const mintaSorok = [
-        ['Minta Bence', 'Shobu HSE', '4. kyu', '64', '2009', 'Férfi', 'KATA + KUMITE'],
-        ['Kiss Anna', 'Budai Dojo', '6. kyu', '48', '2012', 'Női', 'KUMITE'],
-        ['Nagy Gábor', 'Debreceni Kyokushin', '1. dan', '82', '1998', 'Férfi', 'KATA + KUMITE']
+        ['Minta Bence', 'Shobu HSE', '4. kyu', '64', '2010-11-22', 'Férfi', 'KATA + KUMITE'],
+        ['Kiss Anna', 'Budai Dojo', '6. kyu', '48', '2012-05-14', 'Női', 'KUMITE'],
+        ['Nagy Gábor', 'Debreceni Kyokushin', '1. dan', '82', '1998-03-09', 'Férfi', 'KATA + KUMITE']
     ];
     return TatamiMaster.letoltCsvFajl('TATAMI_MASTER_nevezes_minta.csv', fejlec, mintaSorok);
 }
@@ -1156,7 +1335,9 @@ async function importNevezesCsvSzovegbol(csvSzoveg) {
             club: sor.club,
             belt: sor.belt,
             weight: sor.weight,
-            birthYear: sor.birthYear
+            birthYear: sor.birthYear,
+            birthDate: sor.birthDate || '',
+            gender: sor.gender || ''
         });
         if (!res || !res.ok) continue;
         const mentett = await res.json();
@@ -1174,7 +1355,7 @@ async function importNevezesCsvSzovegbol(csvSzoveg) {
         if (direktKat.length > 0) {
             celKatIds = direktKat.map(k => k.id);
         } else {
-            const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, sor.birthYear, sor.weight, sor.gender);
+            const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, sor.birthDate || sor.birthYear, sor.weight, sor.gender);
             const csakKata = celLower.includes('kata') && !celLower.includes('kumite');
             const csakKumite = celLower.includes('kumite') && !celLower.includes('kata');
             if (csakKata) {
@@ -1213,7 +1394,7 @@ async function inditTomegesCsvImport() {
 }
 
 function exportVersenyzokCsv() {
-    const fejlec = ['ID', 'Versenyző Neve', 'Klub / Egyesület', 'Övfokozat', 'Testsúly (kg)', 'Születési év', 'Nevezett Kategóriák'];
+    const fejlec = ['ID', 'Versenyző Neve', 'Klub / Egyesület', 'Övfokozat', 'Testsúly (kg)', 'Születési dátum / év', 'Kor a verseny napján', 'Nevezett Kategóriák'];
     const sorok = (globalVersenyzok || []).map(v => {
         const katNevek = (globalNevezesek || [])
             .filter(n => n.competitorId === v.id)
@@ -1223,7 +1404,17 @@ function exportVersenyzokCsv() {
             })
             .filter(Boolean)
             .join(' | ');
-        return [v.id, v.name, v.club || '', v.belt || '', v.weight || '', v.birthYear || '', katNevek || 'Nincs nevezve'];
+        const kor = TatamiMaster.szamolVersenyzoKor(v);
+        return [
+            v.id,
+            v.name,
+            v.club || '',
+            v.belt || '',
+            v.weight || '',
+            TatamiMaster.formazSzulDatum(v),
+            kor !== null ? `${kor} év` : '',
+            katNevek || 'Nincs nevezve'
+        ];
     });
     const vId = TatamiMaster.lekerAktualisVersenyId();
     return TatamiMaster.letoltCsvFajl(`TATAMI_MASTER_versenyzok_v${vId}.csv`, fejlec, sorok);
@@ -1322,12 +1513,34 @@ function kategoriakBetoltese() {
     }
 }
 
+function kitoltCsipeszharcSablon(tipus = 'OVIS') {
+    const nevEl = document.getElementById('ujKategoriaNev');
+    const tipEl = document.getElementById('ujKategoriaTipus');
+    const nemEl = document.getElementById('ujKategoriaNem');
+    const minEl = document.getElementById('ujKategoriaMinKor');
+    const maxEl = document.getElementById('ujKategoriaMaxKor');
+
+    if (tipus === 'GYEREK') {
+        if (nevEl) nevEl.value = 'Kisiskolás Csipeszharc (Vegyes - Fiú és Lány)';
+        if (minEl) minEl.value = '6';
+        if (maxEl) maxEl.value = '8';
+    } else {
+        if (nevEl) nevEl.value = 'Ovis Csipeszharc (Vegyes - Fiú és Lány)';
+        if (minEl) minEl.value = '4';
+        if (maxEl) maxEl.value = '6';
+    }
+    if (tipEl) tipEl.value = 'KUMITE';
+    if (nemEl) nemEl.value = 'Vegyes';
+    if (nevEl) nevEl.focus();
+    TatamiMaster.toast("Vegyes Csipeszharc sablon betöltve! Kattints a „Kategória Hozzáadása” gombra a mentéshez.");
+}
+
 async function hozzadKategoria() {
     const nev = document.getElementById('ujKategoriaNev').value.trim();
     const tipus = document.getElementById('ujKategoriaTipus').value;
     const nem = document.getElementById('ujKategoriaNem').value;
-    const minKor = parseInt(document.getElementById('ujKategoriaMinKor').value) || 5;
-    const maxKor = parseInt(document.getElementById('ujKategoriaMaxKor').value) || 99;
+    const minKor = parseInt(document.getElementById('ujKategoriaMinKor').value, 10);
+    const maxKor = parseInt(document.getElementById('ujKategoriaMaxKor').value, 10);
 
     if (!nev) {
         TatamiMaster.toast("Add meg a kategória nevét!", "figyelem");
@@ -1335,7 +1548,11 @@ async function hozzadKategoria() {
     }
 
     const res = await TatamiMaster.apiSend('Categories', 'POST', {
-        name: nev, matchType: tipus, gender: nem, minAge: minKor, maxAge: maxKor
+        name: nev,
+        matchType: tipus,
+        gender: nem || 'Vegyes',
+        minAge: !isNaN(minKor) && minKor >= 0 ? minKor : 4,
+        maxAge: !isNaN(maxKor) && maxKor > 0 ? maxKor : 99
     });
     if (res.ok) {
         document.getElementById('ujKategoriaNev').value = '';
@@ -2785,12 +3002,24 @@ function szerkesztVersenyzoTeljes(id) {
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                         <div>
                             <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Súly (kg)</label>
-                            <input type="number" id="editVersenyzoSuly" class="form-control" value="${Number(v.weight) || 0}" min="15" max="200">
+                            <input type="number" id="editVersenyzoSuly" class="form-control" value="${Number(v.weight) || 0}" min="10" max="200">
                         </div>
                         <div>
                             <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Születési év</label>
-                            <input type="number" id="editVersenyzoEv" class="form-control" value="${Number(v.birthYear) || 2010}" min="1940" max="2025">
+                            <input type="number" id="editVersenyzoEv" class="form-control" value="${Number(v.birthYear) || 2010}" min="1940" max="2026">
                         </div>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Teljes születési dátum (Év-Hó-Nap – Japán szabályhoz)</label>
+                        <input type="date" id="editVersenyzoSzulDatum" class="form-control" value="${esc(TatamiMaster.normalizalSzulDatum(v).birthDate || '')}" onchange="if(this.value){var y=parseInt(this.value.split('-')[0],10);if(y)document.getElementById('editVersenyzoEv').value=y;}">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Nem</label>
+                        <select id="editVersenyzoNem" class="form-control">
+                            <option value="" ${!v.gender ? 'selected' : ''}>Automatikus / Nincs megadva</option>
+                            <option value="Férfi" ${v.gender === 'Férfi' ? 'selected' : ''}>Férfi / Fiú</option>
+                            <option value="Női" ${v.gender === 'Női' ? 'selected' : ''}>Női / Lány</option>
+                        </select>
                     </div>
                 </div>
                 <div style="margin-bottom:16px;">
@@ -2825,7 +3054,12 @@ async function mentVersenyzoEsNevezesekModal(id) {
     const klub = (document.getElementById('editVersenyzoKlub')?.value || '').trim();
     const ov = (document.getElementById('editVersenyzoOv')?.value || '').trim();
     const suly = parseInt(document.getElementById('editVersenyzoSuly')?.value, 10);
-    const ev = parseInt(document.getElementById('editVersenyzoEv')?.value, 10);
+    const szulDatumInput = (document.getElementById('editVersenyzoSzulDatum')?.value || '').trim();
+    const evInput = parseInt(document.getElementById('editVersenyzoEv')?.value, 10);
+    const szulNorm = TatamiMaster.normalizalSzulDatum(szulDatumInput || evInput, evInput);
+    const ev = szulNorm.birthYear || (!isNaN(evInput) && evInput > 1900 ? evInput : v.birthYear);
+    const nemInput = document.getElementById('editVersenyzoNem');
+    const nem = nemInput ? nemInput.value.trim() : (v.gender || '');
 
     const mentBtn = document.getElementById('editVersenyzoMentBtn');
     if (mentBtn) mentBtn.disabled = true;
@@ -2835,7 +3069,9 @@ async function mentVersenyzoEsNevezesekModal(id) {
         club: klub || v.club,
         belt: ov || v.belt,
         weight: !isNaN(suly) && suly > 0 ? suly : v.weight,
-        birthYear: !isNaN(ev) && ev > 1900 ? ev : v.birthYear
+        birthYear: ev,
+        birthDate: szulNorm.hasFullDate ? szulNorm.birthDate : '',
+        gender: nem
     });
 
     const res = await TatamiMaster.apiSend('Competitors/' + id, 'PUT', frissitett);
@@ -2875,19 +3111,102 @@ async function mentVersenyzoEsNevezesekModal(id) {
     await mindenAdatFrissitese();
 }
 
-async function szerkesztKategoriaTeljes(id) {
+function bezarKategoriaEditModal() {
+    const m = document.getElementById('tmKategoriaEditModal');
+    if (m) m.remove();
+}
+
+function szerkesztKategoriaTeljes(id) {
     const k = globalKategoriak.find(x => x.id === id);
     if (!k) return;
-    const ujNev = prompt("Kategória neve:", k.name);
-    if (ujNev === null) return;
-    const ujTipus = prompt("Típus (KUMITE vagy KATA):", k.matchType);
-    if (ujTipus === null) return;
 
-    k.name = ujNev.trim() || k.name;
-    k.matchType = (ujTipus.trim().toUpperCase() === 'KATA') ? 'KATA' : 'KUMITE';
+    bezarKategoriaEditModal();
+    const esc = (s) => TatamiMaster.escapeHtml(s);
+    const isKata = (k.matchType && k.matchType.toUpperCase() === 'KATA');
+    const isVegyes = TatamiMaster.isVegyesKategoria(k);
+    const isNoi = !isVegyes && TatamiMaster.isNoiKategoria(k);
+    const aktNem = isVegyes ? 'Vegyes' : (isNoi ? 'Női' : 'Férfi');
+
+    const modal = document.createElement('div');
+    modal.id = 'tmKategoriaEditModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(24,24,27,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.onclick = (e) => { if (e.target === modal) bezarKategoriaEditModal(); };
+
+    modal.innerHTML = `
+        <div style="background:#FFFFFF;border:1.5px solid #18181B;border-radius:12px;width:100%;max-width:520px;padding:20px 18px;box-shadow:0 20px 45px rgba(0,0,0,0.28);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #E4E0D7;padding-bottom:10px;">
+                <h3 style="margin:0;font-size:1.05rem;font-weight:800;color:#18181B;display:flex;align-items:center;gap:8px;">
+                    ${TatamiMaster.icon('edit', 18)} Kategória Szerkesztése (Nemek, Korhatár, Típus)
+                </h3>
+                <button type="button" onclick="bezarKategoriaEditModal()" style="background:transparent;border:none;cursor:pointer;color:#71717A;padding:4px;">
+                    ${TatamiMaster.icon('x', 20)}
+                </button>
+            </div>
+            <form onsubmit="event.preventDefault(); mentKategoriaEditModal(${id});">
+                <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
+                    <div>
+                        <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">Kategória megnevezése *</label>
+                        <input type="text" id="editKategoriaNev" class="form-control" value="${esc(k.name || '')}" required>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div>
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">Versenyszám típusa</label>
+                            <select id="editKategoriaTipus" class="form-control">
+                                <option value="KUMITE" ${!isKata ? 'selected' : ''}>KUMITE (Küzdelem / Csipeszharc)</option>
+                                <option value="KATA" ${isKata ? 'selected' : ''}>KATA (Formagyakorlat)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">Nemek szerinti bontás</label>
+                            <select id="editKategoriaNem" class="form-control">
+                                <option value="Férfi" ${aktNem === 'Férfi' ? 'selected' : ''}>Férfi / Fiú</option>
+                                <option value="Női" ${aktNem === 'Női' ? 'selected' : ''}>Női / Lány</option>
+                                <option value="Vegyes" ${aktNem === 'Vegyes' ? 'selected' : ''}>Vegyes (Fiú + Lány együtt)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div>
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">Alsó korhatár (év)</label>
+                            <input type="number" id="editKategoriaMinKor" class="form-control" value="${k.minAge ?? 4}" min="2" max="99">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.8rem;font-weight:700;color:#27272A;margin-bottom:4px;">Felső korhatár (év)</label>
+                            <input type="number" id="editKategoriaMaxKor" class="form-control" value="${k.maxAge ?? 99}" min="2" max="99">
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button type="button" class="btn btn-outline" onclick="bezarKategoriaEditModal()">Mégse</button>
+                    <button type="submit" class="btn btn-outline-green" style="padding:9px 18px;">
+                        ${TatamiMaster.icon('check', 16)} Kategória Mentése
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function mentKategoriaEditModal(id) {
+    const k = globalKategoriak.find(x => x.id === id);
+    if (!k) return;
+
+    const ujNev = (document.getElementById('editKategoriaNev')?.value || '').trim();
+    const ujTipus = (document.getElementById('editKategoriaTipus')?.value || '').trim();
+    const ujNem = (document.getElementById('editKategoriaNem')?.value || '').trim();
+    const ujMinKor = parseInt(document.getElementById('editKategoriaMinKor')?.value, 10);
+    const ujMaxKor = parseInt(document.getElementById('editKategoriaMaxKor')?.value, 10);
+
+    k.name = ujNev || k.name;
+    k.matchType = (ujTipus.toUpperCase() === 'KATA') ? 'KATA' : 'KUMITE';
+    k.gender = ujNem || k.gender || 'Vegyes';
+    if (!isNaN(ujMinKor) && ujMinKor >= 0) k.minAge = ujMinKor;
+    if (!isNaN(ujMaxKor) && ujMaxKor > 0) k.maxAge = ujMaxKor;
 
     const res = await TatamiMaster.apiSend('Categories/' + id, 'PUT', k);
-    if (res.ok) {
+    bezarKategoriaEditModal();
+    if (res && res.ok) {
         TatamiMaster.toast(`Kategória frissítve!`);
         await mindenAdatFrissitese();
     }

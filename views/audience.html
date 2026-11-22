@@ -9,8 +9,8 @@
     <title>TATAMI MASTER™ - Élő Követés, „Mikor küzdök?” &amp; Edzői Felület</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/stlye.css?v=20261118_v1">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261118_v1">
+    <link rel="stylesheet" href="../CSS/stlye.css?v=20261122_v1">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261122_v1">
 </head>
 <body>
     <header class="top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; flex-wrap: wrap; gap: 10px;">
@@ -101,17 +101,19 @@
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
                         1. Új versenyző regisztrálása (Több kategória is bepipálható egyszerre):
                     </strong>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center;">
                         <input type="text" id="coachUjNev" placeholder="Versenyző neve (pl. Nagy Ádám)" class="input-field" style="flex: 1.5; min-width: 180px;">
                         <input type="text" id="coachUjKlub" placeholder="Klub (pl. Shobu HSE)" class="input-field" style="flex: 1; min-width: 150px;">
                         <input type="text" id="coachUjOv" placeholder="Öv (pl. 4. kyu)" class="input-field" style="max-width: 120px;">
                         <input type="number" id="coachUjSuly" placeholder="Súly (kg)" class="input-field" style="max-width: 110px;" oninput="frissitCoachKategoriaAjanlas()">
-                        <input type="number" id="coachUjSzulEv" placeholder="Szül. év (2008)" class="input-field" style="max-width: 135px;" oninput="frissitCoachKategoriaAjanlas()">
+                        <input type="date" id="coachUjSzulDatum" title="Születési dátum (Év-Hónap-Nap)" class="input-field" style="max-width: 170px;" oninput="szinkronizalCoachSzulDatum()" onchange="szinkronizalCoachSzulDatum()">
+                        <input type="hidden" id="coachUjSzulEv" value="">
                         <select id="coachUjNem" class="input-field" style="max-width: 150px;" onchange="frissitCoachKategoriaAjanlas()">
                             <option value="">Nem (Auto)</option>
                             <option value="Férfi">Férfi / Fiú</option>
                             <option value="Női">Női / Lány</option>
                         </select>
+                        <span id="coachUjKorInfo" style="font-size:0.78rem;font-weight:800;color:#990000;"></span>
                     </div>
 
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
@@ -238,8 +240,8 @@
         </div>
     </main>
 
-    <script src="../JS/core.js?v=20261118_v1"></script>
-    <script src="../JS/auth.js?v=20261118_v1"></script>
-    <script src="../JS/audience.js?v=20261118_v1"></script>
+    <script src="../JS/core.js?v=20261122_v1"></script>
+    <script src="../JS/auth.js?v=20261122_v1"></script>
+    <script src="../JS/audience.js?v=20261122_v1"></script>
 </body>
 </html>

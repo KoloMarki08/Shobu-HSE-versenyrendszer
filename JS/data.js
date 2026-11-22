@@ -407,7 +407,7 @@ function initNevezesPage() {
     const kereso = (document.getElementById('merlegKeresoInput')?.value || '').toLowerCase();
     let szurt = exVersenyzok.filter(v => v.name.toLowerCase().includes(kereso) || (v.club && v.club.toLowerCase().includes(kereso)));
 
-    let html = '<table class="data-table"><tr><th>Név</th><th>Klub</th><th>Öv</th><th>Szül. év</th><th>Mérlegelt Súly (kg)</th><th>Nevezett Kategóriái</th></tr>';
+    let html = '<table class="data-table"><tr><th>Név</th><th>Klub</th><th>Öv</th><th>Szül. dátum (Kor)</th><th>Mérlegelt Súly (kg)</th><th>Nevezett Kategóriái</th></tr>';
     for (let v of szurt) {
         let katNevLista = exNevezesek.filter(n => n.competitorId === v.id)
                                      .map(n => exKategoriak.find(k => k.id === n.categoryId)?.name)
@@ -416,7 +416,7 @@ function initNevezesPage() {
             <td><strong>${v.name}</strong></td>
             <td>${v.club}</td>
             <td>${v.belt}</td>
-            <td>${v.birthYear}</td>
+            <td>${TatamiMaster.escapeHtml(TatamiMaster.formazSzulDatumEsKor(v))}</td>
             <td>
                 <input type="number" id="gyorsSuly_${v.id}" value="${v.weight}" style="width:75px;padding:5px;font-weight:bold;"> kg
                 <button class="btn btn-outline-green" style="padding:4px 10px;" onclick="gyorsSulyMentes(${v.id})">${TatamiMaster.icon('check', 14)} Mentés</button>

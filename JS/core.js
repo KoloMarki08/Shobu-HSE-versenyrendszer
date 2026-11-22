@@ -354,6 +354,8 @@ const TatamiMaster = {
             this._alkalmazMegosztottAllapotHelyben('oklevelSablonok', snap.shared.oklevelSablonok);
             this._alkalmazMegosztottAllapotHelyben('versenyMellekletek', snap.shared.versenyMellekletek);
             this._alkalmazMegosztottAllapotHelyben('dijatadoAllapot', snap.shared.dijatadoAllapot);
+            this._alkalmazMegosztottAllapotHelyben('versenyBeallitasok', snap.shared.versenyBeallitasok);
+            this._alkalmazMegosztottAllapotHelyben('versenyzoExtraAdatok', snap.shared.versenyzoExtraAdatok);
         }
 
         // Élő Tatami eredményjelzők szinkronizálása
@@ -396,6 +398,10 @@ const TatamiMaster = {
                 localStorage.setItem('versenyMellekletek', JSON.stringify(val));
             } else if (key === 'dijatadoAllapot' && typeof val === 'object') {
                 localStorage.setItem('tatamiDijatadoAllapot', JSON.stringify(val));
+            } else if (key === 'versenyBeallitasok' && typeof val === 'object') {
+                localStorage.setItem('tatamiVersenyBeallitasok', JSON.stringify(val));
+            } else if (key === 'versenyzoExtraAdatok' && typeof val === 'object') {
+                localStorage.setItem('tatamiVersenyzoExtraAdatok', JSON.stringify(val));
             }
         } catch (e) {}
     },
@@ -465,6 +471,8 @@ const TatamiMaster = {
                     localStorage.removeItem('tatamiOklevelSablonok');
                     localStorage.removeItem('versenyMellekletek');
                     localStorage.removeItem('tatamiDijatadoAllapot');
+                    localStorage.removeItem('tatamiVersenyBeallitasok');
+                    localStorage.removeItem('tatamiVersenyzoExtraAdatok');
                     Object.keys(localStorage).forEach(k => {
                         if (k.startsWith('tatamiNevezesLezarva_') || k.startsWith('tatamiAdatok') || k.startsWith('tatamiKovetettVersenyzok_')) {
                             localStorage.removeItem(k);
@@ -724,12 +732,76 @@ const TatamiMaster = {
         return alapId;
     },
 
-    // --- NEVEZÉS LEZÁRÁSA / MEGNYITÁSA ÁLLAPOTKEZELŐ (VERSENYENKÉNT SZEPARÁLVA + KÜLÖN GÉPEKRE SZINKRONIZÁLVA) ---
-    isNevezesLezarva: function(versenyId = null) {
+    // --- VERSENY BEÁLLÍTÁSOK (NEVEZÉSI HATÁRIDŐ + JAPÁN / EURÓPAI ÉLETKOR-SZABÁLY) & NEVEZÉSLEZÁRÁS ---
+    lekerVersenyBeallitasokMap: function() {
+        const mentett = this.safeJsonParse('tatamiVersenyBeallitasok', {});
+        return (mentett && typeof mentett === 'object') ? mentett : {};
+    },
+
+    lekerVersenyBeallitas: function(versenyId = null) {
+        const vId = String(parseInt(versenyId, 10) || this.lekerAktualisVersenyId() || 1);
+        const map = this.lekerVersenyBeallitasokMap();
+        const alap = {
+            registrationDeadline: '',
+            ageRule: 'JAPAN',
+            manualUnlockedAfterDeadline: false
+        };
+        const mentett = map[vId];
+        if (!mentett || typeof mentett !== 'object') return alap;
+        return {
+            registrationDeadline: String(mentett.registrationDeadline || ''),
+            ageRule: (mentett.ageRule === 'EUROPEAN') ? 'EUROPEAN' : 'JAPAN',
+            manualUnlockedAfterDeadline: Boolean(mentett.manualUnlockedAfterDeadline)
+        };
+    },
+
+    mentVersenyBeallitas: function(versenyId, valtozasok = {}) {
+        const vId = String(parseInt(versenyId, 10) || this.lekerAktualisVersenyId() || 1);
+        const map = this.lekerVersenyBeallitasokMap();
+        const jelenlegi = this.lekerVersenyBeallitas(vId);
+        map[vId] = Object.assign({}, jelenlegi, valtozasok || {});
+        if (map[vId].ageRule !== 'EUROPEAN') map[vId].ageRule = 'JAPAN';
+        try {
+            localStorage.setItem('tatamiVersenyBeallitasok', JSON.stringify(map));
+        } catch (e) {}
+        const delta = {};
+        delta[vId] = map[vId];
+        this.kuldesLiveMegosztottAllapot('versenyBeallitasok', delta, true);
+        return map[vId];
+    },
+
+    isNevezesiHataridoLejart: function(versenyId = null, nowMs = null) {
+        const vId = parseInt(versenyId, 10) || this.lekerAktualisVersenyId();
+        const beallitas = this.lekerVersenyBeallitas(vId);
+        if (!beallitas || !beallitas.registrationDeadline) return false;
+        const hataridoMs = new Date(beallitas.registrationDeadline).getTime();
+        if (isNaN(hataridoMs)) return false;
+        const mostMs = (typeof nowMs === 'number') ? nowMs : Date.now();
+        return mostMs >= hataridoMs;
+    },
+
+    formazNevezesiHatarido: function(hataridoStr) {
+        if (!hataridoStr) return '';
+        const d = new Date(hataridoStr);
+        if (isNaN(d.getTime())) return String(hataridoStr);
+        return d.toLocaleString('hu-HU', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+
+    isNevezesLezarva: function(versenyId = null, nowMs = null) {
         const vId = parseInt(versenyId) || this.lekerAktualisVersenyId();
         const perVerseny = localStorage.getItem('tatamiNevezesLezarva_' + vId);
-        if (perVerseny !== null) {
-            return perVerseny === 'true';
+        if (perVerseny === 'true') {
+            return true;
+        }
+        const beallitas = this.lekerVersenyBeallitas(vId);
+        if (this.isNevezesiHataridoLejart(vId, nowMs) && !beallitas.manualUnlockedAfterDeadline) {
+            return true;
         }
         return false;
     },
@@ -740,6 +812,171 @@ const TatamiMaster = {
         const payload = {};
         payload[String(vId)] = !!lezarva;
         this.kuldesLiveMegosztottAllapot('nevezesLezarva', payload, true);
+
+        const beallitas = this.lekerVersenyBeallitas(vId);
+        if (beallitas && beallitas.registrationDeadline) {
+            if (!lezarva && this.isNevezesiHataridoLejart(vId)) {
+                this.mentVersenyBeallitas(vId, { manualUnlockedAfterDeadline: true });
+            } else if (lezarva) {
+                this.mentVersenyBeallitas(vId, { manualUnlockedAfterDeadline: false });
+            }
+        }
+    },
+
+    // --- VERSENYZŐ EXTRA METAADATOK (TELJES SZÜLETÉSI DÁTUM: ÉV-HÓ-NAP + NEM) ÉS JAPÁN / EURÓPAI ÉLETKOR-SZÁMÍTÁS ---
+    lekerVersenyzoExtraMap: function() {
+        const mentett = this.safeJsonParse('tatamiVersenyzoExtraAdatok', {});
+        return (mentett && typeof mentett === 'object') ? mentett : {};
+    },
+
+    lekerVersenyzoExtra: function(compId) {
+        if (compId === null || compId === undefined) return { birthDate: '', gender: '' };
+        const map = this.lekerVersenyzoExtraMap();
+        const rec = map[String(compId)];
+        if (!rec || typeof rec !== 'object') return { birthDate: '', gender: '' };
+        return {
+            birthDate: String(rec.birthDate || ''),
+            gender: String(rec.gender || '')
+        };
+    },
+
+    mentVersenyzoExtra: function(compId, valtozasok = {}) {
+        if (compId === null || compId === undefined) return null;
+        const cKey = String(compId);
+        const map = this.lekerVersenyzoExtraMap();
+        const jelenlegi = this.lekerVersenyzoExtra(compId);
+        map[cKey] = Object.assign({}, jelenlegi, valtozasok || {});
+        try {
+            localStorage.setItem('tatamiVersenyzoExtraAdatok', JSON.stringify(map));
+        } catch (e) {}
+        const delta = {};
+        delta[cKey] = map[cKey];
+        this.kuldesLiveMegosztottAllapot('versenyzoExtraAdatok', delta, true);
+        return map[cKey];
+    },
+
+    normalizalSzulDatum: function(ertek, fallbackEv = null) {
+        let nyersDatum = '';
+        let nyersEv = (fallbackEv !== null && fallbackEv !== undefined && fallbackEv !== '') ? parseInt(fallbackEv, 10) : null;
+        if (ertek && typeof ertek === 'object') {
+            const ex = (ertek.id !== undefined) ? this.lekerVersenyzoExtra(ertek.id) : { birthDate: '' };
+            nyersDatum = String(ertek.birthDate || ex.birthDate || '').trim();
+            if (ertek.birthYear) nyersEv = parseInt(ertek.birthYear, 10);
+        } else if (typeof ertek === 'string') {
+            nyersDatum = ertek.trim();
+        } else if (typeof ertek === 'number' && !isNaN(ertek)) {
+            nyersEv = Math.trunc(ertek);
+        }
+
+        const mTeljes = nyersDatum.match(/^(\d{4})[.\-/\\\s]+(\d{1,2})[.\-/\\\s]+(\d{1,2})\.?$/);
+        if (mTeljes) {
+            const y = parseInt(mTeljes[1], 10);
+            const m = parseInt(mTeljes[2], 10);
+            const d = parseInt(mTeljes[3], 10);
+            if (y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                return { birthDate: iso, birthYear: y, month: m, day: d, hasFullDate: true };
+            }
+        }
+
+        const mEv = nyersDatum.match(/^(\d{4})\.?$/);
+        if (mEv) {
+            const y = parseInt(mEv[1], 10);
+            if (y >= 1900 && y <= 2100) {
+                return { birthDate: '', birthYear: y, month: null, day: null, hasFullDate: false };
+            }
+        }
+
+        if (nyersEv && !isNaN(nyersEv) && nyersEv >= 1900 && nyersEv <= 2100) {
+            return { birthDate: '', birthYear: nyersEv, month: null, day: null, hasFullDate: false };
+        }
+
+        return { birthDate: '', birthYear: null, month: null, day: null, hasFullDate: false };
+    },
+
+    lekerAktivVersenyDatumEsKorSzabaly: function(opciok = null) {
+        let vId = this.lekerAktualisVersenyId();
+        let explicitDatum = '';
+        let explicitRule = '';
+
+        if (typeof opciok === 'number' && !isNaN(opciok)) {
+            vId = opciok;
+        } else if (typeof opciok === 'string' && opciok.trim()) {
+            explicitDatum = opciok.trim();
+        } else if (opciok && typeof opciok === 'object') {
+            if (opciok.versenyId) vId = parseInt(opciok.versenyId, 10) || vId;
+            if (opciok.versenyDatum || opciok.tournamentDate) explicitDatum = String(opciok.versenyDatum || opciok.tournamentDate).trim();
+            if (opciok.ageRule) explicitRule = String(opciok.ageRule).toUpperCase();
+        }
+
+        const beallitas = this.lekerVersenyBeallitas(vId);
+        const ageRule = (explicitRule === 'EUROPEAN' || explicitRule === 'JAPAN')
+            ? explicitRule
+            : (beallitas.ageRule || 'JAPAN');
+
+        let datumStr = explicitDatum;
+        if (!datumStr) {
+            const cache = this.safeJsonParse('tatamiVersenyekCache', []);
+            const vObj = Array.isArray(cache) ? (cache.find(v => v.id === vId) || cache[0]) : null;
+            if (vObj && vObj.date) datumStr = String(vObj.date);
+        }
+
+        let tYear, tMonth, tDay;
+        const isoMatch = String(datumStr || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) {
+            tYear = parseInt(isoMatch[1], 10);
+            tMonth = parseInt(isoMatch[2], 10);
+            tDay = parseInt(isoMatch[3], 10);
+        } else {
+            const refDate = datumStr ? new Date(datumStr) : new Date();
+            const validDate = isNaN(refDate.getTime()) ? new Date() : refDate;
+            tYear = validDate.getFullYear();
+            tMonth = validDate.getMonth() + 1;
+            tDay = validDate.getDate();
+        }
+
+        return {
+            versenyId: vId,
+            ageRule,
+            tYear,
+            tMonth,
+            tDay,
+            tournamentDateIso: `${tYear}-${String(tMonth).padStart(2, '0')}-${String(tDay).padStart(2, '0')}`
+        };
+    },
+
+    szamolVersenyzoKor: function(szulDatumVagyVersenyzo, opciok = null) {
+        const norm = this.normalizalSzulDatum(szulDatumVagyVersenyzo);
+        if (!norm.birthYear) return null;
+
+        const ref = this.lekerAktivVersenyDatumEsKorSzabaly(opciok);
+        if (norm.birthYear > ref.tYear) return null;
+
+        if (ref.ageRule === 'JAPAN' && norm.hasFullDate) {
+            let kor = ref.tYear - norm.birthYear;
+            if (ref.tMonth < norm.month || (ref.tMonth === norm.month && ref.tDay < norm.day)) {
+                kor--;
+            }
+            return Math.max(0, kor);
+        }
+        return Math.max(0, ref.tYear - norm.birthYear);
+    },
+
+    formazSzulDatum: function(ertek, fallbackEv = null) {
+        const norm = this.normalizalSzulDatum(ertek, fallbackEv);
+        if (norm.hasFullDate) {
+            return `${norm.birthYear}. ${String(norm.month).padStart(2, '0')}. ${String(norm.day).padStart(2, '0')}.`;
+        }
+        if (norm.birthYear) return String(norm.birthYear);
+        return '-';
+    },
+
+    formazSzulDatumEsKor: function(ertek, opciok = null) {
+        const norm = this.normalizalSzulDatum(ertek);
+        if (!norm.birthYear) return '-';
+        const datumStr = this.formazSzulDatum(norm);
+        const kor = this.szamolVersenyzoKor(norm, opciok);
+        return (kor !== null) ? `${datumStr} (${kor} év)` : datumStr;
     },
 
     // --- KYOKUSHIN KUMITE FORMÁTUM SZABÁLY (<= 5 FŐ: KÖRMÉRKŐZÉS, > 5 FŐ: EGYENES KIESÉS) ---
@@ -897,12 +1134,29 @@ const TatamiMaster = {
     },
 
     // --- KOROSZTÁLYOS ÉS KATEGÓRIÁS TATAMI-MENETREND RENDEZŐ MOTOR ---
-    isNoiKategoria: function(kat) {
+    isVegyesKategoria: function(kat) {
         if (!kat) return false;
         const g = String(kat.gender || '').toLowerCase();
         const n = String(kat.name || '').toLowerCase();
-        return g.includes('girl') || g.includes('women') || g.includes('female') || g.includes('nő') || g.includes('lány') ||
-               n.includes('girl') || n.includes('women') || n.includes('female') || n.includes('női') || n.includes('lány');
+        if (g.includes('vegyes') || g.includes('mixed') || g.includes('coed') || g.includes('közös') || g.includes('kozos')) return true;
+        if (n.includes('vegyes') || n.includes('mixed') || n.includes('csipesz') || (n.includes('fiú') && n.includes('lány'))) return true;
+        return false;
+    },
+
+    isNoiKategoria: function(kat) {
+        if (!kat || this.isVegyesKategoria(kat)) return false;
+        const g = String(kat.gender || '').toLowerCase();
+        const n = String(kat.name || '').toLowerCase();
+        return g.includes('girl') || g.includes('women') || g.includes('female') || g.includes('nő') || g.includes('noi') || g.includes('lány') || g.includes('lany') ||
+               n.includes('girl') || n.includes('women') || n.includes('female') || n.includes('női') || n.includes('noi') || n.includes('lány') || n.includes('lany');
+    },
+
+    isFerfiKategoria: function(kat) {
+        if (!kat || this.isVegyesKategoria(kat)) return false;
+        const g = String(kat.gender || '').toLowerCase();
+        const n = String(kat.name || '').toLowerCase();
+        return g.includes('boy') || g.includes('men') || g.includes('male') || g.includes('férfi') || g.includes('ferfi') || g.includes('fiú') || g.includes('fiu') ||
+               n.includes('boy') || n.includes('men') || n.includes('male') || n.includes('férfi') || n.includes('ferfi') || n.includes('fiú') || n.includes('fiu');
     },
 
     lekerSulySorrendErtek: function(kat) {
@@ -1633,7 +1887,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261118_v1';
+            link.href = prefix + 'design_system.css?v=20261122_v1';
             document.head.appendChild(link);
         }
 
@@ -1921,6 +2175,15 @@ const TatamiMaster = {
             const alapVegpont = vegpont.split('/')[0];
 
             if (alapVegpont === 'Tournaments') {
+                for (let v of adatok) {
+                    if (v && v.id !== undefined) {
+                        const vb = this.lekerVersenyBeallitas(v.id);
+                        if (!v.registrationDeadline && vb.registrationDeadline) {
+                            v.registrationDeadline = vb.registrationDeadline;
+                        }
+                        v.ageRule = vb.ageRule || v.ageRule || 'JAPAN';
+                    }
+                }
                 try {
                     localStorage.setItem('tatamiVersenyekCache', JSON.stringify(adatok));
                 } catch (e) {}
@@ -1949,6 +2212,19 @@ const TatamiMaster = {
                     }
                 }
                 return adatok;
+            }
+
+            if (alapVegpont === 'Competitors') {
+                const extraMap = this.lekerVersenyzoExtraMap();
+                for (let elem of adatok) {
+                    if (elem && elem.id !== undefined) {
+                        const ex = extraMap[String(elem.id)];
+                        if (ex) {
+                            if (ex.birthDate && !elem.birthDate) elem.birthDate = ex.birthDate;
+                            if (ex.gender && !elem.gender) elem.gender = ex.gender;
+                        }
+                    }
+                }
             }
 
             if (opciok && opciok.mindenVerseny === true) {
@@ -2010,13 +2286,43 @@ const TatamiMaster = {
 
     apiSend: async function(vegpont, method, adat, opciok = null) {
         try {
-            const tisztaAdat = adat ? this.sanitizePayload(adat) : null;
+            const alapVegpont = vegpont.split('/')[0];
+            let kuldendoAdat = adat ? Object.assign({}, adat) : null;
+            let mentendoCompExtra = null;
+            let mentendoVersenyBeallitas = null;
+
+            if (kuldendoAdat && alapVegpont === 'Competitors' && (method === 'POST' || method === 'PUT')) {
+                const norm = this.normalizalSzulDatum(kuldendoAdat.birthDate || kuldendoAdat.birthYear, kuldendoAdat.birthYear);
+                if (norm.birthYear) {
+                    kuldendoAdat.birthYear = norm.birthYear;
+                }
+                if (norm.hasFullDate || kuldendoAdat.birthDate !== undefined || kuldendoAdat.gender !== undefined) {
+                    mentendoCompExtra = {};
+                    if (norm.hasFullDate) mentendoCompExtra.birthDate = norm.birthDate;
+                    else if (kuldendoAdat.birthDate === '') mentendoCompExtra.birthDate = '';
+                    if (kuldendoAdat.gender !== undefined) mentendoCompExtra.gender = String(kuldendoAdat.gender || '');
+                }
+            }
+
+            if (kuldendoAdat && alapVegpont === 'Tournaments' && (method === 'POST' || method === 'PUT')) {
+                if (kuldendoAdat.registrationDeadline !== undefined || kuldendoAdat.ageRule !== undefined) {
+                    mentendoVersenyBeallitas = {};
+                    if (kuldendoAdat.registrationDeadline !== undefined) {
+                        mentendoVersenyBeallitas.registrationDeadline = String(kuldendoAdat.registrationDeadline || '');
+                        mentendoVersenyBeallitas.manualUnlockedAfterDeadline = false;
+                    }
+                    if (kuldendoAdat.ageRule !== undefined) {
+                        mentendoVersenyBeallitas.ageRule = (kuldendoAdat.ageRule === 'EUROPEAN') ? 'EUROPEAN' : 'JAPAN';
+                    }
+                }
+            }
+
+            const tisztaAdat = kuldendoAdat ? this.sanitizePayload(kuldendoAdat) : null;
             const res = await fetch(this.API_URL + '/' + vegpont, {
                 method: method,
                 headers: this.epitsAuthHeaders({ 'Content-Type': 'application/json' }),
                 body: tisztaAdat ? JSON.stringify(tisztaAdat) : null
             });
-            const alapVegpont = vegpont.split('/')[0];
 
             if (method === 'DELETE' && ['Competitors', 'Categories', 'Tatamis', 'Registrations', 'Matches'].includes(alapVegpont) && (res.ok || res.status === 404)) {
                 const reszek = vegpont.split('/');
@@ -2052,6 +2358,8 @@ const TatamiMaster = {
                 localStorage.removeItem('kataDontoMeccsIdk');
                 localStorage.removeItem('kumiteReszletek');
                 localStorage.removeItem('tatamiDijatadoAllapot');
+                localStorage.removeItem('tatamiVersenyBeallitasok');
+                localStorage.removeItem('tatamiVersenyzoExtraAdatok');
                 if (vegpont === 'Tournaments/reset-empty') {
                     localStorage.removeItem('versenyMellekletek');
                     localStorage.removeItem('tatamiOklevelSablonok');
@@ -2079,6 +2387,26 @@ const TatamiMaster = {
                             ? parseInt(opciok.versenyId)
                             : this.lekerAktualisVersenyId();
                         this.hozzarendelEntitasVersenyhez(alapVegpont, letrejott.id, celVersenyId);
+                        if (alapVegpont === 'Competitors' && mentendoCompExtra) {
+                            this.mentVersenyzoExtra(letrejott.id, mentendoCompExtra);
+                        }
+                    }
+                } catch (e) {}
+            } else if (method === 'PUT' && alapVegpont === 'Competitors' && mentendoCompExtra) {
+                const celId = parseInt(vegpont.split('/')[1], 10) || (kuldendoAdat && kuldendoAdat.id);
+                if (celId) this.mentVersenyzoExtra(celId, mentendoCompExtra);
+            }
+
+            if ((method === 'POST' || method === 'PUT') && alapVegpont === 'Tournaments' && mentendoVersenyBeallitas) {
+                try {
+                    let celVersId = parseInt(vegpont.split('/')[1], 10) || (kuldendoAdat && kuldendoAdat.id) || 0;
+                    if (!celVersId && method === 'POST') {
+                        const klon = res.clone();
+                        const letrejottV = await klon.json();
+                        if (letrejottV && letrejottV.id) celVersId = letrejottV.id;
+                    }
+                    if (celVersId) {
+                        this.mentVersenyBeallitas(celVersId, mentendoVersenyBeallitas);
                     }
                 } catch (e) {}
             }
@@ -2958,20 +3286,20 @@ const TatamiMaster = {
     },
 
     // =========================================================
-    // AUTOMATIKUS KORCSOPORT- ÉS SÚLYCSOPORT-AJÁNLÓ (3.9)
+    // AUTOMATIKUS KORCSOPORT- ÉS SÚLYCSOPORT-AJÁNLÓ (3.9 + JAPÁN SZABÁLY & VEGYES KATEGÓRIÁK)
     // =========================================================
-    ajanljKategoriakatVersenyzonek: function(kategoriak, szulEv, sulyKg, nemSzoveg = '') {
+    ajanljKategoriakatVersenyzonek: function(kategoriak, szulDatumVagyEv, sulyKg, nemSzoveg = '', opciok = null) {
         const katLista = Array.isArray(kategoriak) ? kategoriak : [];
-        const aktualisEv = new Date().getFullYear();
-        const evSzam = parseInt(szulEv, 10);
-        const kor = (!isNaN(evSzam) && evSzam > 1900 && evSzam <= aktualisEv) ? (aktualisEv - evSzam) : null;
+        const kor = (szulDatumVagyEv !== null && szulDatumVagyEv !== undefined && String(szulDatumVagyEv).trim() !== '')
+            ? this.szamolVersenyzoKor(szulDatumVagyEv, opciok)
+            : null;
         const suly = (!isNaN(parseFloat(sulyKg)) && parseFloat(sulyKg) > 0) ? parseFloat(sulyKg) : null;
         const nemNorm = String(nemSzoveg || '').trim().toLowerCase();
 
         let isNoi = null;
         if (nemNorm) {
-            if (/(nő|noi|lány|lany|female|girl|women|^n$|^f$)/i.test(nemNorm)) isNoi = true;
-            else if (/(férfi|ferfi|fiú|fiu|male|boy|men|^m$)/i.test(nemNorm)) isNoi = false;
+            if (/(nő|noi|lány|lany|female|girl|women|^n$)/i.test(nemNorm)) isNoi = true;
+            else if (/(férfi|ferfi|fiú|fiu|male|boy|men|^f$|^m$)/i.test(nemNorm)) isNoi = false;
         }
 
         const korEsNemMegfelel = (k) => {
@@ -2982,9 +3310,9 @@ const TatamiMaster = {
                 if (kor < minA || kor > maxA) return false;
             }
             if (isNoi !== null) {
-                const nev = String(k.name || '').toLowerCase();
-                const katNoi = /(női|noi|lány|lany|girls|women|female)/i.test(nev);
-                const katFerfi = /(férfi|ferfi|fiú|fiu|boys|men|male)/i.test(nev);
+                if (this.isVegyesKategoria(k)) return true;
+                const katNoi = this.isNoiKategoria(k);
+                const katFerfi = this.isFerfiKategoria(k);
                 if (isNoi && katFerfi && !katNoi) return false;
                 if (!isNoi && katNoi && !katFerfi) return false;
             }
@@ -3017,12 +3345,12 @@ const TatamiMaster = {
             }
         }
 
-        // Kumite súlycsoport szűkítés korcsoport + nem csoportonként
+        // Kumite súlycsoport szűkítés korcsoport + nem csoportonként (Vegyes = V, Női = N, Férfi = F)
         const kumiteIds = [];
         const csoportok = new Map();
         for (const k of kumiteJeloltek) {
-            const katNoi = this.isNoiKategoria(k) ? 'N' : 'F';
-            const kulcs = `${k.minAge || 0}_${k.maxAge || 99}_${katNoi}`;
+            const katNemKod = this.isVegyesKategoria(k) ? 'V' : (this.isNoiKategoria(k) ? 'N' : 'F');
+            const kulcs = `${k.minAge || 0}_${k.maxAge || 99}_${katNemKod}`;
             if (!csoportok.has(kulcs)) csoportok.set(kulcs, []);
             csoportok.get(kulcs).push(k);
         }
@@ -3138,11 +3466,13 @@ const TatamiMaster = {
             const club = (oszlopok[1] || 'Shobu HSE').trim() || 'Shobu HSE';
             const belt = (oszlopok[2] || '10. kyu').trim() || '10. kyu';
             const weight = parseInt(String(oszlopok[3] || '60').replace(/[^\d]/g, ''), 10) || 60;
-            const birthYear = parseInt(String(oszlopok[4] || '2010').replace(/[^\d]/g, ''), 10) || 2010;
+            const szulNorm = this.normalizalSzulDatum(oszlopok[4] || '2010');
+            const birthYear = szulNorm.birthYear || 2010;
+            const birthDate = szulNorm.hasFullDate ? szulNorm.birthDate : '';
             const gender = (oszlopok[5] || '').trim();
             const targetText = (oszlopok[6] || '').trim();
 
-            eredmeny.push({ name, club, belt, weight, birthYear, gender, targetText });
+            eredmeny.push({ name, club, belt, weight, birthYear, birthDate, gender, targetText });
         }
         return eredmeny;
     },

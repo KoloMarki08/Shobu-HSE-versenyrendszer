@@ -91,7 +91,12 @@ function valasztMikorKuzdokDropdown(val) {
 }
 
 function frissitEdzoiNevezesZarolasUI() {
-    const lezarva = TatamiMaster.isNevezesLezarva();
+    const aktId = TatamiMaster.lekerAktualisVersenyId();
+    const lezarva = TatamiMaster.isNevezesLezarva(aktId);
+    const beallitas = TatamiMaster.lekerVersenyBeallitas(aktId);
+    const hataridoStr = beallitas && beallitas.registrationDeadline ? TatamiMaster.formazNevezesiHatarido(beallitas.registrationDeadline) : '';
+    const hataridoLejart = TatamiMaster.isNevezesiHataridoLejart(aktId);
+
     const banner = document.getElementById('edzoiNevezesZarvaBanner');
     const urlapok = document.getElementById('edzoiNevezesUrlapok');
     const statusBadge = document.getElementById('edzoiNevezesStatusBadge');
@@ -100,9 +105,12 @@ function frissitEdzoiNevezesZarolasUI() {
         banner.style.display = lezarva ? 'flex' : 'none';
     }
     if (statusBadge) {
-        statusBadge.innerHTML = lezarva
+        const hataridoPill = hataridoStr
+            ? `<span style="background:#FAF8F5;border:1px solid ${hataridoLejart ? '#990000' : '#CFC9BC'};color:${hataridoLejart ? '#990000' : '#18181B'};padding:5px 10px;border-radius:6px;font-size:0.78rem;font-weight:700;margin-right:6px;">Határidő: ${TatamiMaster.escapeHtml(hataridoStr)}${hataridoLejart ? ' (LEJÁRT)' : ''}</span>`
+            : '';
+        statusBadge.innerHTML = hataridoPill + (lezarva
             ? `<span style="background:#990000;color:#FAF8F5;padding:5px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${TatamiMaster.icon('lock', 14)} NEVEZÉS LEZÁRVA</span>`
-            : `<span style="background:#18181B;color:#FAF8F5;padding:5px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${TatamiMaster.icon('unlock', 14)} NEVEZÉS NYITVA</span>`;
+            : `<span style="background:#18181B;color:#FAF8F5;padding:5px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${TatamiMaster.icon('unlock', 14)} NEVEZÉS NYITVA</span>`);
     }
     if (urlapok) {
         urlapok.style.opacity = lezarva ? '0.45' : '1';
@@ -298,9 +306,19 @@ function frissitAudienceVersenyBar() {
                 ? `<button type="button" class="btn btn-outline" style="padding:3px 9px;font-size:0.76rem;" onclick="mutatAudiencePlakatNagyban('${safeNameAttr}')">${TatamiMaster.icon('image', 13)} Plakát megtekintése</button>`
                 : '';
 
+            const beallitas = TatamiMaster.lekerVersenyBeallitas(aktVerseny.id);
+            const korSzabalySzoveg = (beallitas.ageRule === 'EUROPEAN')
+                ? 'Európai szabály (születési év)'
+                : 'Japán szabály (versenynapi pontos életkor)';
+            const hataridoHtml = beallitas.registrationDeadline
+                ? `<span>&bull; Nevezési határidő: <strong>${TatamiMaster.escapeHtml(TatamiMaster.formazNevezesiHatarido(beallitas.registrationDeadline))}</strong></span>`
+                : '';
+
             metaEl.innerHTML = `
                 <span>${TatamiMaster.icon('calendar', 14)} Dátum: <strong>${datumSzoveg}</strong></span>
                 <span>&bull; ${TatamiMaster.icon('user', 14)} Szervező: <strong>${szervezoSzoveg}</strong></span>
+                <span>&bull; Korhatár: <strong>${korSzabalySzoveg}</strong></span>
+                ${hataridoHtml}
                 ${kiirasGomb}
                 ${plakatGomb}
             `;
@@ -336,6 +354,34 @@ function mutatAudiencePlakatNagyban(versenyNev) {
     document.body.appendChild(modal);
 }
 
+function lekerCoachUrlapSzulErtek() {
+    const datumVal = (document.getElementById('coachUjSzulDatum')?.value || '').trim();
+    const evVal = (document.getElementById('coachUjSzulEv')?.value || '').trim();
+    return datumVal || evVal || '';
+}
+
+function szinkronizalCoachSzulDatum() {
+    const evInput = document.getElementById('coachUjSzulEv');
+    const korInfo = document.getElementById('coachUjKorInfo');
+    const nyers = lekerCoachUrlapSzulErtek();
+    const norm = TatamiMaster.normalizalSzulDatum(nyers);
+
+    if (evInput && norm.birthYear) {
+        evInput.value = String(norm.birthYear);
+    }
+    if (korInfo) {
+        if (norm.birthYear) {
+            const kor = TatamiMaster.szamolVersenyzoKor(nyers);
+            const ref = TatamiMaster.lekerAktivVersenyDatumEsKorSzabaly();
+            const szabNev = ref.ageRule === 'EUROPEAN' ? 'Európai szabály' : 'Japán szabály';
+            korInfo.innerText = (kor !== null) ? `Versenynapon: ${kor} éves (${szabNev})` : '';
+        } else {
+            korInfo.innerText = '';
+        }
+    }
+    frissitCoachKategoriaAjanlas();
+}
+
 function frissitKategoriaCheckboxok(meglevoBepipalt = null) {
     frissitCoachKategoriaAjanlas(meglevoBepipalt);
 }
@@ -350,12 +396,12 @@ function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
     const lezarva = TatamiMaster.isNevezesLezarva();
 
     const sulyVal = document.getElementById('coachUjSuly')?.value || '';
-    const szulEvVal = document.getElementById('coachUjSzulEv')?.value || '';
+    const szulVal = lekerCoachUrlapSzulErtek();
     const nemVal = document.getElementById('coachUjNem')?.value || '';
-    const vanBemenet = Boolean(sulyVal || szulEvVal || nemVal);
+    const vanBemenet = Boolean(sulyVal || szulVal || nemVal);
 
     const ajanlas = vanBemenet
-        ? TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulEvVal, sulyVal, nemVal)
+        ? TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulVal, sulyVal, nemVal)
         : { ajanlottIds: [] };
     const ajanlottSet = new Set(ajanlas.ajanlottIds || []);
 
@@ -368,17 +414,21 @@ function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
 
     cont.innerHTML = rendezett.map(kat => {
         const isKata = (kat.matchType && kat.matchType.toUpperCase() === 'KATA');
+        const isVegyes = TatamiMaster.isVegyesKategoria(kat);
         const jelzo = isKata ? `${TatamiMaster.icon('award', 13)} KATA` : `${TatamiMaster.icon('target', 13)} KUMITE`;
         const checked = bepipaltIdk.includes(kat.id) ? 'checked' : '';
         const isAj = ajanlottSet.has(kat.id);
         const ajBadge = isAj
             ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">AJÁNLOTT</span>`
             : '';
+        const vegyesBadge = isVegyes
+            ? ` <span style="background:#18181B;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.66rem;font-weight:700;">VEGYES</span>`
+            : '';
         const extraStyle = isAj ? 'border-color:#990000;background:#FAF5F5;' : '';
         return `
             <label class="kat-check-item" style="${extraStyle}">
                 <input type="checkbox" class="coach-kat-cb" value="${kat.id}" ${checked} ${lezarva ? 'disabled' : ''}>
-                <span><strong>${TatamiMaster.escapeHtml(kat.name)}</strong> <small style="color:#52525B;display:inline-flex;align-items:center;gap:3px;">[${jelzo}]</small>${ajBadge}</span>
+                <span><strong>${TatamiMaster.escapeHtml(kat.name)}</strong> <small style="color:#52525B;display:inline-flex;align-items:center;gap:3px;">[${jelzo}]</small>${vegyesBadge}${ajBadge}</span>
             </label>
         `;
     }).join('');
@@ -386,11 +436,11 @@ function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
 
 function alkalmazCoachAjanlottKategoriak() {
     const sulyVal = document.getElementById('coachUjSuly')?.value || '';
-    const szulEvVal = document.getElementById('coachUjSzulEv')?.value || '';
+    const szulVal = lekerCoachUrlapSzulErtek();
     const nemVal = document.getElementById('coachUjNem')?.value || '';
-    const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulEvVal, sulyVal, nemVal);
+    const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulVal, sulyVal, nemVal);
     if (!ajanlas.ajanlottIds || ajanlas.ajanlottIds.length === 0) {
-        TatamiMaster.toast("Add meg a születési évet és/vagy testsúlyt az ajánláshoz!", "figyelem");
+        TatamiMaster.toast("Add meg a születési dátumot és/vagy testsúlyt az ajánláshoz!", "figyelem");
         return [];
     }
     frissitCoachKategoriaAjanlas(ajanlas.ajanlottIds);
@@ -814,7 +864,11 @@ async function coachUjVersenyzoEsNevezes() {
     const klub = document.getElementById('coachUjKlub').value.trim() || "Shobu HSE";
     const ov = document.getElementById('coachUjOv').value.trim() || "10. kyu";
     const suly = parseInt(document.getElementById('coachUjSuly').value) || 60;
-    const szulEv = parseInt(document.getElementById('coachUjSzulEv').value) || 2008;
+    const nyersSzul = lekerCoachUrlapSzulErtek() || '2008';
+    const szulNorm = TatamiMaster.normalizalSzulDatum(nyersSzul);
+    const szulEv = szulNorm.birthYear || 2008;
+    const szulDatum = szulNorm.hasFullDate ? szulNorm.birthDate : '';
+    const nem = document.getElementById('coachUjNem')?.value || '';
 
     const kijeloltKatIdk = Array.from(document.querySelectorAll('.coach-kat-cb:checked')).map(cb => parseInt(cb.value));
 
@@ -828,7 +882,9 @@ async function coachUjVersenyzoEsNevezes() {
         club: klub,
         belt: ov,
         weight: suly,
-        birthYear: szulEv
+        birthYear: szulEv,
+        birthDate: szulDatum,
+        gender: nem
     });
 
     if (compRes.ok) {
@@ -844,6 +900,12 @@ async function coachUjVersenyzoEsNevezes() {
         alert(`${nev} sikeresen regisztrálva és benevezve ${kijeloltKatIdk.length} db kategóriába!`);
         document.getElementById('coachUjNev').value = '';
         document.getElementById('coachUjSuly').value = '';
+        const szulDatumEl = document.getElementById('coachUjSzulDatum');
+        if (szulDatumEl) szulDatumEl.value = '';
+        const szulEvEl = document.getElementById('coachUjSzulEv');
+        if (szulEvEl) szulEvEl.value = '';
+        const korInfoEl = document.getElementById('coachUjKorInfo');
+        if (korInfoEl) korInfoEl.innerText = '';
         document.querySelectorAll('.coach-kat-cb').forEach(cb => cb.checked = false);
         audienceAdatokBetoltese();
     }
@@ -1223,7 +1285,7 @@ function rajzolAudienceVersenyzokTabla() {
                 <th>Klub / Egyesület</th>
                 <th>Övfokozat</th>
                 <th>Súly</th>
-                <th>Szül. év</th>
+                <th>Szül. dátum (Kor)</th>
                 <th>Benevezett Kategóriák</th>
                 <th>Mikor küzd?</th>
             </tr>
@@ -1247,7 +1309,7 @@ function rajzolAudienceVersenyzokTabla() {
             <td>${TatamiMaster.escapeHtml(v.club || '-')}</td>
             <td><span style="background:#F3F0EA;border:1px solid #CFC9BC;padding:2px 7px;border-radius:6px;font-weight:700;font-size:0.8rem;">${TatamiMaster.escapeHtml(v.belt || '-')}</span></td>
             <td>${v.weight ? v.weight + ' kg' : '-'}</td>
-            <td>${v.birthYear || '-'}</td>
+            <td>${TatamiMaster.escapeHtml(TatamiMaster.formazSzulDatumEsKor(v))}</td>
             <td>${katPills}</td>
             <td style="white-space:nowrap;">
                 <button type="button" class="${kovetve ? 'btn btn-outline-green' : 'btn btn-outline-blue'}" style="padding:4px 9px;font-size:0.78rem;" onclick="ugorjVersenyzoIdobecslore(${v.id})">

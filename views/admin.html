@@ -10,7 +10,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261118_v1">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261122_v1">
 </head>
 
 <body>
@@ -114,12 +114,23 @@
                             <label class="admin-field-label" for="adminUjVersenySzervezo">2. Szervező egyesület / Főrendező *</label>
                             <input type="text" id="adminUjVersenySzervezo" placeholder="Pl. Vácrátóti HSE - Tornai Bálint" class="input-field" style="width: 100%;">
                         </div>
-                        <div class="admin-field-group" style="flex: 1; min-width: 160px;">
+                        <div class="admin-field-group" style="flex: 1; min-width: 155px;">
                             <label class="admin-field-label" for="adminUjVersenyDatum">3. Verseny dátuma *</label>
                             <input type="date" id="adminUjVersenyDatum" class="input-field" style="width: 100%;">
                         </div>
+                        <div class="admin-field-group" style="flex: 1.3; min-width: 215px;">
+                            <label class="admin-field-label" for="adminUjVersenyHatarido">4. Nevezési határidő (Nap, óra:perc)</label>
+                            <input type="datetime-local" id="adminUjVersenyHatarido" class="input-field" style="width: 100%;" title="A megadott időpont elérésekor a nevezés automatikusan lezárul">
+                        </div>
+                        <div class="admin-field-group" style="flex: 1.4; min-width: 230px;">
+                            <label class="admin-field-label" for="adminUjVersenyKorSzabaly">5. Korhatár-számítási szabály *</label>
+                            <select id="adminUjVersenyKorSzabaly" class="input-field" style="width: 100%;">
+                                <option value="JAPAN" selected>Japán szabály (Verseny napján betöltött életkor: Év-Hó-Nap)</option>
+                                <option value="EUROPEAN">Európai szabály (Csak születési év alapján)</option>
+                            </select>
+                        </div>
                         <div class="admin-field-group" style="flex: 1; min-width: 170px;">
-                            <label class="admin-field-label" for="adminUjVersenyStatusz">4. Verseny jelenlegi állapota</label>
+                            <label class="admin-field-label" for="adminUjVersenyStatusz">6. Verseny jelenlegi állapota</label>
                             <select id="adminUjVersenyStatusz" class="input-field" style="width: 100%;">
                                 <option value="ÉLŐ / NYITVA">ÉLŐ / NYITVA (Aktív verseny)</option>
                                 <option value="NEVEZÉS ALATT">NEVEZÉS ALATT (Közelgő verseny)</option>
@@ -244,9 +255,11 @@
                         <label class="admin-field-label" for="ujVersenyzoSuly">4. Testsúly (kg)</label>
                         <input type="number" id="ujVersenyzoSuly" placeholder="Pl. 65" class="input-field" oninput="frissitAdminKategoriaAjanlas()">
                     </div>
-                    <div class="admin-field-group" style="max-width: 160px; min-width: 135px;">
-                        <label class="admin-field-label" for="ujVersenyzoSzulEv">5. Születési év</label>
-                        <input type="number" id="ujVersenyzoSzulEv" placeholder="Pl. 2008" class="input-field" oninput="frissitAdminKategoriaAjanlas()">
+                    <div class="admin-field-group" style="max-width: 210px; min-width: 175px;">
+                        <label class="admin-field-label" for="ujVersenyzoSzulDatum">5. Születési dátum (Év-Hó-Nap) *</label>
+                        <input type="date" id="ujVersenyzoSzulDatum" class="input-field" oninput="szinkronizalAdminSzulDatum()" onchange="szinkronizalAdminSzulDatum()">
+                        <input type="hidden" id="ujVersenyzoSzulEv" value="">
+                        <small id="ujVersenyzoKorInfo" style="color:#990000;font-weight:800;font-size:0.74rem;display:block;margin-top:2px;"></small>
                     </div>
                     <div class="admin-field-group" style="max-width: 155px; min-width: 130px;">
                         <label class="admin-field-label" for="ujVersenyzoNem">6. Nem (Ajánlóhoz)</label>
@@ -326,7 +339,7 @@
                             <th>Klub / Egyesület</th>
                             <th>Övfokozat</th>
                             <th>Testsúly</th>
-                            <th>Születési év</th>
+                            <th>Születési dátum (Kor a versenyen)</th>
                             <th>Melyik kategóriákba van benevezve?</th>
                             <th>Módosítás / Törlés</th>
                         </tr>
@@ -363,31 +376,39 @@
         <section id="tab-kategoriak" class="tab-content pro-card" style="display: none;">
             <!-- A) ÚJ KATEGÓRIA LÉTREHOZÁSA KÉZZEL -->
             <div class="admin-section-box">
-                <div class="admin-section-header">
+                <div class="admin-section-header" style="flex-wrap:wrap;gap:10px;">
                     <h3 class="admin-section-title">
                         <span class="admin-section-num">A) ÚJ KATEGÓRIA</span>
-                        Új Kategória Hozzáadása (Kata vagy Kumite)
+                        Új Kategória Hozzáadása (Kata, Kumite vagy Vegyes Csipeszharc)
                     </h3>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline-blue" style="padding:6px 12px;font-size:0.8rem;font-weight:700;" onclick="kitoltCsipeszharcSablon('OVIS')">
+                            Ovis Csipeszharc (Vegyes Fiú+Lány, 4-6 év) sablon
+                        </button>
+                        <button type="button" class="btn btn-outline" style="padding:6px 12px;font-size:0.8rem;font-weight:700;" onclick="kitoltCsipeszharcSablon('GYEREK')">
+                            Kisiskolás Csipeszharc (Vegyes Fiú+Lány, 6-8 év) sablon
+                        </button>
+                    </div>
                 </div>
 
                 <div class="add-form-container" style="margin-bottom: 0;">
                     <div class="admin-field-group" style="flex: 2; min-width: 240px;">
                         <label class="admin-field-label" for="ujKategoriaNev">1. Kategória megnevezése *</label>
-                        <input type="text" id="ujKategoriaNev" placeholder="Pl. Junior Férfi Kumite -65 kg" class="input-field">
+                        <input type="text" id="ujKategoriaNev" placeholder="Pl. Junior Férfi Kumite -65 kg vagy Ovis Csipeszharc (Vegyes)" class="input-field">
                     </div>
                     <div class="admin-field-group" style="min-width: 185px;">
                         <label class="admin-field-label" for="ujKategoriaTipus">2. Versenyszám típusa</label>
                         <select id="ujKategoriaTipus" class="input-field">
-                            <option value="KUMITE">KUMITE (Küzdelem)</option>
+                            <option value="KUMITE">KUMITE (Küzdelem / Csipeszharc)</option>
                             <option value="KATA">KATA (Formagyakorlat)</option>
                         </select>
                     </div>
-                    <div class="admin-field-group" style="min-width: 175px;">
-                        <label class="admin-field-label" for="ujKategoriaNem">3. Nemek szerinti bontás</label>
+                    <div class="admin-field-group" style="min-width: 215px;">
+                        <label class="admin-field-label" for="ujKategoriaNem">3. Nemek szerinti bontás *</label>
                         <select id="ujKategoriaNem" class="input-field">
                             <option value="Férfi">Férfi / Fiú</option>
                             <option value="Női">Női / Lány</option>
-                            <option value="Vegyes">Vegyes (Fiú + Lány)</option>
+                            <option value="Vegyes">Vegyes (Fiú + Lány együtt – pl. Csipeszharc / Ovis)</option>
                         </select>
                     </div>
                     <div class="admin-field-group" style="max-width: 145px; min-width: 120px;">
@@ -792,10 +813,10 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261118_v1"></script>
-    <script src="../JS/auth.js?v=20261118_v1"></script>
-    <script src="../JS/tabs.js?v=20261118_v1"></script>
-    <script src="../JS/admin_adatok.js?v=20261118_v1"></script>
+    <script src="../JS/core.js?v=20261122_v1"></script>
+    <script src="../JS/auth.js?v=20261122_v1"></script>
+    <script src="../JS/tabs.js?v=20261122_v1"></script>
+    <script src="../JS/admin_adatok.js?v=20261122_v1"></script>
 </body>
 
 </html>
