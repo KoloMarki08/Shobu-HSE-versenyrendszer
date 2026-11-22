@@ -979,15 +979,140 @@ const TatamiMaster = {
         return (kor !== null) ? `${datumStr} (${kor} év)` : datumStr;
     },
 
-    // --- KYOKUSHIN KUMITE FORMÁTUM SZABÁLY (<= 5 FŐ: KÖRMÉRKŐZÉS, > 5 FŐ: EGYENES KIESÉS) ---
+    // --- KYOKUSHIN KUMITE FORMÁTUM SZABÁLY (2..5 FŐ: KÖRMÉRKŐZÉS, 6 FŐ: HIBRID [3 SELEJTEZŐ + 3 FŐS DÖNTŐ KÖRMECCS], 7+ FŐ: EGYENES KIESÉS) ---
     isKumiteKormeccsLetszam: function(indulokSzama) {
         return (parseInt(indulokSzama) || 0) <= 5;
+    },
+
+    isKumiteHatFosLetszam: function(indulokSzama) {
+        return (parseInt(indulokSzama, 10) || 0) === 6;
+    },
+
+    isKumiteEgyenesKiesesLetszam: function(indulokSzama) {
+        return (parseInt(indulokSzama, 10) || 0) >= 7;
     },
 
     isKumiteAgrajz: function(katMeccsek) {
         if (!Array.isArray(katMeccsek) || katMeccsek.length === 0) return false;
         const n = katMeccsek.length;
         return (n === 7 || n === 15 || n === 31 || n === 63 || n === 127);
+    },
+
+    isKumiteHatFosHibrid: function(katMeccsek) {
+        if (!Array.isArray(katMeccsek) || katMeccsek.length !== 6) return false;
+        const sorted = [...katMeccsek].sort((a, b) => a.id - b.id);
+        const elsoHaromIds = new Set();
+        for (let i = 0; i < 3; i++) {
+            if (sorted[i].competitor1Id) elsoHaromIds.add(sorted[i].competitor1Id);
+            if (sorted[i].competitor2Id) elsoHaromIds.add(sorted[i].competitor2Id);
+        }
+        return elsoHaromIds.size === 6;
+    },
+
+    /**
+     * 6 fős Kumite Hibrid rendszer generálása:
+     * - 1. forduló (3 páros egyenes kieséses selejtező):
+     *     1. selejtező: A1 vs A2 -> Győztes 1 (vesztes kiesik)
+     *     2. selejtező: B1 vs B2 -> Győztes 2 (vesztes kiesik)
+     *     3. selejtező: C1 vs C2 -> Győztes 3 (vesztes kiesik)
+     *   (A kiemeltek külön párba kerülnek, az azonos klubbelieket a sorsoló szétválasztja.)
+     * - 2. forduló (A 3 győztes döntő körmérkőzése az 1–3. helyért):
+     *     4. mérkőzés: 1. selejtező győztese vs. 2. selejtező győztese
+     *     5. mérkőzés: 1. selejtező győztese vs. 3. selejtező győztese
+     *     6. mérkőzés: 2. selejtező győztese vs. 3. selejtező győztese
+     */
+    generalHatFosKumiteHibridMeccsek: function(categoryId, tatamiId, kiemeltek = [], tobbiek = [], startOrder = 1) {
+        const kiemeltSor = [...(kiemeltek || [])];
+        const egyebSor = [...(tobbiek || [])];
+        const ossz = [...kiemeltSor, ...egyebSor];
+        if (ossz.length !== 6) {
+            return this.generalEgyenesKiesesMeccsek(categoryId, tatamiId, kiemeltek, tobbiek, startOrder);
+        }
+
+        let sorszam = startOrder;
+        const akaLista = [];
+        for (let i = 0; i < 3; i++) {
+            akaLista.push(kiemeltSor.length > 0 ? kiemeltSor.shift() : egyebSor.shift());
+        }
+        const shiroPool = [...egyebSor, ...kiemeltSor];
+        const selejtezok = [];
+
+        for (let i = 0; i < 3; i++) {
+            const aka = akaLista[i];
+            const kovAkaKlubok = new Set(akaLista.slice(i + 1).map(x => x.club));
+            let valasztottIdx = -1;
+            for (let j = 0; j < shiroPool.length; j++) {
+                if (shiroPool[j].club === aka.club) continue;
+                if (valasztottIdx === -1) valasztottIdx = j;
+                if (kovAkaKlubok.has(shiroPool[j].club)) {
+                    valasztottIdx = j;
+                    break;
+                }
+            }
+            if (valasztottIdx === -1) valasztottIdx = 0;
+            const shiro = shiroPool.splice(valasztottIdx, 1)[0];
+
+            selejtezok.push({
+                categoryId,
+                tatamiId,
+                competitor1Id: aka.id,
+                competitor2Id: shiro.id,
+                matchOrder: sorszam++,
+                isFinished: false,
+                winnerId: null
+            });
+        }
+
+        // 3 döntő körmérkőzés a 3 selejtező győztese között (G1-G2, G1-G3, G2-G3)
+        const dontoKormeccsek = [
+            { categoryId, tatamiId, competitor1Id: null, competitor2Id: null, matchOrder: sorszam++, isFinished: false, winnerId: null },
+            { categoryId, tatamiId, competitor1Id: null, competitor2Id: null, matchOrder: sorszam++, isFinished: false, winnerId: null },
+            { categoryId, tatamiId, competitor1Id: null, competitor2Id: null, matchOrder: sorszam++, isFinished: false, winnerId: null }
+        ];
+
+        return [...selejtezok, ...dontoKormeccsek];
+    },
+
+    /**
+     * Kiszámítja, hogy egy adott létszámú egyenes kieséses táblán (pl. 8, 16, 32, 64)
+     * melyik 1..M táblahelyekre kerülnek a kiemelt versenyzők (pl. 32-es táblán 4 kiemelt: 1., 32., 17., 16. hely).
+     */
+    szamolKiemeltPoziciok: function(indulokVagyAgrajzMeret) {
+        const n = Math.max(2, parseInt(indulokVagyAgrajzMeret, 10) || 8);
+        let agrajzMeret = 2;
+        while (agrajzMeret < n) agrajzMeret *= 2;
+        const r1Meret = agrajzMeret / 2;
+
+        let matchSeeds = [1];
+        while (matchSeeds.length < r1Meret) {
+            const nextLen = matchSeeds.length * 2;
+            const mirrorSum = nextLen + 1;
+            const expanded = [];
+            for (let i = 0; i < matchSeeds.length; i++) {
+                const s = matchSeeds[i];
+                if (i % 2 === 0) {
+                    expanded.push(s, mirrorSum - s);
+                } else {
+                    expanded.push(mirrorSum - s, s);
+                }
+            }
+            matchSeeds = expanded;
+        }
+
+        const prioritasIndexek = matchSeeds
+            .map((seedRank, idx) => ({ seedRank, idx }))
+            .sort((a, b) => a.seedRank - b.seedRank)
+            .map(item => item.idx);
+
+        // Páros meccsindexnél (0, 8, ...) a negyed/ág felső széle (2*mIdx + 1, pl. 1. és 17. hely),
+        // páratlan meccsindexnél (7, 15, ...) a negyed/ág alsó széle (2*mIdx + 2, pl. 16. és 32. hely)!
+        const tablaHelyek = prioritasIndexek.map(mIdx => (mIdx % 2 === 0) ? (2 * mIdx + 1) : (2 * mIdx + 2));
+        return {
+            agrajzMeret,
+            r1Meret,
+            prioritasIndexek,
+            tablaHelyek
+        };
     },
 
     /**
@@ -1090,11 +1215,14 @@ const TatamiMaster = {
             if (valasztottIdx === -1) valasztottIdx = 0;
 
             const shiro = shiroPool.splice(valasztottIdx, 1)[0];
+            // Ha kiemelt versenyző kerül egy negyed/félág alsó szélső mérkőzésébe (páratlan meccsindex: pl. 32-es táblán a 8. és 16. meccs),
+            // akkor a mérkőzés alsó (SHIRO = 16. és 32.) ághelyére tesszük, hogy a 4 kiemelt pontosan a negyedek legtávolabbi szélein (1., 16., 17., 32. hely) álljon!
+            const kiemeltAlsoSzelen = (mIdx % 2 === 1) && kiemeltIdSet.has(aka.id) && !kiemeltIdSet.has(shiro.id);
             elsoKor[mIdx] = {
                 categoryId,
                 tatamiId,
-                competitor1Id: aka.id,
-                competitor2Id: shiro.id,
+                competitor1Id: kiemeltAlsoSzelen ? shiro.id : aka.id,
+                competitor2Id: kiemeltAlsoSzelen ? aka.id : shiro.id,
                 isFinished: false,
                 winnerId: null
             };
@@ -1220,6 +1348,15 @@ const TatamiMaster = {
                 korMeret /= 2;
             }
             return fordulok;
+        }
+
+        if (this.isKumiteHatFosHibrid(rendezett)) {
+            return [
+                rendezett.slice(0, 3),
+                [rendezett[3]],
+                [rendezett[4]],
+                [rendezett[5]]
+            ];
         }
 
         const maradek = [...rendezett];
@@ -1887,7 +2024,7 @@ const TatamiMaster = {
             const link = document.createElement('link');
             link.id = 'tmDesignSystemCss';
             link.rel = 'stylesheet';
-            link.href = prefix + 'design_system.css?v=20261122_v1';
+            link.href = prefix + 'design_system.css?v=20261122_v2';
             document.head.appendChild(link);
         }
 
@@ -3534,6 +3671,32 @@ const TatamiMaster = {
                                 }
                             });
                         }
+                    }
+                } else if (this.isKumiteHatFosHibrid(sorted)) {
+                    const dontoKormeccsek = sorted.slice(3, 6);
+                    const vanLezartDonto = dontoKormeccsek.some(m => m.isFinished && m.winnerId);
+                    if (vanLezartDonto) {
+                        const stat = {};
+                        for (const m of dontoKormeccsek) {
+                            if (m.competitor1Id && !stat[m.competitor1Id]) stat[m.competitor1Id] = { id: m.competitor1Id, gy: 0, p: 0 };
+                            if (m.competitor2Id && !stat[m.competitor2Id]) stat[m.competitor2Id] = { id: m.competitor2Id, gy: 0, p: 0 };
+                            if (m.isFinished && m.winnerId && stat[m.winnerId]) {
+                                const r = kumTar[m.id];
+                                const wt = this.WIN_TYPES[r && r.winType ? r.winType : 'HANTEI'] || { pont: 1 };
+                                stat[m.winnerId].gy++;
+                                stat[m.winnerId].p += wt.pont;
+                            }
+                        }
+                        const tab = Object.values(stat).sort((a, b) => (b.gy - a.gy) || (b.p - a.p));
+                        [0, 1, 2].forEach(idx => {
+                            if (tab[idx]) {
+                                dobogosok.push({
+                                    hely: idx + 1,
+                                    v: (versenyzok || []).find(x => x.id === tab[idx].id),
+                                    extra: `${tab[idx].gy} győzelem (${tab[idx].p} súlypont a 3 fős döntőben)`
+                                });
+                            }
+                        });
                     }
                 } else {
                     const stat = {};

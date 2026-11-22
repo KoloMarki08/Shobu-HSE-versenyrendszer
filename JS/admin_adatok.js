@@ -1466,9 +1466,13 @@ function kategoriakBetoltese() {
 
             let formatumHint = '';
             if (!isKataKat && indulokDb >= 2) {
-                formatumHint = TatamiMaster.isKumiteKormeccsLetszam(indulokDb)
-                    ? ` <span style="background:#FAF8F5;border:1px solid #CFC9BC;color:#27272A;padding:2px 7px;border-radius:6px;font-size:0.75rem;font-weight:700;">Körmérkőzés</span>`
-                    : ` <span style="background:#18181B;color:#FAF8F5;padding:2px 7px;border-radius:6px;font-size:0.75rem;font-weight:700;">Egyenes kiesés</span>`;
+                if (TatamiMaster.isKumiteKormeccsLetszam(indulokDb)) {
+                    formatumHint = ` <span style="background:#FAF8F5;border:1px solid #CFC9BC;color:#27272A;padding:2px 7px;border-radius:6px;font-size:0.75rem;font-weight:700;">Körmérkőzés</span>`;
+                } else if (TatamiMaster.isKumiteHatFosLetszam(indulokDb)) {
+                    formatumHint = ` <span style="background:#FAF5F5;border:1px solid #990000;color:#990000;padding:2px 7px;border-radius:6px;font-size:0.75rem;font-weight:800;">6 fős Hibrid (3 selejtező + 3 fős döntő körmeccs)</span>`;
+                } else {
+                    formatumHint = ` <span style="background:#18181B;color:#FAF8F5;padding:2px 7px;border-radius:6px;font-size:0.75rem;font-weight:700;">Egyenes kiesés (7+ fő)</span>`;
+                }
             }
 
             html += `<tr>
@@ -2083,12 +2087,42 @@ async function hozzadTatami() {
     }
 }
 
+    let kiemeltKivalasztasiSorrend = [];
+
+function kattintKiemeltVersenyzoCb(cb) {
+    const id = parseInt(cb.value, 10);
+    if (!id) return;
+    if (cb.checked) {
+        if (!kiemeltKivalasztasiSorrend.includes(id)) kiemeltKivalasztasiSorrend.push(id);
+    } else {
+        kiemeltKivalasztasiSorrend = kiemeltKivalasztasiSorrend.filter(x => x !== id);
+    }
+    frissitKiemelesSorrendCimkek();
+}
+
+function frissitKiemelesSorrendCimkek() {
+    document.querySelectorAll('.kiemelt-versenyzo-cb').forEach(cb => {
+        const id = parseInt(cb.value, 10);
+        const badge = document.getElementById('kiemeltSorrendBadge_' + id);
+        if (!badge) return;
+        const idx = kiemeltKivalasztasiSorrend.indexOf(id);
+        if (cb.checked && idx !== -1) {
+            badge.style.display = 'inline-block';
+            badge.innerText = `${idx + 1}. KIEMELT`;
+        } else {
+            badge.style.display = 'none';
+            badge.innerText = '';
+        }
+    });
+}
+
 function frissitKiemelesValaszto() {
     const katId = parseInt(document.getElementById('sorsolasKategoriaSelect')?.value);
     const cont = document.getElementById('kiemelesContainer');
     const formatSel = document.getElementById('sorsolasFormatumSelect');
     if (!cont) return;
     if (!katId) { cont.innerHTML = ''; return; }
+    kiemeltKivalasztasiSorrend = [];
 
     const kivalasztottKat = globalKategoriak.find(k => k.id === katId);
     const isKata = (kivalasztottKat && kivalasztottKat.matchType && kivalasztottKat.matchType.toUpperCase() === 'KATA');
@@ -2103,11 +2137,26 @@ function frissitKiemelesValaszto() {
     }
 
     const isKormeccs = !isKata && TatamiMaster.isKumiteKormeccsLetszam(indulok.length);
+    const isHatFosHibrid = !isKata && TatamiMaster.isKumiteHatFosLetszam(indulok.length);
     if (formatSel && !isKata) {
-        formatSel.value = isKormeccs ? 'kormeccs' : 'egyenes';
+        formatSel.value = isKormeccs ? 'kormeccs' : (isHatFosHibrid ? 'hatfos_hibrid' : 'egyenes');
     }
 
     const meccsSzamKormeccs = (indulok.length * (indulok.length - 1)) / 2;
+    const pozInfo = (!isKata && indulok.length >= 7) ? TatamiMaster.szamolKiemeltPoziciok(indulok.length) : null;
+    const top4PozSzoveg = pozInfo
+        ? pozInfo.tablaHelyek.slice(0, 4).sort((a, b) => a - b).map(h => `${h}.`).join(', ')
+        : '1., 16., 17., 32.';
+
+    let kumiteFormatumLeiras = '';
+    if (isKormeccs) {
+        kumiteFormatumLeiras = `<strong>2–5 fő (${indulok.length} fő) &rarr; AUTOMATIKUS KÖRMÉRKŐZÉS</strong> (mindenki küzd mindenkivel, összesen ${meccsSzamKormeccs} mérkőzés).`;
+    } else if (isHatFosHibrid) {
+        kumiteFormatumLeiras = `<strong>6 fő &rarr; 6 FŐS HIBRID RENDSZER (3 páros kieséses selejtező + a 3 győztes döntő körmérkőzése, összesen 6 mérkőzés; a 3 selejtezős vesztes kiesik).</strong>`;
+    } else {
+        kumiteFormatumLeiras = `<strong>7+ fő (${indulok.length} fő, ${pozInfo ? pozInfo.agrajzMeret : 8}-as tábla) &rarr; AUTOMATIKUS EGYENES KIESÉSES ÁGRAJZ</strong> (4 kiemelt esetén a negyedek legtávolabbi széleire: <strong>${top4PozSzoveg} helyre</strong> kerülnek, így mind a 4 győzelme esetén az elődöntőben találkoznak!).`;
+    }
+
     const szabalyBanner = isKata
         ? `<div style="margin-bottom:8px;padding:9px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
             ${TatamiMaster.icon('info', 15)}
@@ -2115,20 +2164,16 @@ function frissitKiemelesValaszto() {
            </div>`
         : `<div style="margin-bottom:8px;padding:9px 14px;background:#FAF8F5;border:1.5px solid #18181B;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
             ${TatamiMaster.icon('info', 15)}
-            <span><strong>Hivatalos Kyokushin Kumite szabály (${indulok.length} induló):</strong> ${
-                isKormeccs
-                    ? `<strong>5 fő vagy 5 fő alatt (${indulok.length} fő) &rarr; AUTOMATIKUS KÖRMÉRKŐZÉS</strong> (mindenki küzd mindenkivel, összesen ${meccsSzamKormeccs} mérkőzés).`
-                    : `<strong>5 fő felett (${indulok.length} fő) &rarr; AUTOMATIKUS EGYENES KIESÉS</strong> (ágrajzos rendszer).`
-            }</span>
+            <span><strong>Hivatalos Kyokushin Kumite szabály (${indulok.length} induló):</strong> ${kumiteFormatumLeiras}</span>
            </div>`;
 
     cont.innerHTML = szabalyBanner +
-        `<div style="margin-bottom:6px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('star', 14)} Kiemelt versenyzők bepipálása (egyenes kiesésben ők lesznek az erőnyerők és külön ágra kerülnek; Katában a végén indulnak):</div>` +
+        `<div style="margin-bottom:6px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:6px;">${TatamiMaster.icon('star', 14)} Kiemelt versenyzők bepipálása (a bepipálás sorrendjében: 1., 2., 3., 4. kiemelt — egyenes kiesésben a negyedek legtávolabbi széleire kerülnek, 6 főnél külön selejtező párba, Katában a végén indulnak):</div>` +
         `<div class="kat-checkbox-grid">` +
         indulok.map(v => `
             <label class="kat-check-item">
-                <input type="checkbox" class="kiemelt-versenyzo-cb" value="${v.id}">
-                <span>${v.name} <small style="color:#52525B;">(${v.club})</small></span>
+                <input type="checkbox" class="kiemelt-versenyzo-cb" value="${v.id}" onchange="kattintKiemeltVersenyzoCb(this)">
+                <span>${v.name} <small style="color:#52525B;">(${v.club})</small> <span id="kiemeltSorrendBadge_${v.id}" style="display:none;background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;margin-left:4px;"></span></span>
             </label>
         `).join('') + `</div>`;
 }
@@ -2169,8 +2214,12 @@ async function kategoriaSorsolasa() {
         localStorage.setItem('kataEredmenyek', JSON.stringify(kataTar));
     }
 
-    const kiemeltIdk = Array.from(document.querySelectorAll('.kiemelt-versenyzo-cb:checked')).map(cb => parseInt(cb.value));
-    let kiemeltek = indulok.filter(v => kiemeltIdk.includes(v.id));
+    const bepipaltKiemeltIdk = Array.from(document.querySelectorAll('.kiemelt-versenyzo-cb:checked')).map(cb => parseInt(cb.value, 10));
+    const kiemeltIdk = [
+        ...kiemeltKivalasztasiSorrend.filter(id => bepipaltKiemeltIdk.includes(id)),
+        ...bepipaltKiemeltIdk.filter(id => !kiemeltKivalasztasiSorrend.includes(id))
+    ];
+    let kiemeltek = kiemeltIdk.map(id => indulok.find(v => v.id === id)).filter(Boolean);
     let tobbiek = indulok.filter(v => !kiemeltIdk.includes(v.id)).sort(() => Math.random() - 0.5);
     let rendezett = kiemeltek.concat(tobbiek);
 
@@ -2183,14 +2232,18 @@ async function kategoriaSorsolasa() {
         for (let v of kataSorrend) {
             generalt.push({ categoryId: katId, tatamiId, competitor1Id: v.id, competitor2Id: null, matchOrder: sorszam++, isFinished: false, winnerId: null });
         }
-    } else if (TatamiMaster.isKumiteKormeccsLetszam(rendezett.length) || formatum === 'kormeccs') {
-        // Kyokushin Kumite szabály: 5 főnél vagy 5 fő alatt (2, 3, 4, 5 fő) körmérkőzés van!
+    } else if (formatum === 'kormeccs' || (TatamiMaster.isKumiteKormeccsLetszam(rendezett.length) && formatum !== 'egyenes' && formatum !== 'hatfos_hibrid')) {
+        // Kyokushin Kumite szabály: 2, 3, 4, 5 főnél körmérkőzés van!
         for (let i = 0; i < rendezett.length; i++) {
             for (let j = i + 1; j < rendezett.length; j++) {
                 generalt.push({ categoryId: katId, tatamiId, competitor1Id: rendezett[i].id, competitor2Id: rendezett[j].id, matchOrder: sorszam++, isFinished: false, winnerId: null });
             }
         }
+    } else if (rendezett.length === 6 && (formatum === 'hatfos_hibrid' || formatum === 'egyenes')) {
+        // 6 fős Kumite kategória: 3 páros kieséses selejtező -> a 3 győztes döntő körmérkőzése (a 3 vesztes kiesik)
+        generalt = TatamiMaster.generalHatFosKumiteHibridMeccsek(katId, tatamiId, kiemeltek, tobbiek, sorszam);
     } else {
+        // 7+ fős Kumite kategória: klasszikus egyenes kieséses ágrajz
         generalt = TatamiMaster.generalEgyenesKiesesMeccsek(katId, tatamiId, kiemeltek, tobbiek, sorszam);
     }
 
@@ -2594,6 +2647,7 @@ function rajzolAgrajz() {
     let fordulok = [];
     let n = katMeccsek.length;
     let isAgrajz = TatamiMaster.isKumiteAgrajz(katMeccsek);
+    let isHatFosHibrid = !isAgrajz && TatamiMaster.isKumiteHatFosHibrid(katMeccsek);
 
     if (isAgrajz) {
         let korMeret = (n + 1) / 2;
@@ -2603,6 +2657,9 @@ function rajzolAgrajz() {
             idx += korMeret;
             korMeret /= 2;
         }
+    } else if (isHatFosHibrid) {
+        fordulok.push(katMeccsek.slice(0, 3));
+        fordulok.push(katMeccsek.slice(3, 6));
     } else {
         const sorrendben = [...katMeccsek].sort((a, b) => (a.matchOrder - b.matchOrder) || (a.id - b.id));
         fordulok.push(sorrendben);
@@ -2611,21 +2668,34 @@ function rajzolAgrajz() {
     let formatumFejlec = isAgrajz
         ? `<div class="tm-print-hide-note" style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
             ${TatamiMaster.icon('git-branch', 15)}
-            <span><strong>Lebonyolítási forma: Egyenes kieséses ágrajz</strong> (5 fő feletti Kumite kategória – összesen ${n} mérkőzés).</span>
+            <span><strong>Lebonyolítási forma: Egyenes kieséses ágrajz</strong> (7+ fős Kumite kategória – összesen ${n} mérkőzés).</span>
            </div>`
-        : `<div class="tm-print-hide-note" style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
-            ${TatamiMaster.icon('refresh', 15)}
-            <span><strong>Lebonyolítási forma: Körmérkőzés (Mindenki mindenkivel)</strong> – 5 fő vagy 5 fő alatti Kumite kategória (${n} mérkőzés + élő tabella).</span>
-           </div>`;
+        : (isHatFosHibrid
+            ? `<div class="tm-print-hide-note" style="margin-bottom:12px;padding:10px 14px;background:#FAF5F5;border:1.5px solid #990000;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
+                ${TatamiMaster.icon('git-branch', 15)}
+                <span><strong>Lebonyolítási forma: 6 fős Hibrid Rendszer</strong> (1. kör: 3 páros kieséses selejtező &rarr; 2. kör: a 3 győztes döntő körmérkőzése az 1–3. helyért; a 3 vesztes kiesik).</span>
+               </div>`
+            : `<div class="tm-print-hide-note" style="margin-bottom:12px;padding:10px 14px;background:#FAF8F5;border:1px solid #CFC9BC;border-radius:8px;font-size:0.86rem;color:#18181B;display:flex;align-items:center;gap:8px;">
+                ${TatamiMaster.icon('refresh', 15)}
+                <span><strong>Lebonyolítási forma: Körmérkőzés (Mindenki mindenkivel)</strong> – 2–5 fős Kumite kategória (${n} mérkőzés + élő tabella).</span>
+               </div>`);
 
-    let html = formatumFejlec + `<div class="bracket-wrapper ${isAgrajz ? 'is-elimination' : ''}">`;
+    const hibridDontoPlaceholder = (dontoIdx, oldal) => {
+        if (dontoIdx === 0) return oldal === 1 ? '1. selejtező győztese' : '2. selejtező győztese';
+        if (dontoIdx === 1) return oldal === 1 ? '1. selejtező győztese' : '3. selejtező győztese';
+        return oldal === 1 ? '2. selejtező győztese' : '3. selejtező győztese';
+    };
+
+    let html = formatumFejlec + `<div class="bracket-wrapper ${(isAgrajz || isHatFosHibrid) ? 'is-elimination' : ''}">`;
     fordulok.forEach((f, r) => {
         let korCim = isAgrajz
             ? (r === fordulok.length - 1 ? `${TatamiMaster.icon('trophy', 15)} Döntő` : (r === fordulok.length - 2 ? "Elődöntők" : (r + 1) + ". Forduló"))
-            : "Körmérkőzések (5 főig mindenki mindenkivel)";
+            : (isHatFosHibrid
+                ? (r === 0 ? "1. Forduló: 3 Páros Kieséses Selejtező (Győztesek továbbjutnak)" : `${TatamiMaster.icon('trophy', 15)} Döntő Körmérkőzés (A 3 győztes között az 1–3. helyért)`)
+                : "Körmérkőzések (2–5 főig mindenki mindenkivel)");
 
         html += `<div class="bracket-round"><h4>${korCim}</h4><div class="bracket-round-matches">`;
-        for (let m of f) {
+        f.forEach((m, mIdxInRound) => {
             let isBye = (m.isFinished && !m.competitor2Id);
             let akaW = (m.isFinished && m.winnerId === m.competitor1Id) ? 'winner' : '';
             let shiroW = (m.isFinished && m.winnerId === m.competitor2Id) ? 'winner' : '';
@@ -2633,35 +2703,47 @@ function rajzolAgrajz() {
             let modRovid = (!isBye && reszlet && TatamiMaster.WIN_TYPES[reszlet.winType]) ? `<strong>[${TatamiMaster.WIN_TYPES[reszlet.winType].rovid}]</strong> ` : '';
             let modCimke = (!isBye && reszlet && TatamiMaster.WIN_TYPES[reszlet.winType]) ? TatamiMaster.WIN_TYPES[reszlet.winType].cimke : '';
 
+            const akaNevHtml = m.competitor1Id
+                ? nevKeres(m.competitor1Id)
+                : (isHatFosHibrid && r === 1 ? `<em style="color:#52525B;">${hibridDontoPlaceholder(mIdxInRound, 1)}</em>` : 'Várakozik...');
+            const shiroNevHtml = m.competitor2Id
+                ? ('<span class="fighter-tag shiro-tag">SHIRO</span>' + nevKeres(m.competitor2Id))
+                : (isBye
+                    ? '<em style="color:#71717A;">Erőnyerő</em>'
+                    : (isHatFosHibrid && r === 1
+                        ? `<span class="fighter-tag shiro-tag">SHIRO</span><em style="color:#52525B;">${hibridDontoPlaceholder(mIdxInRound, 2)}</em>`
+                        : '<span class="fighter-tag shiro-tag">SHIRO</span>Várakozik...'));
+
             html += `
                 <div class="bracket-slot">
                     <div class="bracket-match ${m.isFinished ? 'finished' : ''}">
                         <div style="background:#F3F0EA;border-bottom:1px solid #E4E0D7;padding:5px 12px;font-size:0.78rem;font-weight:700;color:#3F3F46;display:flex;justify-content:space-between;align-items:center;gap:6px;">
-                            <span>Mérkőzés #${m.matchOrder}</span>
+                            <span>Mérkőzés #${m.matchOrder}${isHatFosHibrid ? (r === 0 ? ` (${mIdxInRound + 1}. selejtező)` : ` (${mIdxInRound + 1}. döntő körmeccs)`) : ''}</span>
                             <span style="display:inline-flex;align-items:center;gap:6px;">
                                 <span>${m.isFinished ? modCimke : ''}</span>
                                 ${(m.isFinished && !isBye) ? `<button type="button" class="btn btn-outline tm-print-hide-note" style="padding:1px 7px;font-size:0.7rem;" onclick="meccsUjranyitasaReset(${m.id})">Újranyitás</button>` : ''}
                             </span>
                         </div>
                         <div class="bracket-fighter aka ${akaW}">
-                            <span><span class="fighter-tag aka-tag">AKA</span>${nevKeres(m.competitor1Id)}</span>
+                            <span><span class="fighter-tag aka-tag">AKA</span>${akaNevHtml}</span>
                             <span>${akaW ? modRovid + TatamiMaster.icon('trophy', 14) : ''}</span>
                         </div>
                         <div class="bracket-fighter shiro ${shiroW}">
-                            <span>${m.competitor2Id ? '<span class="fighter-tag shiro-tag">SHIRO</span>' + nevKeres(m.competitor2Id) : '<em style="color:#71717A;">Erőnyerő</em>'}</span>
+                            <span>${shiroNevHtml}</span>
                             <span>${shiroW ? modRovid + TatamiMaster.icon('trophy', 14) : ''}</span>
                         </div>
                     </div>
                 </div>
             `;
-        }
+        });
         html += `</div></div>`;
     });
     html += `</div>`;
 
     if (!isAgrajz) {
+        const tabellaMeccsek = isHatFosHibrid ? katMeccsek.slice(3, 6) : katMeccsek;
         let stat = {};
-        for (let m of katMeccsek) {
+        for (let m of tabellaMeccsek) {
             [m.competitor1Id, m.competitor2Id].forEach(id => {
                 if (id && !stat[id]) {
                     let vObj = globalVersenyzok.find(v => v.id === id);
@@ -3249,6 +3331,21 @@ async function meccsUjranyitasaReset(matchId, skipConfirm = false) {
                     break;
                 }
             }
+        } else if (TatamiMaster.isKumiteHatFosHibrid(katMeccsek)) {
+            const selIdx = katMeccsek.slice(0, 3).findIndex(x => x.id === m.id);
+            if (selIdx !== -1) {
+                const dontoSLotok = selIdx === 0
+                    ? [{ m: katMeccsek[3], mezo: 'competitor1Id' }, { m: katMeccsek[4], mezo: 'competitor1Id' }]
+                    : (selIdx === 1
+                        ? [{ m: katMeccsek[3], mezo: 'competitor2Id' }, { m: katMeccsek[5], mezo: 'competitor1Id' }]
+                        : [{ m: katMeccsek[4], mezo: 'competitor2Id' }, { m: katMeccsek[5], mezo: 'competitor2Id' }]);
+                for (const sl of dontoSLotok) {
+                    if (sl.m && !sl.m.isFinished && sl.m[sl.mezo] === regiGyoztesId) {
+                        sl.m[sl.mezo] = null;
+                        await TatamiMaster.apiSend('Matches/' + sl.m.id, 'PUT', epitsTisztaMeccsPayload(sl.m));
+                    }
+                }
+            }
         }
     }
 
@@ -3397,13 +3494,18 @@ async function osszesKategoriaAutomatikusSorsolasa() {
                 generalt.push({ categoryId: kat.id, tatamiId: tId, competitor1Id: v.id, competitor2Id: null, matchOrder: sorszamMap[tId]++, isFinished: false, winnerId: null });
             }
         } else if (TatamiMaster.isKumiteKormeccsLetszam(kevert.length)) {
-            // 5 főnél vagy 5 fő alatt (2..5 fő) a Kumitében körmérkőzés van!
+            // 2..5 főnél a Kumitében körmérkőzés van!
             for (let i = 0; i < kevert.length; i++) {
                 for (let j = i + 1; j < kevert.length; j++) {
                     generalt.push({ categoryId: kat.id, tatamiId: tId, competitor1Id: kevert[i].id, competitor2Id: kevert[j].id, matchOrder: sorszamMap[tId]++, isFinished: false, winnerId: null });
                 }
             }
+        } else if (TatamiMaster.isKumiteHatFosLetszam(kevert.length)) {
+            // 6 főnél: 3 páros kieséses selejtező -> a 3 győztes döntő körmérkőzése (összesen 6 meccs)
+            generalt = TatamiMaster.generalHatFosKumiteHibridMeccsek(kat.id, tId, [], kevert, sorszamMap[tId]);
+            sorszamMap[tId] += generalt.length;
         } else {
+            // 7+ főnél: egyenes kieséses ágrajz
             generalt = TatamiMaster.generalEgyenesKiesesMeccsek(kat.id, tId, [], kevert, sorszamMap[tId]);
             sorszamMap[tId] += generalt.length;
         }

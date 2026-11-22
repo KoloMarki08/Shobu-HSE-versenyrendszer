@@ -1205,6 +1205,21 @@ async function ujranyitMeccsBiroiPultbol(celMeccsId = null) {
                     break;
                 }
             }
+        } else if (TatamiMaster.isKumiteHatFosHibrid(katMeccsek)) {
+            const selIdx = katMeccsek.slice(0, 3).findIndex(x => x.id === celMeccs.id);
+            if (selIdx !== -1) {
+                const dontoSlotok = selIdx === 0
+                    ? [{ m: katMeccsek[3], mezo: 'competitor1Id' }, { m: katMeccsek[4], mezo: 'competitor1Id' }]
+                    : (selIdx === 1
+                        ? [{ m: katMeccsek[3], mezo: 'competitor2Id' }, { m: katMeccsek[5], mezo: 'competitor1Id' }]
+                        : [{ m: katMeccsek[4], mezo: 'competitor2Id' }, { m: katMeccsek[5], mezo: 'competitor2Id' }]);
+                for (const sl of dontoSlotok) {
+                    if (sl.m && !sl.m.isFinished && sl.m[sl.mezo] === regiGyoztesId) {
+                        sl.m[sl.mezo] = null;
+                        await TatamiMaster.apiSend('Matches/' + sl.m.id, 'PUT', epitsTisztaBiroiMeccsPayload(sl.m));
+                    }
+                }
+            }
         }
     }
 
@@ -1277,6 +1292,30 @@ async function ellenorizKataSelejtezoEsTop6Donto(categoryId, tatamiId) {
 async function tovabbjuttatasKovetkezoForduloba(lezartMeccs, gyoztesId) {
     let katMeccsek = panelMeccsek.filter(m => m.categoryId === lezartMeccs.categoryId).sort((a, b) => a.id - b.id);
     let n = katMeccsek.length;
+
+    if (TatamiMaster.isKumiteHatFosHibrid(katMeccsek)) {
+        const selIdx = katMeccsek.slice(0, 3).findIndex(m => m.id === lezartMeccs.id);
+        if (selIdx !== -1) {
+            const dontoSlotok = selIdx === 0
+                ? [{ m: katMeccsek[3], mezo: 'competitor1Id' }, { m: katMeccsek[4], mezo: 'competitor1Id' }]
+                : (selIdx === 1
+                    ? [{ m: katMeccsek[3], mezo: 'competitor2Id' }, { m: katMeccsek[5], mezo: 'competitor1Id' }]
+                    : [{ m: katMeccsek[4], mezo: 'competitor2Id' }, { m: katMeccsek[5], mezo: 'competitor2Id' }]);
+            for (const sl of dontoSlotok) {
+                if (sl.m) {
+                    const regiTovabbjuto = sl.m[sl.mezo];
+                    sl.m[sl.mezo] = gyoztesId;
+                    if (regiTovabbjuto && regiTovabbjuto !== gyoztesId && sl.m.isFinished) {
+                        sl.m.isFinished = false;
+                        sl.m.winnerId = null;
+                    }
+                    await TatamiMaster.apiSend('Matches/' + sl.m.id, 'PUT', epitsTisztaBiroiMeccsPayload(sl.m));
+                }
+            }
+        }
+        return;
+    }
+
     if (!TatamiMaster.isKumiteAgrajz(katMeccsek)) return;
 
     let fordulok = [];

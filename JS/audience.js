@@ -1177,6 +1177,7 @@ function audienceAgrajzFrissites() {
     let fordulok = [];
     let osszes = katMeccsek.length;
     let isAgrajz = TatamiMaster.isKumiteAgrajz(katMeccsek);
+    let isHatFosHibrid = !isAgrajz && TatamiMaster.isKumiteHatFosHibrid(katMeccsek);
 
     if (isAgrajz) {
         let korMeret = (osszes + 1) / 2;
@@ -1186,22 +1187,41 @@ function audienceAgrajzFrissites() {
             idx += korMeret;
             korMeret /= 2;
         }
+    } else if (isHatFosHibrid) {
+        fordulok.push(katMeccsek.slice(0, 3));
+        fordulok.push(katMeccsek.slice(3, 6));
     } else {
         fordulok.push(katMeccsek);
     }
 
-    let html = jelmagyarazatHtml + '<div class="bracket-wrapper ' + (isAgrajz ? 'is-elimination' : '') + '">';
+    const hibridDontoPlaceholder = (dontoIdx, oldal) => {
+        if (dontoIdx === 0) return oldal === 1 ? '1. selejtező győztese' : '2. selejtező győztese';
+        if (dontoIdx === 1) return oldal === 1 ? '1. selejtező győztese' : '3. selejtező győztese';
+        return oldal === 1 ? '2. selejtező győztese' : '3. selejtező győztese';
+    };
+
+    let html = jelmagyarazatHtml + '<div class="bracket-wrapper ' + ((isAgrajz || isHatFosHibrid) ? 'is-elimination' : '') + '">';
     for (let r = 0; r < fordulok.length; r++) {
         let korCim = isAgrajz
             ? (r === fordulok.length - 1 ? `${TatamiMaster.icon('trophy', 15)} Döntő` : (r === fordulok.length - 2 ? "Elődöntők" : (r + 1) + ". Forduló"))
-            : "Körmérkőzések";
+            : (isHatFosHibrid
+                ? (r === 0 ? "1. Forduló: 3 Páros Kieséses Selejtező (Győztesek továbbjutnak)" : `${TatamiMaster.icon('trophy', 15)} Döntő Körmérkőzés (A 3 győztes között az 1–3. helyért)`)
+                : "Körmérkőzések");
 
         html += '<div class="bracket-round"><h4>' + korCim + '</h4><div class="bracket-round-matches">';
-        for (let m of fordulok[r]) {
+        for (let mIdx = 0; mIdx < fordulok[r].length; mIdx++) {
+            let m = fordulok[r][mIdx];
             let isBye = (m.isFinished && !m.competitor2Id);
             let akaWinner = (m.isFinished && m.winnerId === m.competitor1Id) ? "winner" : "";
             let shiroWinner = (m.isFinished && m.winnerId === m.competitor2Id) ? "winner" : "";
-            let shiroSzoveg = isBye ? "" : nevKereso(m.competitor2Id);
+            let akaSzoveg = m.competitor1Id
+                ? nevKereso(m.competitor1Id)
+                : (isHatFosHibrid && r === 1 ? `<em style="color:#52525B;">${hibridDontoPlaceholder(mIdx, 1)}</em>` : nevKereso(null));
+            let shiroSzoveg = isBye
+                ? ""
+                : (m.competitor2Id
+                    ? nevKereso(m.competitor2Id)
+                    : (isHatFosHibrid && r === 1 ? `<em style="color:#52525B;">${hibridDontoPlaceholder(mIdx, 2)}</em>` : nevKereso(null)));
 
             let reszlet = kumiteAdatok[m.id];
             let modKod = isBye ? '' : (reszlet && reszlet.winType ? reszlet.winType : 'HANTEI');
@@ -1213,7 +1233,7 @@ function audienceAgrajzFrissites() {
 
             html += '<div class="bracket-slot"><div class="bracket-match ' + (m.isFinished ? 'finished' : '') + '" title="' + (m.isFinished ? modCimke : '') + '">';
             html += '<div style="background:#F3F0EA; border-bottom:1px solid #E4E0D7; padding: 5px 12px; font-size:0.78rem; font-weight:700; color:#3F3F46; display:flex; justify-content:space-between;"><span>Mérkőzés #' + m.matchOrder + '</span><span>' + (m.isFinished ? modCimke : '') + '</span></div>';
-            html += '<div class="bracket-fighter aka ' + akaWinner + '"><span><span class="fighter-tag aka-tag">AKA</span>' + nevKereso(m.competitor1Id) + '</span><span>' + akaJelzes + '</span></div>';
+            html += '<div class="bracket-fighter aka ' + akaWinner + '"><span><span class="fighter-tag aka-tag">AKA</span>' + akaSzoveg + '</span><span>' + akaJelzes + '</span></div>';
             html += '<div class="bracket-fighter shiro ' + shiroWinner + '"><span>' + (shiroSzoveg ? '<span class="fighter-tag shiro-tag">SHIRO</span>' + shiroSzoveg : '<em style="color:#71717A;">Erőnyerő</em>') + '</span><span>' + shiroJelzes + '</span></div>';
             html += '</div></div>';
         }
@@ -1223,7 +1243,8 @@ function audienceAgrajzFrissites() {
 
     if (!isAgrajz) {
         let stat = {};
-        for (let m of katMeccsek) {
+        const tabellaMeccsek = isHatFosHibrid ? katMeccsek.slice(3, 6) : katMeccsek;
+        for (let m of tabellaMeccsek) {
             if (m.competitor1Id && !stat[m.competitor1Id]) stat[m.competitor1Id] = { id: m.competitor1Id, gyozelem: 0, pont: 0, modok: [] };
             if (m.competitor2Id && !stat[m.competitor2Id]) stat[m.competitor2Id] = { id: m.competitor2Id, gyozelem: 0, pont: 0, modok: [] };
 

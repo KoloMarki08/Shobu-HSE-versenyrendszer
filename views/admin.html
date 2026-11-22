@@ -10,7 +10,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261122_v1">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261122_v2">
 </head>
 
 <body>
@@ -593,7 +593,7 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><polyline points="18 2 22 6 18 10"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><polyline points="18 14 22 18 18 22"/></svg>
                             Tatamik (Küzdőterek), Sorsolás és Mérkőzés-menetrend
                         </span>
-                        <span class="admin-acc-subtitle">Kumite: 5 főig körmérkőzés, 5 fő felett (6+ fő) egyenes kiesés • Pihenőidős tatami-rotáció</span>
+                        <span class="admin-acc-subtitle">Kumite: 2–5 fő körmérkőzés, 6 fő: 3 páros selejtező + 3 fős döntő körmeccs, 7+ fő: egyenes kiesés • Pihenőidős tatami-rotáció</span>
                     </div>
                 </div>
                 <div class="admin-accordion-right">
@@ -677,11 +677,12 @@
                         <label class="admin-field-label" for="sorsolasTatamiSelect">2. Melyik tatamira kerüljön?</label>
                         <select id="sorsolasTatamiSelect" class="input-field"></select>
                     </div>
-                    <div class="admin-field-group" style="flex: 1.2; min-width: 210px;">
-                        <label class="admin-field-label" for="sorsolasFormatumSelect">3. Lebonyolítási mód (5 főig körmeccs, 6+ fő egyenes kiesés)</label>
+                    <div class="admin-field-group" style="flex: 1.3; min-width: 225px;">
+                        <label class="admin-field-label" for="sorsolasFormatumSelect">3. Lebonyolítási mód (2–5 fő körmeccs, 6 fő hibrid, 7+ fő ágrajz)</label>
                         <select id="sorsolasFormatumSelect" class="input-field">
-                            <option value="kormeccs">Körmérkőzés (5 fő vagy 5 fő alatt – mindenki mindenkivel)</option>
-                            <option value="egyenes">Egyenes kiesés (5 fő felett / 6+ főtől ágrajz, vagy Kata lista)</option>
+                            <option value="kormeccs">Körmérkőzés (2–5 fő – mindenki mindenkivel)</option>
+                            <option value="hatfos_hibrid">6 fős Hibrid (3 páros kieséses selejtező &rarr; 3 győztes döntő körmérkőzése)</option>
+                            <option value="egyenes">Egyenes kiesés (7+ főtől ágrajz, vagy Kata lista)</option>
                         </select>
                     </div>
                     <button class="btn btn-outline-green" style="padding: 11px 22px;" onclick="kategoriaSorsolasa()">
@@ -813,10 +814,10 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261122_v1"></script>
-    <script src="../JS/auth.js?v=20261122_v1"></script>
-    <script src="../JS/tabs.js?v=20261122_v1"></script>
-    <script src="../JS/admin_adatok.js?v=20261122_v1"></script>
+    <script src="../JS/core.js?v=20261122_v2"></script>
+    <script src="../JS/auth.js?v=20261122_v2"></script>
+    <script src="../JS/tabs.js?v=20261122_v2"></script>
+    <script src="../JS/admin_adatok.js?v=20261122_v2"></script>
 </body>
 
 </html>
