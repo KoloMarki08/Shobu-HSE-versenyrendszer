@@ -1263,30 +1263,119 @@ const TatamiMaster = {
         return generalt;
     },
 
-    // --- KOROSZTÁLYOS ÉS KATEGÓRIÁS TATAMI-MENETREND RENDEZŐ MOTOR ---
+    // --- KOROSZTÁLYOS, NEMEK SZERINTI ÉS KATEGÓRIÁS SEGÉDFÜGGVÉNYEK ---
+    _szovegTartalmazNoiKulcsszot: function(szoveg) {
+        const s = String(szoveg || '').toLowerCase().trim();
+        if (!s) return false;
+        if (s === 'n') return true;
+        if (/(?:^|[^a-záéíóöőúüű])(nő|női|noi|nők|nok|lány|lany|lányok|lanyok|leány|leany|leányok|leanyok|hölgy|holgy|hölgyek|holgyek|asszony)(?:$|[^a-záéíóöőúüű])/i.test(s)) {
+            return true;
+        }
+        if (/(?:^|[^a-záéíóöőúüű])(girls?|wom[ae]n|females?|lady|ladies)(?:$|[^a-záéíóöőúüű])/i.test(s)) {
+            return true;
+        }
+        return false;
+    },
+
+    _szovegTartalmazFerfiKulcsszot: function(szoveg) {
+        const s = String(szoveg || '').toLowerCase().trim();
+        if (!s) return false;
+        if (s === 'f' || s === 'm') return true;
+        if (/(?:^|[^a-záéíóöőúüű])(férfi|ferfi|férfiak|ferfiak|fiú|fiu|fiúk|fiuk)(?:$|[^a-záéíóöőúüű])/i.test(s)) {
+            return true;
+        }
+        // Szóhatáros angol illesztés, hogy a "women" / "woman" / "female" SOHA ne illeszkedjen a "men" / "man" / "male" szavakra!
+        if (/(?:^|[^a-záéíóöőúüű])(boys?|m[ae]n|males?)(?:$|[^a-záéíóöőúüű])/i.test(s)) {
+            return true;
+        }
+        return false;
+    },
+
+    normalizalVersenyzoNem: function(nemSzoveg) {
+        const s = String(nemSzoveg || '').trim();
+        if (!s) return null;
+        const noi = this._szovegTartalmazNoiKulcsszot(s);
+        const ferfi = this._szovegTartalmazFerfiKulcsszot(s);
+        if (noi && !ferfi) return 'NOI';
+        if (ferfi && !noi) return 'FERFI';
+        return null;
+    },
+
     isVegyesKategoria: function(kat) {
         if (!kat) return false;
         const g = String(kat.gender || '').toLowerCase();
         const n = String(kat.name || '').toLowerCase();
-        if (g.includes('vegyes') || g.includes('mixed') || g.includes('coed') || g.includes('közös') || g.includes('kozos')) return true;
-        if (n.includes('vegyes') || n.includes('mixed') || n.includes('csipesz') || (n.includes('fiú') && n.includes('lány'))) return true;
+        if (n.includes('vegyes') || n.includes('mixed') || n.includes('coed') || n.includes('közös') || n.includes('kozos') || n.includes('csipesz')) {
+            return true;
+        }
+        const nevNoi = this._szovegTartalmazNoiKulcsszot(n);
+        const nevFerfi = this._szovegTartalmazFerfiKulcsszot(n);
+        if (nevNoi && nevFerfi) return true;
+        if (nevNoi || nevFerfi) return false;
+        if (g.includes('vegyes') || g.includes('mixed') || g.includes('coed') || g.includes('közös') || g.includes('kozos')) {
+            return true;
+        }
         return false;
     },
 
     isNoiKategoria: function(kat) {
         if (!kat || this.isVegyesKategoria(kat)) return false;
-        const g = String(kat.gender || '').toLowerCase();
-        const n = String(kat.name || '').toLowerCase();
-        return g.includes('girl') || g.includes('women') || g.includes('female') || g.includes('nő') || g.includes('noi') || g.includes('lány') || g.includes('lany') ||
-               n.includes('girl') || n.includes('women') || n.includes('female') || n.includes('női') || n.includes('noi') || n.includes('lány') || n.includes('lany');
+        const n = String(kat.name || '');
+        const g = String(kat.gender || '');
+        const nevNoi = this._szovegTartalmazNoiKulcsszot(n);
+        const nevFerfi = this._szovegTartalmazFerfiKulcsszot(n);
+        if (nevNoi && !nevFerfi) return true;
+        if (nevFerfi && !nevNoi) return false;
+        return this._szovegTartalmazNoiKulcsszot(g) && !this._szovegTartalmazFerfiKulcsszot(g);
     },
 
     isFerfiKategoria: function(kat) {
         if (!kat || this.isVegyesKategoria(kat)) return false;
-        const g = String(kat.gender || '').toLowerCase();
-        const n = String(kat.name || '').toLowerCase();
-        return g.includes('boy') || g.includes('men') || g.includes('male') || g.includes('férfi') || g.includes('ferfi') || g.includes('fiú') || g.includes('fiu') ||
-               n.includes('boy') || n.includes('men') || n.includes('male') || n.includes('férfi') || n.includes('ferfi') || n.includes('fiú') || n.includes('fiu');
+        const n = String(kat.name || '');
+        const g = String(kat.gender || '');
+        const nevNoi = this._szovegTartalmazNoiKulcsszot(n);
+        const nevFerfi = this._szovegTartalmazFerfiKulcsszot(n);
+        if (nevFerfi && !nevNoi) return true;
+        if (nevNoi && !nevFerfi) return false;
+        return this._szovegTartalmazFerfiKulcsszot(g) && !this._szovegTartalmazNoiKulcsszot(g);
+    },
+
+    isSeniorKor: function(kor) {
+        return typeof kor === 'number' && !isNaN(kor) && kor >= 35;
+    },
+
+    isFelnottKategoria: function(kat) {
+        if (!kat) return false;
+        const minA = (typeof kat.minAge === 'number' && kat.minAge > 0) ? kat.minAge : 0;
+        const maxA = (typeof kat.maxAge === 'number' && kat.maxAge > 0) ? kat.maxAge : 99;
+        const nyersNev = String(kat.name || '').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        // Utánpótlás / U21 / U22 kategóriák kizárása
+        if (/\b(u8|u9|u10|u11|u12|u13|u14|u15|u16|u17|u18|u20|u21|u22)\b/.test(nyersNev)) {
+            return false;
+        }
+        if ((nyersNev.includes('junior') || nyersNev.includes('ifjusagi') || nyersNev.includes('serdulo') || nyersNev.includes('gyerek') || nyersNev.includes('gyermek') || nyersNev.includes('ovis')) &&
+            !nyersNev.includes('felnott') && !nyersNev.includes('adult') && !nyersNev.includes('18-34')) {
+            return false;
+        }
+        // Tisztán Senior / Veterán / Masters (35+) kategóriák kizárása (azokat a versenyző saját életkora alapján vizsgáljuk)
+        if ((nyersNev.includes('senior') || nyersNev.includes('veteran') || nyersNev.includes('masters') || /(?:^|[^0-9])(35\+|35-|40\+|45\+|50\+)/.test(nyersNev)) &&
+            !nyersNev.includes('felnott') && !nyersNev.includes('adult') && !nyersNev.includes('18-34')) {
+            return false;
+        }
+
+        // 1. Hivatalos Felnőtt korcsoport korhatár (18-34 év, ill. 18-35 év)
+        if (minA === 18 && maxA >= 30 && maxA <= 35) {
+            return true;
+        }
+        // 2. Név alapján explicit "18-34", "felnőtt" vagy "adult" kategória
+        if (nyersNev.includes('18-34') || nyersNev.includes('felnott') || nyersNev.includes('adult')) {
+            if (minA <= 18 && maxA >= 30) {
+                return true;
+            }
+        }
+        return false;
     },
 
     lekerSulySorrendErtek: function(kat) {
@@ -3425,7 +3514,7 @@ const TatamiMaster = {
     },
 
     // =========================================================
-    // AUTOMATIKUS KORCSOPORT- ÉS SÚLYCSOPORT-AJÁNLÓ (3.9 + JAPÁN SZABÁLY & VEGYES KATEGÓRIÁK)
+    // AUTOMATIKUS KORCSOPORT- ÉS SÚLYCSOPORT-AJÁNLÓ (3.9 + JAPÁN SZABÁLY, NEM-SZŰRÉS & SENIOR + FELNŐTT 18-34 AJÁNLÁS)
     // =========================================================
     ajanljKategoriakatVersenyzonek: function(kategoriak, szulDatumVagyEv, sulyKg, nemSzoveg = '', opciok = null) {
         const katLista = Array.isArray(kategoriak) ? kategoriak : [];
@@ -3433,28 +3522,19 @@ const TatamiMaster = {
             ? this.szamolVersenyzoKor(szulDatumVagyEv, opciok)
             : null;
         const suly = (!isNaN(parseFloat(sulyKg)) && parseFloat(sulyKg) > 0) ? parseFloat(sulyKg) : null;
-        const nemNorm = String(nemSzoveg || '').trim().toLowerCase();
+        const nemKod = this.normalizalVersenyzoNem(nemSzoveg);
+        const isNoi = (nemKod === 'NOI') ? true : ((nemKod === 'FERFI') ? false : null);
+        const isSenior = this.isSeniorKor(kor);
 
-        let isNoi = null;
-        if (nemNorm) {
-            if (/(nő|noi|lány|lany|female|girl|women|^n$)/i.test(nemNorm)) isNoi = true;
-            else if (/(férfi|ferfi|fiú|fiu|male|boy|men|^f$|^m$)/i.test(nemNorm)) isNoi = false;
-        }
-
-        const korEsNemMegfelel = (k) => {
+        const nemMegfelel = (k) => {
             if (!k) return false;
-            if (kor !== null) {
-                const minA = (typeof k.minAge === 'number' && k.minAge > 0) ? k.minAge : 0;
-                const maxA = (typeof k.maxAge === 'number' && k.maxAge > 0) ? k.maxAge : 99;
-                if (kor < minA || kor > maxA) return false;
-            }
-            if (isNoi !== null) {
-                if (this.isVegyesKategoria(k)) return true;
-                const katNoi = this.isNoiKategoria(k);
-                const katFerfi = this.isFerfiKategoria(k);
-                if (isNoi && katFerfi && !katNoi) return false;
-                if (!isNoi && katNoi && !katFerfi) return false;
-            }
+            if (isNoi === null) return true;
+            if (this.isVegyesKategoria(k)) return true;
+            const katNoi = this.isNoiKategoria(k);
+            const katFerfi = this.isFerfiKategoria(k);
+            // Férfi kiválasztásakor kizárjuk a női kategóriákat; Női kiválasztásakor kizárjuk a férfi kategóriákat
+            if (isNoi && katFerfi) return false;
+            if (!isNoi && katNoi) return false;
             return true;
         };
 
@@ -3471,60 +3551,124 @@ const TatamiMaster = {
             return null;
         };
 
-        const eloszurt = katLista.filter(korEsNemMegfelel);
-        const kataIds = [];
-        const kumiteJeloltek = [];
-
-        for (const k of eloszurt) {
-            const isKata = (k.matchType && String(k.matchType).toUpperCase() === 'KATA');
-            if (isKata) {
-                kataIds.push(k.id);
-            } else {
-                kumiteJeloltek.push(k);
-            }
-        }
-
         // Kumite súlycsoport szűkítés korcsoport + nem csoportonként (Vegyes = V, Női = N, Férfi = F)
-        const kumiteIds = [];
-        const csoportok = new Map();
-        for (const k of kumiteJeloltek) {
-            const katNemKod = this.isVegyesKategoria(k) ? 'V' : (this.isNoiKategoria(k) ? 'N' : 'F');
-            const kulcs = `${k.minAge || 0}_${k.maxAge || 99}_${katNemKod}`;
-            if (!csoportok.has(kulcs)) csoportok.set(kulcs, []);
-            csoportok.get(kulcs).push(k);
-        }
+        const szukitKumiteJelolteket = (jeloltek) => {
+            const eredmenyIds = [];
+            const csoportok = new Map();
+            for (const k of jeloltek) {
+                const katNemKod = this.isVegyesKategoria(k) ? 'V' : (this.isNoiKategoria(k) ? 'N' : 'F');
+                const kulcs = `${k.minAge || 0}_${k.maxAge || 99}_${katNemKod}`;
+                if (!csoportok.has(kulcs)) csoportok.set(kulcs, []);
+                csoportok.get(kulcs).push(k);
+            }
 
-        for (const [, csop] of csoportok.entries()) {
-            const sulyosak = csop.map(k => ({ k, sh: parseSulyHatar(k.name) }));
-            const vanSulybontas = sulyosak.some(x => x.sh !== null);
-            if (!vanSulybontas || suly === null) {
-                csop.forEach(k => kumiteIds.push(k.id));
-            } else {
-                // Keressük a legkisebb -X kg kategóriát, amibe még belefér (suly <= X)
-                const maxosok = sulyosak
-                    .filter(x => x.sh && x.sh.tipus === 'MAX' && suly <= x.sh.hatar)
-                    .sort((a, b) => a.sh.hatar - b.sh.hatar);
-                if (maxosok.length > 0) {
-                    kumiteIds.push(maxosok[0].k.id);
+            for (const [, csop] of csoportok.entries()) {
+                const sulyosak = csop.map(k => ({ k, sh: parseSulyHatar(k.name) }));
+                const vanSulybontas = sulyosak.some(x => x.sh !== null);
+                if (!vanSulybontas || suly === null) {
+                    csop.forEach(k => eredmenyIds.push(k.id));
                 } else {
-                    // Ha egyik -X kg-ba sem fér bele, keressük a +Y kg kategóriát (suly > Y, vagy a legnagyobb +Y)
-                    const pluszosok = sulyosak
-                        .filter(x => x.sh && x.sh.tipus === 'MIN' && suly >= x.sh.hatar)
-                        .sort((a, b) => b.sh.hatar - a.sh.hatar);
-                    if (pluszosok.length > 0) {
-                        kumiteIds.push(pluszosok[0].k.id);
+                    // Keressük a legkisebb -X kg kategóriát, amibe még belefér (suly <= X)
+                    const maxosok = sulyosak
+                        .filter(x => x.sh && x.sh.tipus === 'MAX' && suly <= x.sh.hatar)
+                        .sort((a, b) => a.sh.hatar - b.sh.hatar);
+                    if (maxosok.length > 0) {
+                        eredmenyIds.push(maxosok[0].k.id);
                     } else {
-                        const barmilyenPlusz = sulyosak.filter(x => x.sh && x.sh.tipus === 'MIN');
-                        if (barmilyenPlusz.length > 0) kumiteIds.push(barmilyenPlusz[0].k.id);
+                        // Ha egyik -X kg-ba sem fér bele, keressük a +Y kg kategóriát (suly >= Y, vagy a legnagyobb +Y)
+                        const pluszosok = sulyosak
+                            .filter(x => x.sh && x.sh.tipus === 'MIN' && suly >= x.sh.hatar)
+                            .sort((a, b) => b.sh.hatar - a.sh.hatar);
+                        if (pluszosok.length > 0) {
+                            eredmenyIds.push(pluszosok[0].k.id);
+                        } else {
+                            const barmilyenPlusz = sulyosak.filter(x => x.sh && x.sh.tipus === 'MIN');
+                            if (barmilyenPlusz.length > 0) eredmenyIds.push(barmilyenPlusz[0].k.id);
+                        }
                     }
+                    // Súlyhatár nélküli nyílt kategóriák hozzáadása, ha vannak a csoportban
+                    sulyosak.filter(x => x.sh === null).forEach(x => eredmenyIds.push(x.k.id));
                 }
-                // Súlyhatár nélküli nyílt kategóriák hozzáadása, ha vannak a csoportban
-                sulyosak.filter(x => x.sh === null).forEach(x => kumiteIds.push(x.k.id));
+            }
+            return eredmenyIds;
+        };
+
+        const sajatKorKatok = [];
+        const felnottExtraKatok = [];
+
+        for (const k of katLista) {
+            if (!nemMegfelel(k)) continue;
+
+            if (kor === null) {
+                sajatKorKatok.push(k);
+                continue;
+            }
+
+            const minA = (typeof k.minAge === 'number' && k.minAge > 0) ? k.minAge : 0;
+            const maxA = (typeof k.maxAge === 'number' && k.maxAge > 0) ? k.maxAge : 99;
+            const korBenneVan = (kor >= minA && kor <= maxA);
+
+            if (isSenior) {
+                const nyersNev = String(k.name || '').toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const isFelnott1834 = this.isFelnottKategoria(k);
+                // Pl. "Kumite Men 18+ y.o. Open" (minAge: 18, maxAge: 99) szintén a felnőtt opció, ha nincs a nevében a senior szó
+                const isFelnott18PlusOpen = (korBenneVan && minA >= 18 && minA < 35 && !nyersNev.includes('senior'));
+
+                if (korBenneVan && !isFelnott1834 && !isFelnott18PlusOpen) {
+                    // A senior versenyző saját életkorának megfelelő (pl. 35+, 35-44, 35-49, 45+, 50+) kategóriája
+                    sajatKorKatok.push(k);
+                } else if (isFelnott1834 || isFelnott18PlusOpen) {
+                    // Senior versenyzők számára a Felnőtt (18-34 évesek / 18+ Open) kategóriát is felajánljuk!
+                    felnottExtraKatok.push(k);
+                }
+            } else if (korBenneVan) {
+                sajatKorKatok.push(k);
             }
         }
 
-        const ajanlottIds = Array.from(new Set([...kataIds, ...kumiteIds]));
-        return { ajanlottIds, kataIds, kumiteIds, kor };
+        const bontKataKumite = (lista) => {
+            const kata = [];
+            const kumiteJeloltek = [];
+            for (const k of lista) {
+                const isKata = (k.matchType && String(k.matchType).toUpperCase() === 'KATA');
+                if (isKata) kata.push(k.id);
+                else kumiteJeloltek.push(k);
+            }
+            const kumite = szukitKumiteJelolteket(kumiteJeloltek);
+            return { kata, kumite };
+        };
+
+        const sajatBontas = bontKataKumite(sajatKorKatok);
+        const felnottBontas = bontKataKumite(felnottExtraKatok);
+
+        const elsodlegesKataIds = Array.from(new Set(sajatBontas.kata));
+        const elsodlegesKumiteIds = Array.from(new Set(sajatBontas.kumite));
+        const elsodlegesIds = Array.from(new Set([...elsodlegesKataIds, ...elsodlegesKumiteIds]));
+
+        const elsodlegesSet = new Set(elsodlegesIds);
+        const felnottKataIds = Array.from(new Set(felnottBontas.kata.filter(id => !elsodlegesSet.has(id))));
+        const felnottKumiteIds = Array.from(new Set(felnottBontas.kumite.filter(id => !elsodlegesSet.has(id))));
+        const felnottExtraIds = Array.from(new Set([...felnottKataIds, ...felnottKumiteIds]));
+
+        const kataIds = Array.from(new Set([...elsodlegesKataIds, ...felnottKataIds]));
+        const kumiteIds = Array.from(new Set([...elsodlegesKumiteIds, ...felnottKumiteIds]));
+        const ajanlottIds = Array.from(new Set([...elsodlegesIds, ...felnottExtraIds]));
+
+        return {
+            ajanlottIds,
+            kataIds,
+            kumiteIds,
+            elsodlegesIds,
+            elsodlegesKataIds,
+            elsodlegesKumiteIds,
+            felnottExtraIds,
+            felnottKataIds,
+            felnottKumiteIds,
+            kor,
+            isSenior,
+            isNoi
+        };
     },
 
     // =========================================================
@@ -3849,6 +3993,7 @@ const TatamiMaster = {
             const weight = Math.max(10, parseInt(item.weight !== undefined ? item.weight : (meglevo ? meglevo.weight : 50), 10) || 50);
             const defaultKata = item.defaultKata !== undefined ? Boolean(item.defaultKata) : (meglevo ? Boolean(meglevo.defaultKata) : true);
             const defaultKumite = item.defaultKumite !== undefined ? Boolean(item.defaultKumite) : (meglevo ? Boolean(meglevo.defaultKumite) : true);
+            const defaultAdult = item.defaultAdult !== undefined ? Boolean(item.defaultAdult) : (meglevo ? Boolean(meglevo.defaultAdult) : false);
             const selected = item.selected !== undefined ? Boolean(item.selected) : true;
 
             tisztitott.push({
@@ -3862,6 +4007,7 @@ const TatamiMaster = {
                 weight,
                 defaultKata,
                 defaultKumite,
+                defaultAdult,
                 selected,
                 lockedIdentity: true
             });
@@ -3897,6 +4043,7 @@ const TatamiMaster = {
             if (tagAdat.weight) lista[idx].weight = parseInt(tagAdat.weight, 10) || lista[idx].weight;
             if (tagAdat.defaultKata !== undefined) lista[idx].defaultKata = Boolean(tagAdat.defaultKata);
             if (tagAdat.defaultKumite !== undefined) lista[idx].defaultKumite = Boolean(tagAdat.defaultKumite);
+            if (tagAdat.defaultAdult !== undefined) lista[idx].defaultAdult = Boolean(tagAdat.defaultAdult);
             if (tagAdat.selected !== undefined) lista[idx].selected = Boolean(tagAdat.selected);
             if (!lista[idx].birthDate && szulNorm.hasFullDate) lista[idx].birthDate = szulNorm.birthDate;
         } else {
@@ -3911,6 +4058,7 @@ const TatamiMaster = {
                 weight: parseInt(tagAdat.weight, 10) || 50,
                 defaultKata: tagAdat.defaultKata !== undefined ? Boolean(tagAdat.defaultKata) : true,
                 defaultKumite: tagAdat.defaultKumite !== undefined ? Boolean(tagAdat.defaultKumite) : true,
+                defaultAdult: tagAdat.defaultAdult !== undefined ? Boolean(tagAdat.defaultAdult) : false,
                 selected: true,
                 lockedIdentity: true
             });

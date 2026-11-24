@@ -395,11 +395,7 @@ function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
     const cont = document.getElementById('coachUjKategoriaCheckboxes');
     if (!cont) return;
 
-    const bepipaltIdk = Array.isArray(meglevoBepipalt)
-        ? meglevoBepipalt
-        : Array.from(cont.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value, 10));
     const lezarva = TatamiMaster.isNevezesLezarva();
-
     const sulyVal = document.getElementById('coachUjSuly')?.value || '';
     const szulVal = lekerCoachUrlapSzulErtek();
     const nemVal = document.getElementById('coachUjNem')?.value || '';
@@ -407,13 +403,34 @@ function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
 
     const ajanlas = vanBemenet
         ? TatamiMaster.ajanljKategoriakatVersenyzonek(audKategoriak, szulVal, sulyVal, nemVal)
-        : { ajanlottIds: [] };
-    const ajanlottSet = new Set(ajanlas.ajanlottIds || []);
+        : { ajanlottIds: [], felnottExtraIds: [], isNoi: null };
+    const ajanlottLista = ajanlas.ajanlottIds || [];
+    const ajanlottSet = new Set(ajanlottLista);
+    const felnottExtraSet = new Set(ajanlas.felnottExtraIds || []);
+    const ajanlottSorrendMap = new Map(ajanlottLista.map((id, idx) => [id, idx]));
+
+    let bepipaltIdk = Array.isArray(meglevoBepipalt)
+        ? meglevoBepipalt
+        : Array.from(cont.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value, 10));
+
+    // Ha a nemet egyértelműen Férfira vagy Nőire állították át, az ellentétes nemű kategóriák pipáját automatikusan levesszük
+    if (!Array.isArray(meglevoBepipalt) && ajanlas.isNoi !== null && ajanlas.isNoi !== undefined) {
+        bepipaltIdk = bepipaltIdk.filter(katId => {
+            const katObj = audKategoriak.find(x => x.id === katId);
+            if (!katObj || TatamiMaster.isVegyesKategoria(katObj)) return true;
+            if (ajanlas.isNoi && TatamiMaster.isFerfiKategoria(katObj)) return false;
+            if (!ajanlas.isNoi && TatamiMaster.isNoiKategoria(katObj)) return false;
+            return true;
+        });
+    }
 
     const rendezett = [...audKategoriak].sort((a, b) => {
         const aAj = ajanlottSet.has(a.id) ? 0 : 1;
         const bAj = ajanlottSet.has(b.id) ? 0 : 1;
         if (aAj !== bAj) return aAj - bAj;
+        if (aAj === 0) {
+            return (ajanlottSorrendMap.get(a.id) ?? 9999) - (ajanlottSorrendMap.get(b.id) ?? 9999);
+        }
         return a.id - b.id;
     });
 
@@ -423,8 +440,10 @@ function frissitCoachKategoriaAjanlas(meglevoBepipalt = null) {
         const jelzo = isKata ? `${TatamiMaster.icon('award', 13)} KATA` : `${TatamiMaster.icon('target', 13)} KUMITE`;
         const checked = bepipaltIdk.includes(kat.id) ? 'checked' : '';
         const isAj = ajanlottSet.has(kat.id);
+        const isFelnottExtra = isAj && felnottExtraSet.has(kat.id);
+        const ajCimke = isFelnottExtra ? 'AJÁNLOTT • FELNŐTT (18-34)' : 'AJÁNLOTT';
         const ajBadge = isAj
-            ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">AJÁNLOTT</span>`
+            ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">${ajCimke}</span>`
             : '';
         const vegyesBadge = isVegyes
             ? ` <span style="background:#18181B;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.66rem;font-weight:700;">VEGYES</span>`
@@ -1483,14 +1502,50 @@ function renderCoachCsapatSablon() {
             m.weight,
             m.gender
         );
+        const sajatKataId = (ajanlas.elsodlegesKataIds && ajanlas.elsodlegesKataIds.length > 0)
+            ? ajanlas.elsodlegesKataIds[0]
+            : (ajanlas.kataIds[0] || null);
+        const sajatKumiteId = (ajanlas.elsodlegesKumiteIds && ajanlas.elsodlegesKumiteIds.length > 0)
+            ? ajanlas.elsodlegesKumiteIds[0]
+            : (ajanlas.kumiteIds[0] || null);
+        const felnottKataId = (ajanlas.felnottKataIds && ajanlas.felnottKataIds.length > 0 && ajanlas.felnottKataIds[0] !== sajatKataId)
+            ? ajanlas.felnottKataIds[0]
+            : null;
+        const felnottKumiteId = (ajanlas.felnottKumiteIds && ajanlas.felnottKumiteIds.length > 0 && ajanlas.felnottKumiteIds[0] !== sajatKumiteId)
+            ? ajanlas.felnottKumiteIds[0]
+            : null;
+        const vanFelnottOpciok = Boolean(ajanlas.isSenior && (felnottKataId || felnottKumiteId));
+
         const ajanlottKatNevek = [];
-        if (m.defaultKata && ajanlas.kataIds.length > 0) {
-            const kObj = audKategoriak.find(k => k.id === ajanlas.kataIds[0]);
+        if (m.defaultKata && sajatKataId) {
+            const kObj = audKategoriak.find(k => k.id === sajatKataId);
             if (kObj) ajanlottKatNevek.push(kObj.name);
         }
-        if (m.defaultKumite && ajanlas.kumiteIds.length > 0) {
-            const kObj = audKategoriak.find(k => k.id === ajanlas.kumiteIds[0]);
+        if (m.defaultKumite && sajatKumiteId) {
+            const kObj = audKategoriak.find(k => k.id === sajatKumiteId);
             if (kObj) ajanlottKatNevek.push(kObj.name);
+        }
+        if (vanFelnottOpciok && m.defaultAdult) {
+            if (m.defaultKata && felnottKataId) {
+                const fkObj = audKategoriak.find(k => k.id === felnottKataId);
+                if (fkObj) ajanlottKatNevek.push(fkObj.name);
+            }
+            if (m.defaultKumite && felnottKumiteId) {
+                const fkumObj = audKategoriak.find(k => k.id === felnottKumiteId);
+                if (fkumObj) ajanlottKatNevek.push(fkumObj.name);
+            }
+        }
+
+        const felnottOpcioNevek = [];
+        if (vanFelnottOpciok && !m.defaultAdult) {
+            if (m.defaultKata && felnottKataId) {
+                const fkObj = audKategoriak.find(k => k.id === felnottKataId);
+                if (fkObj) felnottOpcioNevek.push(fkObj.name);
+            }
+            if (m.defaultKumite && felnottKumiteId) {
+                const fkumObj = audKategoriak.find(k => k.id === felnottKumiteId);
+                if (fkumObj) felnottOpcioNevek.push(fkumObj.name);
+            }
         }
 
         const ovOpciokHtml = SABLON_OV_OPCIOK.map(ov =>
@@ -1499,10 +1554,14 @@ function renderCoachCsapatSablon() {
             ? `<option value="${esc(m.belt)}" selected>${esc(m.belt)}</option>`
             : '');
 
+        const felnottTippHtml = felnottOpcioNevek.length > 0
+            ? `<div style="margin-top:2px;font-size:0.71rem;color:#52525B;">Választható Felnőtt (18-34) is: <strong>${esc(felnottOpcioNevek.join(' + '))}</strong></div>`
+            : '';
+
         const statuszSor = meglevoKatNevek.length > 0
-            ? `<div style="margin-top:4px;font-size:0.74rem;color:#15803D;font-weight:800;">MÁR BENEVEZVE: ${esc(meglevoKatNevek.join(', '))}</div>`
+            ? `<div style="margin-top:4px;font-size:0.74rem;color:#15803D;font-weight:800;">MÁR BENEVEZVE: ${esc(meglevoKatNevek.join(', '))}</div>${felnottTippHtml}`
             : (ajanlottKatNevek.length > 0
-                ? `<div style="margin-top:4px;font-size:0.74rem;color:#27272A;">Besorolás: <strong>${esc(ajanlottKatNevek.join(' + '))}</strong></div>`
+                ? `<div style="margin-top:4px;font-size:0.74rem;color:#27272A;">Besorolás: <strong>${esc(ajanlottKatNevek.join(' + '))}</strong></div>${felnottTippHtml}`
                 : `<div style="margin-top:4px;font-size:0.74rem;color:#990000;">Nincs pontos kor/súly találat a meghirdetett kategóriák között</div>`);
 
         html += `<tr style="${m.selected !== false ? '' : 'opacity:0.65;'}">
@@ -1545,6 +1604,9 @@ function renderCoachCsapatSablon() {
                     <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.78rem;font-weight:700;cursor:pointer;">
                         <input type="checkbox" ${m.defaultKumite ? 'checked' : ''} onchange="valtoztatSablonTagMezo('${mId}', 'defaultKumite', this.checked)" style="accent-color:#18181B;"> Kumite
                     </label>
+                    ${vanFelnottOpciok ? `<label style="display:inline-flex;align-items:center;gap:4px;font-size:0.76rem;font-weight:800;color:#990000;cursor:pointer;" title="Senior versenyző nevezése a Felnőtt (18-34 évesek) kategóriába is">
+                        <input type="checkbox" ${m.defaultAdult ? 'checked' : ''} onchange="valtoztatSablonTagMezo('${mId}', 'defaultAdult', this.checked)" style="accent-color:#990000;"> + Felnőtt (18-34)
+                    </label>` : ''}
                 </div>
                 ${statuszSor}
             </td>
@@ -1654,8 +1716,8 @@ function importalKlubVersenyzokSablonba() {
 }
 
 function valtoztatSablonTagMezo(memberId, mezo, ertek) {
-    // Kizárólag a fejlődő mezők (belt, weight, defaultKata, defaultKumite, selected) módosíthatók!
-    const engedelyezettMezok = ['belt', 'weight', 'defaultKata', 'defaultKumite', 'selected'];
+    // Kizárólag a fejlődő mezők (belt, weight, defaultKata, defaultKumite, defaultAdult, selected) módosíthatók!
+    const engedelyezettMezok = ['belt', 'weight', 'defaultKata', 'defaultKumite', 'defaultAdult', 'selected'];
     if (!engedelyezettMezok.includes(mezo)) return;
 
     const klub = lekerCoachSablonKlub();
@@ -1785,9 +1847,26 @@ async function nevezKijeloltekCsapatSablonbol() {
             m.weight,
             m.gender
         );
+        const sajatKataId = (ajanlas.elsodlegesKataIds && ajanlas.elsodlegesKataIds.length > 0)
+            ? ajanlas.elsodlegesKataIds[0]
+            : (ajanlas.kataIds[0] || null);
+        const sajatKumiteId = (ajanlas.elsodlegesKumiteIds && ajanlas.elsodlegesKumiteIds.length > 0)
+            ? ajanlas.elsodlegesKumiteIds[0]
+            : (ajanlas.kumiteIds[0] || null);
+        const felnottKataId = (ajanlas.felnottKataIds && ajanlas.felnottKataIds.length > 0 && ajanlas.felnottKataIds[0] !== sajatKataId)
+            ? ajanlas.felnottKataIds[0]
+            : null;
+        const felnottKumiteId = (ajanlas.felnottKumiteIds && ajanlas.felnottKumiteIds.length > 0 && ajanlas.felnottKumiteIds[0] !== sajatKumiteId)
+            ? ajanlas.felnottKumiteIds[0]
+            : null;
+
         const celKatIdk = [];
-        if (m.defaultKata && ajanlas.kataIds.length > 0) celKatIdk.push(ajanlas.kataIds[0]);
-        if (m.defaultKumite && ajanlas.kumiteIds.length > 0) celKatIdk.push(ajanlas.kumiteIds[0]);
+        if (m.defaultKata && sajatKataId) celKatIdk.push(sajatKataId);
+        if (m.defaultKumite && sajatKumiteId) celKatIdk.push(sajatKumiteId);
+        if (ajanlas.isSenior && m.defaultAdult) {
+            if (m.defaultKata && felnottKataId && !celKatIdk.includes(felnottKataId)) celKatIdk.push(felnottKataId);
+            if (m.defaultKumite && felnottKumiteId && !celKatIdk.includes(felnottKumiteId)) celKatIdk.push(felnottKumiteId);
+        }
 
         let kapottNevezest = false;
         for (const katId of celKatIdk) {

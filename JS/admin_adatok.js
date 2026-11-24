@@ -722,11 +722,7 @@ function frissitAdminKategoriaAjanlas(meglevoBepipalt = null) {
     const cbCont = document.getElementById('adminUjVersenyzoKatCheckboxes');
     if (!cbCont) return;
 
-    const bepipalt = Array.isArray(meglevoBepipalt)
-        ? meglevoBepipalt
-        : Array.from(cbCont.querySelectorAll('input:checked')).map(c => parseInt(c.value, 10));
     const lezarva = TatamiMaster.isNevezesLezarva();
-
     const sulyVal = document.getElementById('ujVersenyzoSuly')?.value || '';
     const szulVal = lekerAdminUrlapSzulErtek();
     const nemVal = document.getElementById('ujVersenyzoNem')?.value || '';
@@ -734,21 +730,44 @@ function frissitAdminKategoriaAjanlas(meglevoBepipalt = null) {
 
     const ajanlas = vanBemenet
         ? TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, szulVal, sulyVal, nemVal)
-        : { ajanlottIds: [] };
-    const ajanlottSet = new Set(ajanlas.ajanlottIds || []);
+        : { ajanlottIds: [], felnottExtraIds: [], isNoi: null };
+    const ajanlottLista = ajanlas.ajanlottIds || [];
+    const ajanlottSet = new Set(ajanlottLista);
+    const felnottExtraSet = new Set(ajanlas.felnottExtraIds || []);
+    const ajanlottSorrendMap = new Map(ajanlottLista.map((id, idx) => [id, idx]));
+
+    let bepipalt = Array.isArray(meglevoBepipalt)
+        ? meglevoBepipalt
+        : Array.from(cbCont.querySelectorAll('input:checked')).map(c => parseInt(c.value, 10));
+
+    // Ha a nemet egyértelműen Férfira vagy Nőire állították át, az ellentétes nemű kategóriák pipáját automatikusan levesszük
+    if (!Array.isArray(meglevoBepipalt) && ajanlas.isNoi !== null && ajanlas.isNoi !== undefined) {
+        bepipalt = bepipalt.filter(katId => {
+            const katObj = globalKategoriak.find(x => x.id === katId);
+            if (!katObj || TatamiMaster.isVegyesKategoria(katObj)) return true;
+            if (ajanlas.isNoi && TatamiMaster.isFerfiKategoria(katObj)) return false;
+            if (!ajanlas.isNoi && TatamiMaster.isNoiKategoria(katObj)) return false;
+            return true;
+        });
+    }
 
     const rendezett = [...globalKategoriak].sort((a, b) => {
         const aAj = ajanlottSet.has(a.id) ? 0 : 1;
         const bAj = ajanlottSet.has(b.id) ? 0 : 1;
         if (aAj !== bAj) return aAj - bAj;
+        if (aAj === 0) {
+            return (ajanlottSorrendMap.get(a.id) ?? 9999) - (ajanlottSorrendMap.get(b.id) ?? 9999);
+        }
         return a.id - b.id;
     });
 
     cbCont.innerHTML = rendezett.map(k => {
         const isAj = ajanlottSet.has(k.id);
+        const isFelnottExtra = isAj && felnottExtraSet.has(k.id);
         const isVegyes = TatamiMaster.isVegyesKategoria(k);
+        const ajCimke = isFelnottExtra ? 'AJÁNLOTT • FELNŐTT (18-34)' : 'AJÁNLOTT';
         const ajBadge = isAj
-            ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">AJÁNLOTT</span>`
+            ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">${ajCimke}</span>`
             : '';
         const vegyesBadge = isVegyes
             ? ` <span style="background:#18181B;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.66rem;font-weight:700;">VEGYES</span>`
@@ -828,10 +847,9 @@ function kovetkeztetKategoriaCimket(versenyzokLista) {
             if (!k) continue;
             totalKatCount++;
             if (k.matchType && k.matchType.toUpperCase() === 'KATA') kataCount++;
-            const g = String(k.gender || k.name || '').toLowerCase();
-            if (g.includes('lány') || g.includes('lany') || g.includes('nő') || g.includes('noi') || g.includes('girl') || g.includes('women')) {
+            if (TatamiMaster.isNoiKategoria(k)) {
                 noiPont++;
-            } else if (g.includes('fiú') || g.includes('fiu') || g.includes('férfi') || g.includes('ferfi') || g.includes('boy') || g.includes('men')) {
+            } else if (TatamiMaster.isFerfiKategoria(k)) {
                 ferfiPont++;
             }
         }
@@ -1360,12 +1378,16 @@ async function importNevezesCsvSzovegbol(csvSzoveg) {
             const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(globalKategoriak, sor.birthDate || sor.birthYear, sor.weight, sor.gender);
             const csakKata = celLower.includes('kata') && !celLower.includes('kumite');
             const csakKumite = celLower.includes('kumite') && !celLower.includes('kata');
+            const kerFelnottIs = celLower.includes('felnőtt') || celLower.includes('felnott') || celLower.includes('18-34') || celLower.includes('adult');
+            const primKata = (ajanlas.elsodlegesKataIds && ajanlas.elsodlegesKataIds.length > 0) ? ajanlas.elsodlegesKataIds : ajanlas.kataIds;
+            const primKumite = (ajanlas.elsodlegesKumiteIds && ajanlas.elsodlegesKumiteIds.length > 0) ? ajanlas.elsodlegesKumiteIds : ajanlas.kumiteIds;
+            const primOssz = Array.from(new Set([...(primKata || []), ...(primKumite || [])]));
             if (csakKata) {
-                celKatIds = ajanlas.kataIds;
+                celKatIds = kerFelnottIs ? ajanlas.kataIds : primKata;
             } else if (csakKumite) {
-                celKatIds = ajanlas.kumiteIds;
+                celKatIds = kerFelnottIs ? ajanlas.kumiteIds : primKumite;
             } else {
-                celKatIds = ajanlas.ajanlottIds;
+                celKatIds = kerFelnottIs ? ajanlas.ajanlottIds : (primOssz.length > 0 ? primOssz : ajanlas.ajanlottIds);
             }
         }
 
@@ -3026,6 +3048,79 @@ function bezarVersenyzoEditModal() {
     if (modal) modal.remove();
 }
 
+function frissitEditVersenyzoKategoriaAjanlas(id, kezdetiBepipalt = null) {
+    const cont = document.getElementById('editVersenyzoKatCheckboxes');
+    if (!cont) return;
+
+    const v = globalVersenyzok.find(x => x.id === id);
+    const elerhetoKategoriak = (globalKategoriak || []).filter(k =>
+        !v || !v.tournamentId || !k.tournamentId || k.tournamentId === v.tournamentId
+    );
+    if (elerhetoKategoriak.length === 0) {
+        cont.innerHTML = '<div style="color:#71717A; font-size:0.86rem;">Még nincs felvett kategória ehhez a versenyhez.</div>';
+        return;
+    }
+
+    const sulyVal = document.getElementById('editVersenyzoSuly')?.value || '';
+    const szulDatumVal = (document.getElementById('editVersenyzoSzulDatum')?.value || '').trim();
+    const evVal = (document.getElementById('editVersenyzoEv')?.value || '').trim();
+    const szulVal = szulDatumVal || evVal || '';
+    const nemVal = document.getElementById('editVersenyzoNem')?.value || '';
+
+    const ajanlas = TatamiMaster.ajanljKategoriakatVersenyzonek(elerhetoKategoriak, szulVal, sulyVal, nemVal);
+    const ajanlottLista = ajanlas.ajanlottIds || [];
+    const ajanlottSet = new Set(ajanlottLista);
+    const felnottExtraSet = new Set(ajanlas.felnottExtraIds || []);
+    const ajanlottSorrendMap = new Map(ajanlottLista.map((katId, idx) => [katId, idx]));
+
+    let bepipalt = Array.isArray(kezdetiBepipalt)
+        ? kezdetiBepipalt
+        : Array.from(cont.querySelectorAll('.edit-versenyzo-kat-cb:checked')).map(cb => parseInt(cb.value, 10));
+
+    if (!Array.isArray(kezdetiBepipalt) && ajanlas.isNoi !== null && ajanlas.isNoi !== undefined) {
+        bepipalt = bepipalt.filter(katId => {
+            const katObj = elerhetoKategoriak.find(x => x.id === katId);
+            if (!katObj || TatamiMaster.isVegyesKategoria(katObj)) return true;
+            if (ajanlas.isNoi && TatamiMaster.isFerfiKategoria(katObj)) return false;
+            if (!ajanlas.isNoi && TatamiMaster.isNoiKategoria(katObj)) return false;
+            return true;
+        });
+    }
+    const bepipaltSet = new Set(bepipalt);
+
+    const rendezett = [...elerhetoKategoriak].sort((a, b) => {
+        const aAj = ajanlottSet.has(a.id) ? 0 : 1;
+        const bAj = ajanlottSet.has(b.id) ? 0 : 1;
+        if (aAj !== bAj) return aAj - bAj;
+        if (aAj === 0) {
+            return (ajanlottSorrendMap.get(a.id) ?? 9999) - (ajanlottSorrendMap.get(b.id) ?? 9999);
+        }
+        return a.id - b.id;
+    });
+
+    const esc = (s) => TatamiMaster.escapeHtml(s);
+    const letszamMap = szamolKategoriaLetszamMap();
+    cont.innerHTML = rendezett.map(k => {
+        const checkedAttr = bepipaltSet.has(k.id) ? 'checked' : '';
+        const isAj = ajanlottSet.has(k.id);
+        const isFelnottExtra = isAj && felnottExtraSet.has(k.id);
+        const db = letszamMap[k.id] || 0;
+        const korInfo = (k.minAge || k.maxAge) ? ` • ${k.minAge || '?'}-${k.maxAge || '?'} év` : '';
+        const letszamCimke = `${esc(k.matchType || 'KUMITE')}${korInfo} • ${db} fő${db === 1 ? ' (EGYEDÜL!)' : ''}`;
+        const ajCimke = isFelnottExtra ? 'AJÁNLOTT • FELNŐTT (18-34)' : 'AJÁNLOTT';
+        const ajBadge = isAj
+            ? ` <span style="background:#990000;color:#FAF8F5;padding:1px 6px;border-radius:4px;font-size:0.68rem;font-weight:800;">${ajCimke}</span>`
+            : '';
+        const borderCol = isAj ? '#990000' : (db === 1 ? '#FCA5A5' : '#E4E4E7');
+        const bgCol = isAj ? '#FAF5F5' : (db === 1 ? '#FEF2F2' : '#FAFAFA');
+        return `<label style="display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid ${borderCol}; border-radius:6px; background:${bgCol}; cursor:pointer; font-size:0.86rem;">
+            <input type="checkbox" class="edit-versenyzo-kat-cb" value="${k.id}" ${checkedAttr}>
+            <span style="flex:1; font-weight:600; color:#18181B;">${esc(k.name)}${ajBadge}</span>
+            <span class="badge" style="font-size:0.72rem; ${db === 1 ? 'color:#990000;border-color:#990000;' : ''}">${letszamCimke}</span>
+        </label>`;
+    }).join('');
+}
+
 function szerkesztVersenyzoTeljes(id) {
     const v = globalVersenyzok.find(x => x.id === id);
     if (!v) return;
@@ -3034,25 +3129,7 @@ function szerkesztVersenyzoTeljes(id) {
 
     const esc = (s) => TatamiMaster.escapeHtml(s);
     const aktualisNevezesek = (globalNevezesek || []).filter(n => n.competitorId === id);
-    const nevezettKatIdSet = new Set(aktualisNevezesek.map(n => n.categoryId));
-    const elerhetoKategoriak = (globalKategoriak || []).filter(k =>
-        !v.tournamentId || !k.tournamentId || k.tournamentId === v.tournamentId
-    );
-
-    const letszamMap = szamolKategoriaLetszamMap();
-    const katCheckboxokHtml = elerhetoKategoriak.length
-        ? elerhetoKategoriak.map(k => {
-            const checkedAttr = nevezettKatIdSet.has(k.id) ? 'checked' : '';
-            const db = letszamMap[k.id] || 0;
-            const korInfo = (k.minAge || k.maxAge) ? ` • ${k.minAge || '?'}-${k.maxAge || '?'} év` : '';
-            const letszamCimke = `${esc(k.matchType || 'KUMITE')}${korInfo} • ${db} fő${db === 1 ? ' (EGYEDÜL!)' : ''}`;
-            return `<label style="display:flex; align-items:center; gap:8px; padding:6px 8px; border:1px solid ${db === 1 ? '#FCA5A5' : '#E4E4E7'}; border-radius:6px; background:${db === 1 ? '#FEF2F2' : '#FAFAFA'}; cursor:pointer; font-size:0.86rem;">
-                <input type="checkbox" class="edit-versenyzo-kat-cb" value="${k.id}" ${checkedAttr}>
-                <span style="flex:1; font-weight:600; color:#18181B;">${esc(k.name)}</span>
-                <span class="badge" style="font-size:0.72rem; ${db === 1 ? 'color:#990000;border-color:#990000;' : ''}">${letszamCimke}</span>
-            </label>`;
-        }).join('')
-        : '<div style="color:#71717A; font-size:0.86rem;">Még nincs felvett kategória ehhez a versenyhez.</div>';
+    const nevezettKatIdk = aktualisNevezesek.map(n => n.categoryId);
 
     const modal = document.createElement('div');
     modal.id = 'tmVersenyzoEditModal';
@@ -3086,20 +3163,20 @@ function szerkesztVersenyzoTeljes(id) {
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                         <div>
                             <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Súly (kg)</label>
-                            <input type="number" id="editVersenyzoSuly" class="form-control" value="${Number(v.weight) || 0}" min="10" max="200">
+                            <input type="number" id="editVersenyzoSuly" class="form-control" value="${Number(v.weight) || 0}" min="10" max="200" oninput="frissitEditVersenyzoKategoriaAjanlas(${id})">
                         </div>
                         <div>
                             <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Születési év</label>
-                            <input type="number" id="editVersenyzoEv" class="form-control" value="${Number(v.birthYear) || 2010}" min="1940" max="2026">
+                            <input type="number" id="editVersenyzoEv" class="form-control" value="${Number(v.birthYear) || 2010}" min="1940" max="2026" oninput="frissitEditVersenyzoKategoriaAjanlas(${id})">
                         </div>
                     </div>
                     <div>
                         <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Teljes születési dátum (Év-Hó-Nap – Japán szabályhoz)</label>
-                        <input type="date" id="editVersenyzoSzulDatum" class="form-control" value="${esc(TatamiMaster.normalizalSzulDatum(v).birthDate || '')}" onchange="if(this.value){var y=parseInt(this.value.split('-')[0],10);if(y)document.getElementById('editVersenyzoEv').value=y;}">
+                        <input type="date" id="editVersenyzoSzulDatum" class="form-control" value="${esc(TatamiMaster.normalizalSzulDatum(v).birthDate || '')}" oninput="if(this.value){var y=parseInt(this.value.split('-')[0],10);if(y)document.getElementById('editVersenyzoEv').value=y;}frissitEditVersenyzoKategoriaAjanlas(${id});" onchange="if(this.value){var y=parseInt(this.value.split('-')[0],10);if(y)document.getElementById('editVersenyzoEv').value=y;}frissitEditVersenyzoKategoriaAjanlas(${id});">
                     </div>
                     <div>
                         <label style="display:block; font-size:0.8rem; font-weight:600; color:#52525B; margin-bottom:4px;">Nem</label>
-                        <select id="editVersenyzoNem" class="form-control">
+                        <select id="editVersenyzoNem" class="form-control" onchange="frissitEditVersenyzoKategoriaAjanlas(${id})">
                             <option value="" ${!v.gender ? 'selected' : ''}>Automatikus / Nincs megadva</option>
                             <option value="Férfi" ${v.gender === 'Férfi' ? 'selected' : ''}>Férfi / Fiú</option>
                             <option value="Női" ${v.gender === 'Női' ? 'selected' : ''}>Női / Lány</option>
@@ -3107,10 +3184,8 @@ function szerkesztVersenyzoTeljes(id) {
                     </div>
                 </div>
                 <div style="margin-bottom:16px;">
-                    <label style="display:block; font-size:0.82rem; font-weight:700; color:#18181B; margin-bottom:6px;">Indulási Kategóriák (Pótnevezés / Módosítás)</label>
-                    <div id="editVersenyzoKatCheckboxes" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap:8px; max-height:220px; overflow-y:auto; padding:8px; border:1px solid #E4E4E7; border-radius:8px; background:#F8FAFC;">
-                        ${katCheckboxokHtml}
-                    </div>
+                    <label style="display:block; font-size:0.82rem; font-weight:700; color:#18181B; margin-bottom:6px;">Indulási Kategóriák (Pótnevezés / Módosítás – az ajánlott kategóriák elöl szerepelnek)</label>
+                    <div id="editVersenyzoKatCheckboxes" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap:8px; max-height:220px; overflow-y:auto; padding:8px; border:1px solid #E4E4E7; border-radius:8px; background:#F8FAFC;"></div>
                 </div>
                 <div style="display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px;">
                     <button type="button" class="btn btn-outline" onclick="bezarVersenyzoEditModal()">Mégse</button>
@@ -3122,6 +3197,7 @@ function szerkesztVersenyzoTeljes(id) {
         </div>`;
 
     document.body.appendChild(modal);
+    frissitEditVersenyzoKategoriaAjanlas(id, nevezettKatIdk);
     const nevInput = document.getElementById('editVersenyzoNev');
     if (nevInput) nevInput.focus();
 }
