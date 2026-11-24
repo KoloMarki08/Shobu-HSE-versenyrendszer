@@ -159,6 +159,11 @@ namespace Versenyrendszer.Services
             return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
 
+        public static bool IsSuperAdmin(string? username)
+        {
+            return string.Equals((username ?? string.Empty).Trim(), "KoloMarki", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static string NormalizeApprovalStatus(string? status)
         {
             var upper = (status ?? string.Empty).Trim().ToUpperInvariant();
@@ -212,19 +217,22 @@ namespace Versenyrendszer.Services
                 u.ApprovalStatus = NormalizeApprovalStatus(u.ApprovalStatus);
             }
 
-            var defaults = new (string Username, string PlainPassword, string Role)[]
+            var defaults = new (string Username, string PlainPassword, string OldPlainPassword, string Role)[]
             {
-                ("KoloMarki", "1234", "ADMIN"),
-                ("A tatami", "A-tatami", "JUDGE"),
-                ("Balint.Tornai", "1234", "COACH"),
-                ("admin", "admin123", "ADMIN"),
-                ("biro", "biro123", "JUDGE"),
-                ("edzo", "edzo123", "COACH")
+                ("KoloMarki", "Kolo08$Mark", "1234", "ADMIN"),
+                ("A tatami", "A-tatami", "", "JUDGE"),
+                ("Balint.Tornai", "1234", "", "COACH"),
+                ("Admin", "Admin123", "admin123", "ADMIN"),
+                ("Biro", "Biro123", "biro123", "JUDGE"),
+                ("Edzo", "Edzo123", "edzo123", "COACH")
             };
 
             foreach (var def in defaults)
             {
-                if (!existingUsers.Any(u => string.Equals(u.Username, def.Username, StringComparison.OrdinalIgnoreCase)))
+                var existing = existingUsers.FirstOrDefault(u =>
+                    string.Equals(u.Username?.Trim(), def.Username, StringComparison.OrdinalIgnoreCase));
+
+                if (existing == null)
                 {
                     db.Users.Add(new User
                     {
@@ -233,6 +241,20 @@ namespace Versenyrendszer.Services
                         Role = def.Role,
                         ApprovalStatus = "APPROVED"
                     });
+                }
+                else
+                {
+                    if (!string.Equals(existing.Username, def.Username, StringComparison.Ordinal))
+                    {
+                        existing.Username = def.Username;
+                    }
+                    if (!string.IsNullOrEmpty(def.OldPlainPassword) &&
+                        VerifyPassword(def.OldPlainPassword, existing.Password, out _))
+                    {
+                        existing.Password = HashPassword(def.PlainPassword);
+                    }
+                    existing.Role = def.Role;
+                    existing.ApprovalStatus = "APPROVED";
                 }
             }
 

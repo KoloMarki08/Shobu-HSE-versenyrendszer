@@ -187,6 +187,10 @@ app.Use(async (context, next) =>
                 return;
             }
 
+            bool isSuperAdminResetEndpoint =
+                path.Equals("/api/Tournaments/reset-seed", StringComparison.OrdinalIgnoreCase) ||
+                path.Equals("/api/Tournaments/reset-empty", StringComparison.OrdinalIgnoreCase);
+
             bool isAdminEndpoint = isUsersRead ||
                                    path.StartsWith("/api/Tournaments", StringComparison.OrdinalIgnoreCase) ||
                                    path.StartsWith("/api/Categories", StringComparison.OrdinalIgnoreCase) ||
@@ -202,7 +206,11 @@ app.Use(async (context, next) =>
                                            path.StartsWith("/api/LiveArena/notify", StringComparison.OrdinalIgnoreCase);
 
             bool allowed = true;
-            if (isAdminEndpoint)
+            if (isSuperAdminResetEndpoint)
+            {
+                allowed = caller.Role == "ADMIN" && AuthService.IsSuperAdmin(caller.Username);
+            }
+            else if (isAdminEndpoint)
             {
                 allowed = caller.Role == "ADMIN";
             }
@@ -219,7 +227,10 @@ app.Use(async (context, next) =>
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 context.Response.ContentType = "application/json; charset=utf-8";
-                await context.Response.WriteAsJsonAsync(new { error = "Nincs megfelelő jogosultság ehhez a művelethez." });
+                var errMsg = isSuperAdminResetEndpoint
+                    ? "Az adatbázis lenullázása és a gyári mintaadatok betöltése kizárólag a KoloMarki fiókkal engedélyezett!"
+                    : "Nincs megfelelő jogosultság ehhez a művelethez.";
+                await context.Response.WriteAsJsonAsync(new { error = errMsg });
                 return;
             }
         }

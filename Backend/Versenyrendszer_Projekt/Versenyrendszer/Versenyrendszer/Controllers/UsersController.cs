@@ -386,6 +386,12 @@ namespace Versenyrendszer.Controllers
             var existing = await _context.Users.FindAsync(id);
             if (existing == null) return NotFound();
 
+            var caller = _auth.ValidateToken(AuthService.ExtractTokenFromRequest(Request));
+            if (AuthService.IsSuperAdmin(existing.Username) && !AuthService.IsSuperAdmin(caller.Username))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = "A KoloMarki főrendszergazda fiókot más felhasználó nem módosíthatja!" });
+            }
+
             if (!string.IsNullOrWhiteSpace(user.Username))
             {
                 existing.Username = user.Username.Trim();
@@ -420,6 +426,10 @@ namespace Versenyrendszer.Controllers
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
+            if (AuthService.IsSuperAdmin(user.Username))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { error = "A KoloMarki főrendszergazda fiók nem törölhető!" });
+            }
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return NoContent();

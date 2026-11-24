@@ -11,7 +11,7 @@
     <title>TATAMI MASTER™ - Adminisztrációs Központ</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="../favicon.svg">
-    <link rel="stylesheet" href="../CSS/design_system.css?v=20261124_v2">
+    <link rel="stylesheet" href="../CSS/design_system.css?v=20261124_v3">
 </head>
 
 <body>
@@ -66,12 +66,12 @@
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                         Eredmények &amp; Oklevelek
                     </a>
-                    <div class="tm-header-menu-divider"></div>
-                    <button type="button" class="tm-header-menu-item" onclick="document.getElementById('adminHeaderToolsMenu').removeAttribute('open'); nagyTesztAdatbazisReset();">
+                    <div id="adminResetMenuDivider" class="tm-header-menu-divider" style="display:none;"></div>
+                    <button id="btnAdminResetSeed" type="button" class="tm-header-menu-item" style="display:none;" onclick="document.getElementById('adminHeaderToolsMenu').removeAttribute('open'); nagyTesztAdatbazisReset();">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                         Gyári mintaadatok betöltése
                     </button>
-                    <button type="button" class="tm-header-menu-item danger" onclick="document.getElementById('adminHeaderToolsMenu').removeAttribute('open'); adatbazisTeljesLenullazas();">
+                    <button id="btnAdminResetEmpty" type="button" class="tm-header-menu-item danger" style="display:none;" onclick="document.getElementById('adminHeaderToolsMenu').removeAttribute('open'); adatbazisTeljesLenullazas();">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         Adatbázis lenullázása (0-ra)
                     </button>
@@ -869,10 +869,10 @@
 
     </main>
 
-    <script src="../JS/core.js?v=20261124_v2"></script>
-    <script src="../JS/auth.js?v=20261124_v2"></script>
-    <script src="../JS/tabs.js?v=20261124_v2"></script>
-    <script src="../JS/admin_adatok.js?v=20261124_v2"></script>
+    <script src="../JS/core.js?v=20261124_v3"></script>
+    <script src="../JS/auth.js?v=20261124_v3"></script>
+    <script src="../JS/tabs.js?v=20261124_v3"></script>
+    <script src="../JS/admin_adatok.js?v=20261124_v3"></script>
 </body>
 
 </html>

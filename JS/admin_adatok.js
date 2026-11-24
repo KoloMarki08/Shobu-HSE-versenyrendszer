@@ -8,7 +8,27 @@ let draggedMatchId = null;
 
 let adminLiveFrissitesTimer = null;
 
+function isSuperAdminKoloMarki() {
+    const u = TatamiMaster.lekerBejelentkezes();
+    return Boolean(
+        u &&
+        String(u.role || '').toUpperCase() === 'ADMIN' &&
+        String(u.username || '').trim().toLowerCase() === 'kolomarki'
+    );
+}
+
+function frissitSuperAdminResetGombok() {
+    const engedelyezett = isSuperAdminKoloMarki();
+    const divEl = document.getElementById('adminResetMenuDivider');
+    const seedBtn = document.getElementById('btnAdminResetSeed');
+    const emptyBtn = document.getElementById('btnAdminResetEmpty');
+    if (divEl) divEl.style.display = engedelyezett ? '' : 'none';
+    if (seedBtn) seedBtn.style.display = engedelyezett ? '' : 'none';
+    if (emptyBtn) emptyBtn.style.display = engedelyezett ? '' : 'none';
+}
+
 window.onload = function() {
+    frissitSuperAdminResetGombok();
     const datumInput = document.getElementById('adminUjVersenyDatum');
     if (datumInput && !datumInput.value) {
         datumInput.value = new Date().toISOString().split('T')[0];
@@ -3462,6 +3482,10 @@ const ujranyitLezartMeccsAdminbol = meccsUjranyitasaReset;
 // NAGY TESZT: TELJES ADATBÁZIS TÖRLÉS, ID=1 RESET ÉS SQL TESZTADATOK BETÖLTÉSE
 // ============================================================================
 async function nagyTesztAdatbazisReset() {
+    if (!isSuperAdminKoloMarki()) {
+        TatamiMaster.toast("A gyári mintaadatok betöltése kizárólag a KoloMarki fiókkal engedélyezett!", "hiba");
+        return;
+    }
     if (!confirm("NAGY TESZT INDÍTÁSA:\n\nBiztosan törölsz minden jelenlegi adatot, visszaállítod az összes ID-t 1-re, és feltöltöd a rendszert a tiszta SQL tesztadatokkal?")) {
         return;
     }
@@ -3484,6 +3508,10 @@ async function nagyTesztAdatbazisReset() {
 }
 
 async function adatbazisTeljesLenullazas() {
+    if (!isSuperAdminKoloMarki()) {
+        TatamiMaster.toast("Az adatbázis lenullázása kizárólag a KoloMarki fiókkal engedélyezett!", "hiba");
+        return;
+    }
     if (!confirm("FIGYELEM! ADATBÁZIS LENULLÁZÁSA (0-RA ÁLLÍTÁS):\n\nBiztosan törölsz MINDEN versenyt, kategóriát, versenyzőt, nevezést, tatamit, mérkőzést és élő eredményt?\n\n(A belépési felhasználói fiókok megmaradnak, de minden versenyadat véglegesen törlődik!)")) {
         return;
     }
