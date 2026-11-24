@@ -18,10 +18,12 @@ function szinkronizalAktivTabJelolok(tabId) {
     const tabBtns = document.getElementsByClassName('tab-btn');
     for (let i = 0; i < tabBtns.length; i++) {
         tabBtns[i].classList.remove('active');
+        tabBtns[i].setAttribute('aria-selected', 'false');
         const onClickAttr = tabBtns[i].getAttribute('onclick') || '';
         const dataTab = tabBtns[i].getAttribute('data-tab') || '';
         if (dataTab === tabId || onClickAttr.includes(`'${tabId}'`) || onClickAttr.includes(`"${tabId}"`)) {
             tabBtns[i].classList.add('active');
+            tabBtns[i].setAttribute('aria-selected', 'true');
         }
     }
 
@@ -50,6 +52,9 @@ function openTab(evt, tabId, scrollToTabs = false) {
         target.style.display = 'block';
         target.classList.add('active');
         frissitAccordionFejlecAllapot(target, true);
+        try {
+            sessionStorage.setItem('tatamiAdminAktivTab', tabId);
+        } catch (e) {}
     }
 
     if (evt && evt.currentTarget && evt.currentTarget.classList && evt.currentTarget.classList.contains('tab-btn')) {
@@ -57,7 +62,8 @@ function openTab(evt, tabId, scrollToTabs = false) {
     }
 
     if (scrollToTabs && target) {
-        const panelWrapper = target.closest('.admin-accordion-panel') || target;
+        const navBar = document.getElementById('adminQuickStepNavBar');
+        const panelWrapper = target.closest('.admin-accordion-panel') || navBar || target;
         setTimeout(() => {
             panelWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 40);
@@ -70,6 +76,12 @@ function toggleAccordionTab(tabId, evt) {
     }
     const target = document.getElementById(tabId);
     if (!target) return;
+
+    const panelWrapper = target.closest('.admin-accordion-panel');
+    if (!panelWrapper) {
+        openTab(null, tabId, false);
+        return;
+    }
 
     const isCurrentlyOpen = target.classList.contains('active') || target.style.display === 'block';
     if (isCurrentlyOpen) {
@@ -91,6 +103,7 @@ function expandAllAdminTabs() {
         tabContents[i].classList.add('active');
         frissitAccordionFejlecAllapot(tabContents[i], true);
     }
+    document.querySelectorAll('.admin-tool-drawer').forEach(d => { d.open = true; });
     document.querySelectorAll('.admin-section-box.collapsed').forEach(box => {
         box.classList.remove('collapsed');
         const btnText = box.querySelector('.subbox-toggle-text');
@@ -99,6 +112,12 @@ function expandAllAdminTabs() {
 }
 
 function collapseAllAdminTabs() {
+    document.querySelectorAll('.admin-tool-drawer').forEach(d => { d.open = false; });
+    const hasAccordion = document.querySelector('.admin-accordion-panel');
+    if (!hasAccordion) {
+        openTab(null, 'tab-versenyzok', false);
+        return;
+    }
     const tabContents = document.getElementsByClassName('tab-content');
     for (let i = 0; i < tabContents.length; i++) {
         tabContents[i].style.display = 'none';
@@ -107,16 +126,42 @@ function collapseAllAdminTabs() {
     }
 }
 
-function ugorjAdminTabra(tabId, scrollToTabs = true) {
+function ugorjAdminTabra(tabId, scrollToTabs = false) {
     openTab(null, tabId, scrollToTabs);
 }
 
-function nyisdHashTabHaVan() {
+function initAdminAlapTabEsMenuk() {
     const hash = window.location.hash ? window.location.hash.replace(/^#/, '') : '';
     if (hash && hash.startsWith('tab-') && document.getElementById(hash)) {
         openTab(null, hash, true);
+        return;
+    }
+
+    let mentettTab = '';
+    try {
+        mentettTab = sessionStorage.getItem('tatamiAdminAktivTab') || '';
+    } catch (e) {}
+
+    const alapTab = (mentettTab && document.getElementById(mentettTab))
+        ? mentettTab
+        : (document.getElementById('tab-versenyzok') ? 'tab-versenyzok' : 'tab-versenyek');
+
+    const vanNyitott = Array.from(document.getElementsByClassName('tab-content'))
+        .some(el => el.classList.contains('active') || el.style.display === 'block');
+
+    if (!vanNyitott && document.getElementById(alapTab)) {
+        openTab(null, alapTab, false);
     }
 }
 
-window.addEventListener('DOMContentLoaded', nyisdHashTabHaVan);
-window.addEventListener('hashchange', nyisdHashTabHaVan);
+window.addEventListener('DOMContentLoaded', () => {
+    initAdminAlapTabEsMenuk();
+    document.addEventListener('click', (e) => {
+        document.querySelectorAll('details.tm-header-menu[open]').forEach(menu => {
+            if (!menu.contains(e.target)) {
+                menu.removeAttribute('open');
+            }
+        });
+    });
+});
+window.addEventListener('hashchange', initAdminAlapTabEsMenuk);

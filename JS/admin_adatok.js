@@ -69,10 +69,10 @@ function frissitNevezesZarolasUI() {
     if (headerBtn) {
         if (lezarva) {
             headerBtn.className = 'btn btn-danger';
-            headerBtn.innerHTML = `${TatamiMaster.icon('unlock', 16)} Nevezés Megnyitása (LEZÁRVA)`;
+            headerBtn.innerHTML = `${TatamiMaster.icon('unlock', 15)} Nevezés: LEZÁRVA`;
         } else {
             headerBtn.className = 'btn btn-outline';
-            headerBtn.innerHTML = `${TatamiMaster.icon('lock', 16)} Nevezés Lezárása (NYITVA)`;
+            headerBtn.innerHTML = `${TatamiMaster.icon('lock', 15)} Nevezés: NYITVA`;
         }
     }
 
@@ -220,32 +220,36 @@ function frissitAdminAktivVersenyBar() {
         const lezarva = TatamiMaster.isNevezesLezarva(aktVerseny.id);
         const isAutoAktualis = (aktVerseny.id === autoId);
 
-        const autoStatusHtml = isAutoAktualis
-            ? `<span style="background:#18181B;color:#FAF8F5;padding:4px 9px;border-radius:6px;font-weight:700;font-size:0.75rem;display:inline-flex;align-items:center;gap:4px;">${TatamiMaster.icon('check', 12)} AUTOMATIKUSAN AKTUÁLIS</span>`
-            : `<button type="button" class="btn btn-outline-green" style="padding:4px 9px;font-size:0.76rem;" onclick="adminValtsAutomatikusVersenyre()">${TatamiMaster.icon('refresh', 12)} Vissza az aktuális versenyre</button>`;
+        const autoStatusHtml = !isAutoAktualis
+            ? `<button type="button" class="btn btn-outline" style="padding:3px 10px;font-size:0.76rem;border-radius:999px;" onclick="adminValtsAutomatikusVersenyre()">${TatamiMaster.icon('refresh', 12)} Vissza az aktuálisra</button>`
+            : '';
 
         const beallitas = TatamiMaster.lekerVersenyBeallitas(aktVerseny.id);
         const korSzabalySzoveg = (beallitas.ageRule === 'EUROPEAN')
-            ? 'Európai szabály (születési év)'
-            : 'Japán szabály (versenynapi életkor)';
-        const hataridoSzoveg = beallitas.registrationDeadline
-            ? ` &bull; Nevezési határidő: <strong>${TatamiMaster.escapeHtml(TatamiMaster.formazNevezesiHatarido(beallitas.registrationDeadline))}</strong>`
+            ? 'Európai korhatár (szül. év)'
+            : 'Japán korhatár (versenynapi)';
+        const hataridoPill = beallitas.registrationDeadline
+            ? `<span class="admin-meta-pill">${TatamiMaster.icon('clock', 12)} Határidő: <strong>${TatamiMaster.escapeHtml(TatamiMaster.formazNevezesiHatarido(beallitas.registrationDeadline))}</strong></span>`
             : '';
 
         meta.innerHTML = `
+            <span class="admin-meta-pill is-dark">${statuszSzoveg}</span>
+            <span class="admin-meta-pill">${TatamiMaster.icon('calendar', 13)} <strong>${datumSzoveg}</strong></span>
+            <span class="admin-meta-pill">${TatamiMaster.icon('user', 13)} ${szervezoSzoveg}</span>
+            <span class="admin-meta-pill">${korSzabalySzoveg}</span>
+            ${hataridoPill}
+            <span class="admin-meta-pill ${lezarva ? 'is-alert' : ''}">
+                ${lezarva ? `${TatamiMaster.icon('lock', 12)} Nevezés lezárva` : `${TatamiMaster.icon('unlock', 12)} Nevezés nyitva`}
+            </span>
             ${autoStatusHtml}
-            <span style="background:#F3F0EA;border:1px solid #CFC9BC;color:#18181B;padding:4px 9px;border-radius:6px;font-weight:700;font-size:0.78rem;">
-                ${statuszSzoveg}
-            </span>
-            <span>${TatamiMaster.icon('calendar', 14)} <strong>${datumSzoveg}</strong></span>
-            <span>&bull; ${TatamiMaster.icon('user', 14)} Szervező: <strong>${szervezoSzoveg}</strong></span>
-            <span>&bull; Korhatár: <strong>${korSzabalySzoveg}</strong>${hataridoSzoveg}</span>
-            <span style="color:${lezarva ? '#990000' : '#18181B'};font-weight:700;">
-                &bull; ${lezarva ? `${TatamiMaster.icon('lock', 13)} Nevezés lezárva` : `${TatamiMaster.icon('unlock', 13)} Nevezés nyitva`}
-            </span>
         `;
     } else if (meta) {
-        meta.innerHTML = `<span style="color:#71717A;font-weight:700;">Nincs aktív verseny — hozz létre egy újat az 1. Menüben!</span>`;
+        meta.innerHTML = `<span class="admin-meta-pill is-alert">Nincs még meghirdetett verseny — hozz létre egyet a Versenyek fülön!</span>`;
+        if (typeof ugorjAdminTabra === 'function') {
+            ugorjAdminTabra('tab-versenyek', false);
+        }
+        const ujVersDrawer = document.getElementById('adminUjVersenyDrawer');
+        if (ujVersDrawer) ujVersDrawer.open = true;
     }
 
     if (eloLink) {
@@ -276,6 +280,8 @@ function ugorjVersenyekFulre() {
     if (typeof ugorjAdminTabra === 'function') {
         ugorjAdminTabra('tab-versenyek', true);
     }
+    const ujVersDrawer = document.getElementById('adminUjVersenyDrawer');
+    if (ujVersDrawer) ujVersDrawer.open = true;
     setTimeout(() => {
         const inp = document.getElementById('adminUjVersenyNev');
         if (inp) inp.focus();
@@ -667,7 +673,7 @@ function frissitAdminKpiEsCheckboxok() {
         stAgrajz.innerText = globalMerkozesek.length > 0 ? 'Nyomtatható' : 'Várakozik';
     }
 
-    // Lenyitható (accordion) menüfülek fejléc-számlálóinak frissítése
+    // Fő navigációs fülek kompakt számlálóinak frissítése
     const accVers = document.getElementById('accBadgeVersenyek');
     const accVerszok = document.getElementById('accBadgeVersenyzok');
     const accKat = document.getElementById('accBadgeKategoriak');
@@ -675,12 +681,12 @@ function frissitAdminKpiEsCheckboxok() {
     const accTat = document.getElementById('accBadgeTatamik');
     const accAgrajz = document.getElementById('accBadgeAgrajz');
 
-    if (accVers) accVers.innerText = `${globalVersenyek.length} verseny`;
-    if (accVerszok) accVerszok.innerText = `${globalVersenyzok.length} fő`;
-    if (accKat) accKat.innerText = `${globalKategoriak.length} kategória`;
-    if (accNev) accNev.innerText = `${globalNevezesek.length} nevezés`;
-    if (accTat) accTat.innerText = `${globalTatamik.length} tatami • ${globalMerkozesek.length} meccs`;
-    if (accAgrajz) accAgrajz.innerText = globalMerkozesek.length > 0 ? `${globalKategoriak.length} kategória rajzolható` : 'Még nincs sorsolás';
+    if (accVers) accVers.innerText = String(globalVersenyek.length);
+    if (accVerszok) accVerszok.innerText = String(globalVersenyzok.length);
+    if (accKat) accKat.innerText = String(globalKategoriak.length);
+    if (accNev) accNev.innerText = String(globalNevezesek.length);
+    if (accTat) accTat.innerText = String(globalMerkozesek.length);
+    if (accAgrajz) accAgrajz.innerText = String(globalKategoriak.length);
 
     const cbCont = document.getElementById('adminUjVersenyzoKatCheckboxes');
     if (cbCont) {
@@ -2034,10 +2040,18 @@ function nevezesekBetoltese() {
 
     const letszamMap = szamolKategoriaLetszamMap();
     const esc = (s) => TatamiMaster.escapeHtml(s);
+    const kereso = (document.getElementById('adminNevezesKereso')?.value || '').toLowerCase().trim();
+
     let html = "";
     for (let n of globalNevezesek) {
         const v = globalVersenyzok.find(x => x.id === n.competitorId);
         const k = globalKategoriak.find(x => x.id === n.categoryId);
+
+        if (kereso) {
+            const keresendoSzoveg = `${v ? v.name : ''} ${v ? (v.club || '') : ''} ${k ? k.name : ''} ${k ? (k.matchType || '') : ''}`.toLowerCase();
+            if (!keresendoSzoveg.includes(kereso)) continue;
+        }
+
         const db = k ? (letszamMap[k.id] || 0) : 0;
         const egyedulJelzes = (k && db === 1)
             ? ` <span style="background:#FAF5F5;color:#990000;border:1px solid #990000;padding:1px 6px;border-radius:8px;font-size:0.72rem;font-weight:700;">1 fő</span>`
@@ -2049,19 +2063,19 @@ function nevezesekBetoltese() {
 
         html += `<tr>
             <td>#${n.id}</td>
-            <td><strong>${v ? esc(v.name) : 'Ismeretlen (#' + n.competitorId + ')'}</strong> <small style="color:#52525B;">(${v ? esc(v.club) + ', ' + v.weight + 'kg' : ''})</small></td>
+            <td><strong>${v ? esc(v.name) : 'Ismeretlen (#' + n.competitorId + ')'}</strong> <small style="color:#52525B;">(${v ? esc(v.club) + ', ' + v.weight + ' kg' : ''})</small></td>
             <td><strong>${k ? esc(k.name) : 'Ismeretlen (#' + n.categoryId + ')'}</strong>${egyedulJelzes}</td>
             <td>${k ? esc(k.matchType) : '-'}</td>
             <td style="white-space:nowrap;">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                    <select id="nevAthelyezSelect_${n.id}" class="input-field" style="padding:4px 8px;font-size:0.8rem;min-width:170px;">${opciokHtml}</select>
-                    <button type="button" class="btn btn-outline-blue" style="padding:4px 9px;font-size:0.78rem;" onclick="gyorsNevezesKategoriaValtas(${n.id})">Áthelyezés</button>
-                    <button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem;" onclick="torolElem('Registrations', ${n.id})">${TatamiMaster.icon('trash', 14)} Nevezés törlése</button>
+                    <select id="nevAthelyezSelect_${n.id}" class="input-field" style="padding:5px 8px;font-size:0.82rem;min-width:170px;">${opciokHtml}</select>
+                    <button type="button" class="btn btn-outline-blue" style="padding:5px 10px;font-size:0.78rem;" onclick="gyorsNevezesKategoriaValtas(${n.id})">Áthelyezés</button>
+                    <button class="btn btn-danger" style="padding:5px 10px;font-size:0.8rem;" onclick="torolElem('Registrations', ${n.id})">${TatamiMaster.icon('trash', 14)} Törlés</button>
                 </div>
             </td>
         </tr>`;
     }
-    tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;color:#71717A;">Nincs rögzített nevezés.</td></tr>`;
+    tbody.innerHTML = html || `<tr><td colspan="5" style="text-align:center;color:#71717A;padding:18px;">Nincs megjeleníthető nevezés.</td></tr>`;
 }
 
 // =========================================================
@@ -3639,13 +3653,11 @@ function renderEdzoRegisztraciokAdmin() {
 
     if (badgeEl) {
         if (pendingDb > 0) {
-            badgeEl.style.background = '#990000';
-            badgeEl.style.color = '#FAF8F5';
-            badgeEl.innerText = `${pendingDb} elbírálásra vár • ${approvedDb} jóváhagyott`;
+            badgeEl.classList.add('is-pending');
+            badgeEl.innerText = `${pendingDb} vár`;
         } else {
-            badgeEl.style.background = '';
-            badgeEl.style.color = '';
-            badgeEl.innerText = `${approvedDb} jóváhagyott edző`;
+            badgeEl.classList.remove('is-pending');
+            badgeEl.innerText = String(approvedDb);
         }
     }
 
